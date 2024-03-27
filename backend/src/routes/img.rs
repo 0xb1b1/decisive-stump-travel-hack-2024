@@ -12,9 +12,9 @@ use async_std::task;
 use log;
 use std::{path, time::Duration};
 use std::fs;
+use crate::models::uploads;
 
-mod s3_checks;
-mod uploads;
+mod utils;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
@@ -70,7 +70,7 @@ async fn upload_image(mut form: Form<uploads::UploadFile<'_>>) -> Json<uploads::
     }
 
     // Check if the file already exists
-    match s3_checks::return_image_stored(&file_path) {
+    match utils::s3_checks::return_image_stored(&file_path) {
         Some(response) => {
             log::error!("File already exists: {}", file_path.as_path().display());
             return response;
@@ -81,7 +81,7 @@ async fn upload_image(mut form: Form<uploads::UploadFile<'_>>) -> Json<uploads::
     task::sleep(Duration::from_secs(10)).await;  // [TEMP]: Simulate ML model processing
 
     // Ensure that the file wasn't processed while we were waiting for ML
-    match s3_checks::return_image_stored(&file_path) {
+    match utils::s3_checks::return_image_stored(&file_path) {
         Some(response) => {
             log::error!("File already exists: {}", file_path.as_path().display());
             return response;
@@ -103,7 +103,7 @@ async fn upload_image(mut form: Form<uploads::UploadFile<'_>>) -> Json<uploads::
         Err(e) => {
             println!("Failed to save file: {}", e);
             return Json(uploads::UploadFileResponse {
-                is_stored: match s3_checks::return_image_stored(&file_path) {
+                is_stored: match utils::s3_checks::return_image_stored(&file_path) {
                     Some(_) => true,
                     None => false
                 },
@@ -113,5 +113,4 @@ async fn upload_image(mut form: Form<uploads::UploadFile<'_>>) -> Json<uploads::
             });
         }
     }
-
 }

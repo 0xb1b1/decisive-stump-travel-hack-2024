@@ -5,6 +5,7 @@ use env_logger;
 use rocket::serde::json::Json;
 
 mod connections;
+mod models;
 mod routes;
 mod utils;
 
@@ -36,10 +37,15 @@ async fn get_root() -> Json<String> {
 async fn rocket() -> _ {
     env_logger::init();
 
+    log::info!("Creating Redis pool...");
+    let redis_pool = connections::redis::pool().await.unwrap();
+    log::info!("Created Redis pool.");
+
     // let limits = Limits::default()
     //     .limit("data-form", 64.mebibytes())
     //     .limit("file", 64.mebibytes());
     rocket::build()
+        .manage(redis_pool)
         .mount(
             "/",
             routes![get_root]
@@ -47,6 +53,10 @@ async fn rocket() -> _ {
         .mount(
             "/img",
             routes::img::routes()
+        )
+        .mount(
+            "/test",
+            routes::test::routes()
         )
 
 }
