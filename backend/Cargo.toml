@@ -7,11 +7,14 @@ edition = "2021"
 
 [dependencies]
 async-std = "1.12.0"
+bb8 = "0.8.3"
+bb8-redis = "0.15.0"
 chrono = { version = "0.4.35", features = ["serde"] }
 clickhouse = "0.11.6"
 cors = "0.1.0"
 env_logger = "0.11.3"
 log = "0.4.21"
+redis = "0.25.2"
 rocket = { version = "0.5.0", features = ["http2", "serde_json", "json"] }
 serde = { version = "1.0.197", features = ["derive"] }
 sha256 = "1.5.0"
