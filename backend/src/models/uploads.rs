@@ -11,6 +11,7 @@ pub struct UploadImage<'f> {
 pub struct UploadImageResponse {
     pub is_stored: bool,  // File is stored (whether it was uploaded or already existed)
     pub is_accepted: bool,  // File is accepted (whether the upload succeeded)
+    pub is_ml_processed: Option<bool>, // File has already been processed by ML before upload (false if errored on upload)
     pub tags: Option<Vec<String>>,  // TODO: Enforce after ML integration
     pub filename: Option<String>,
     pub error: Option<String>

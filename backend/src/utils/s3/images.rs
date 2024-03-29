@@ -8,8 +8,7 @@ use s3::{
 pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
     // file_path is the path to file in s3
     // bucket is the s3 bucket
-    let response = bucket.get_object(file_path).await;
-    match response {
+    match bucket.get_object(file_path).await {
         Ok(data) => {
             log::info!("File found: {:?}", data);
             Some(data)

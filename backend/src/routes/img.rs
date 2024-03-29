@@ -46,6 +46,7 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: false,
                     is_accepted: false,
+                    is_ml_processed: Some(false),
                     tags:Some(form.tags.clone().unwrap_or_default()),
                     filename: None,
                     error: Some("Failed to get file type.".into())
@@ -61,6 +62,7 @@ async fn upload_image(
             Json(UploadImageResponse {
                 is_stored: false,  // File is definitely not stored since it's not an image
                 is_accepted: false,
+                is_ml_processed: Some(false),
                 tags: Some(form.tags.clone().unwrap_or_default()),
                 filename: None,
                 error: Some("Unsupported file type.".into())
@@ -91,6 +93,7 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: false,
+                    is_ml_processed: Some(true),  // TODO: Should be pulled from ClickHouse
                     tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse
                     filename: Some(file_name.clone()),
                     error: Some("File already exists.".into())
@@ -103,24 +106,6 @@ async fn upload_image(
     // The following is done via a separate request
     // task::sleep(Duration::from_secs(10)).await;  // [TEMP]: Simulate ML model processing
 
-    // Ensure that the file wasn't processed while we were waiting for ML
-    match get_img(&file_path, &bucket).await {
-        Some(_) => {  // TODO: What happens to tags in this scenario? Ask ML
-            log::error!("ML already processed the image (race): {}", &file_path);
-            return status::Custom(
-                Status::Conflict,
-                Json(UploadImageResponse {  // TODO: Remove repetitive code.
-                    is_stored: true,
-                    is_accepted: false,
-                    tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse
-                    filename: Some(file_name.clone()),
-                    error: Some("Race condition detected, aborting.".into())
-                }
-            ));
-        },
-        None => ()
-    }
-
     log::debug!("Saving file to: {}", &file_path);
     let mut file_buffer = form.file.open().await.unwrap();
     match bucket.put_object_stream(&mut file_buffer, &file_path).await {
@@ -131,7 +116,8 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: true,
-                    tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse (or response from ML)
+                    is_ml_processed: Some(false),
+                    tags: Some(form.tags.clone().unwrap_or_default()),
                     filename: Some(file_name),
                     error: None
                 }
@@ -145,6 +131,7 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: false,
+                    is_ml_processed: None,
                     tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse (or response from ML)
                     filename: None,
                     error: Some(format!("Failed to save file: {}", e))

@@ -44,12 +44,17 @@ async fn rocket() -> _ {
     let minio_bucket = connections::s3::get_bucket().await.unwrap();
     log::info!("Connected to Minio.");
 
+    log::info!("Connecting to ClickHouse...");
+    let click = connections::click::get_client().await.unwrap();
+    log::info!("Connected to ClickHouse.");
+
     // let limits = Limits::default()
     //     .limit("data-form", 64.mebibytes())
     //     .limit("file", 64.mebibytes());
     rocket::build()
         .manage(redis_pool)
         .manage(minio_bucket)
+        .manage(click)
         .mount(
             "/",
             routes![get_root]
