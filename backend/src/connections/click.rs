@@ -1,32 +1,48 @@
-use clickhouse::Client;
+use klickhouse::{
+    Client,
+    ClientOptions
+};
 use std::env;
 
-pub fn get_client() -> Result<Client, String> {
-    let client = Client::default()
-        .with_url(match env::var("DS_CLICKHOUSE_URL"){
+pub async fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
+    let url = match env::var("DS_CLICKHOUSE_URL") {
+        Ok(var) => var,
+        Err(_) => {
+            return Err("ClickHouse URL not defined.".into());
+        }
+    };
+    let client_options = ClientOptions {
+        default_database: match env::var("DS_CLICKHOUSE_DB") {
             Ok(var) => var,
             Err(_) => {
-                return Err("ClickHouse URL not defined.".into());
+                return Err("ClickHouse database not defined.".into());
             }
-        })
-        .with_database(match env::var("DS_CLICKHOUSE_DB"){
+        },
+        username: match env::var("DS_CLICKHOUSE_USER") {
             Ok(var) => var,
             Err(_) => {
-                return Err("ClickHouse DB not defined.".into());
+                return Err("ClickHouse username not defined.".into());
             }
-        })
-        .with_user(match env::var("DS_CLICKHOUSE_USER"){
+        },
+        password: match env::var("DS_CLICKHOUSE_PASSWORD") {
             Ok(var) => var,
             Err(_) => {
-                return Err("ClickHouse User not defined.".into());
+                return Err("ClickHouse password not defined.".into());
             }
-        })
-        .with_password(match env::var("DS_CLICKHOUSE_PASSWORD"){
-            Ok(var) => var,
-            Err(_) => {
-                return Err("ClickHouse Password not defined.".into());
-            }
-        });
+        },
+    };
 
-    return Ok(client)
+    log::debug!("Connecting to ClickHouse at {}...", &url);
+
+     match Client::connect(
+        url,
+        client_options
+    ).await {
+        Ok(client) => {
+            return Ok(client);
+        },
+        Err(e) => {
+            return Err(format!("Failed to create ClickHouse client: {}", e).into());
+        }
+    };
 }
