@@ -7,15 +7,19 @@ edition = "2021"
 
 [dependencies]
 async-std = "1.12.0"
+aws-creds = { version = "0.34.1", default-features = false, features = ["attohttpc", "http-credentials", "rustls-tls"] }
+aws-region = "0.25.4"
 bb8 = "0.8.3"
 bb8-redis = "0.15.0"
 chrono = { version = "0.4.35", features = ["serde"] }
 clickhouse = "0.11.6"
 cors = "0.1.0"
 env_logger = "0.11.3"
+klickhouse = "0.11.2"
 log = "0.4.21"
 redis = "0.25.2"
 rocket = { version = "0.5.0", features = ["http2", "serde_json", "json"] }
+rust-s3 = "0.33.0"
 serde = { version = "1.0.197", features = ["derive"] }
 sha256 = "1.5.0"
 tokio = { version = "1.36.0", features = ["full"] }

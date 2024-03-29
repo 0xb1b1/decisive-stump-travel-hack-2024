@@ -9,7 +9,6 @@ mod models;
 mod routes;
 mod utils;
 
-
 // fn main() {
 //     if env::var("RUST_LOG").is_err() {
 //         env::set_var("RUST_LOG", "debug");
@@ -41,11 +40,16 @@ async fn rocket() -> _ {
     let redis_pool = connections::redis::pool().await.unwrap();
     log::info!("Created Redis pool.");
 
+    log::info!("Connecting to Minio...");
+    let minio_bucket = connections::s3::get_bucket().await.unwrap();
+    log::info!("Connected to Minio.");
+
     // let limits = Limits::default()
     //     .limit("data-form", 64.mebibytes())
     //     .limit("file", 64.mebibytes());
     rocket::build()
         .manage(redis_pool)
+        .manage(minio_bucket)
         .mount(
             "/",
             routes![get_root]
@@ -58,5 +62,4 @@ async fn rocket() -> _ {
             "/test",
             routes::test::routes()
         )
-
 }
