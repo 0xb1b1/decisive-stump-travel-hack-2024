@@ -8,6 +8,7 @@ mod connections;
 mod models;
 mod routes;
 mod utils;
+mod locks;
 
 // fn main() {
 //     if env::var("RUST_LOG").is_err() {

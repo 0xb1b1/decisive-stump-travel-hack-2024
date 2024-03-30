@@ -10,7 +10,7 @@ pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
     // bucket is the s3 bucket
     match bucket.get_object(file_path).await {
         Ok(data) => {
-            log::info!("File found: {:?}", data);
+            log::info!("File found: {}", &file_path);
             Some(data)
         },
         Err(e) => {
