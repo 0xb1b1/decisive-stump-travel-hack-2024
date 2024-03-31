@@ -22,6 +22,9 @@ use bb8;
 use bb8_redis;
 use redis;
 use s3::Bucket;
+use rsmq_async::{PooledRsmq, RsmqConnection};
+// use crate::enums::rsmq::RsmqDsQueue;
+use crate::utils;
 
 // use crate::models::uploads;
 
@@ -29,7 +32,9 @@ use s3::Bucket;
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         test_redis,
-        test_s3
+        test_s3,
+        test_rsmq_send,
+        test_rsmq_receive
     ]
 }
 
@@ -54,6 +59,31 @@ struct TestS3<'f> {
 #[derive(serde::Serialize, Debug)]
 struct TestS3Response {
     success: bool,
+    detail: Option<String>
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct TestRsmq {
+    queue_name: String,
+    message: String
+}
+
+#[derive(serde::Serialize, Debug)]
+struct TestRsmqResponse {
+    success: bool,
+    queue_id: Option<String>,
+    detail: Option<String>
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct TestRsmqReceive {
+    queue_name: String
+}
+
+#[derive(serde::Serialize, Debug)]
+struct TestRsmqReceiveResponse {
+    success: bool,
+    message: Option<String>,
     detail: Option<String>
 }
 
@@ -175,6 +205,121 @@ async fn test_s3(form: Form<TestS3<'_>>, bucket: &rocket::State<Bucket>) -> stat
         Status::Ok,
         Json(TestS3Response {
             success: true,
+            detail: None
+        })
+    )
+}
+
+#[post("/rsmq/send", data = "<data>")]
+async fn test_rsmq_send(data: Json<TestRsmq>, pool: &rocket::State<PooledRsmq>) -> status::Custom<Json<TestRsmqResponse>> {
+    log::debug!("Got a request: {:?}", data);
+
+    // Verify queue name
+    if !utils::rsmq::verify::queue_exists(data.queue_name.as_str()) {
+        log::error!("Queue name is invalid.");
+        return status::Custom(
+            Status::BadRequest,
+            Json(TestRsmqResponse {
+                success: false,
+                queue_id: None,
+                detail: Some("Queue name is invalid.".into())
+            })
+        )
+    }
+
+    // Send data to RSMQ
+    log::debug!("Sending data to RSMQ...");
+    let queue_id = match pool.inner().clone().send_message(
+        data.queue_name.as_str(),
+        data.message.as_str(),
+        None
+    ).await {
+        Ok(msg) => msg,
+        Err(e) => {
+            log::error!("Failed to send data to RSMQ: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(TestRsmqResponse {
+                    success: false,
+                    queue_id: None,
+                    detail: Some(format!("Failed to send data to RSMQ: {}", e))
+                })
+            )
+        }
+    };
+
+
+    status::Custom(
+        Status::Ok,
+        Json(TestRsmqResponse {
+            success: true,
+            queue_id: Some(queue_id),
+            detail: None
+        })
+    )
+}
+
+#[post("/rsmq/receive", data = "<data>")]
+async fn test_rsmq_receive(data: Json<TestRsmqReceive>, pool: &rocket::State<PooledRsmq>) -> status::Custom<Json<TestRsmqReceiveResponse>> {
+    log::debug!("Got a request: {:?}", data);
+
+    // Verify queue name
+    if !utils::rsmq::verify::queue_exists(data.queue_name.as_str()) {
+        log::error!("Queue name is invalid.");
+        return status::Custom(
+            Status::BadRequest,
+            Json(TestRsmqReceiveResponse {
+                success: false,
+                message: None,
+                detail: Some("Queue name is invalid.".into())
+            })
+        )
+    }
+
+    // Receive data from RSMQ
+    log::debug!("Receiving data from RSMQ...");
+    let message = match pool.inner().clone().receive_message(
+        data.queue_name.as_str(),
+        None
+    ).await {
+        Ok(msg) => {
+            let msg = match msg {
+                Some(m) => m,
+                None => {
+                    log::error!("Failed to receive data from RSMQ: No message received.");
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(TestRsmqReceiveResponse {
+                            success: false,
+                            message: None,
+                            detail: Some("Failed to receive data from RSMQ: No message received.".into())
+                        })
+                    )
+                }
+            };
+            log::debug!("Removing message from RSMQ: {:?}", msg);
+            pool.inner().clone().delete_message(data.queue_name.as_str(), &msg.id).await.unwrap();
+            log::debug!("Message removed from Redis: {:?}", msg);
+            msg
+        }
+        Err(e) => {
+            log::error!("Failed to receive data from RSMQ: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(TestRsmqReceiveResponse {
+                    success: false,
+                    message: None,
+                    detail: Some(format!("Failed to receive data from RSMQ: {}", e))
+                })
+            )
+        }
+    };
+
+    status::Custom(
+        Status::Ok,
+        Json(TestRsmqReceiveResponse {
+            success: true,
+            message: Some(message.message),
             detail: None
         })
     )

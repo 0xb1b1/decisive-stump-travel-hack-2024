@@ -8,6 +8,8 @@ mod connections;
 mod models;
 mod routes;
 mod utils;
+mod locks;
+mod enums;
 
 // fn main() {
 //     if env::var("RUST_LOG").is_err() {
@@ -37,8 +39,13 @@ async fn rocket() -> _ {
     env_logger::init();
 
     log::info!("Creating Redis pool...");
-    let redis_pool = connections::redis::pool().await.unwrap();
+    let redis_pool = connections::redis::get_pool().await.unwrap();
     log::info!("Created Redis pool.");
+
+    log::info!("Creating RSMQ pool...");
+    // RSMQ uses a built-in connection pool
+    let rsmq_pool = connections::rsmq::get_pool().await.unwrap();
+    log::info!("Created RSMQ pool.");
 
     log::info!("Connecting to Minio...");
     let minio_bucket = connections::s3::get_bucket().await.unwrap();
@@ -53,6 +60,7 @@ async fn rocket() -> _ {
     //     .limit("file", 64.mebibytes());
     rocket::build()
         .manage(redis_pool)
+        .manage(rsmq_pool)
         .manage(minio_bucket)
         .manage(click)
         .mount(
