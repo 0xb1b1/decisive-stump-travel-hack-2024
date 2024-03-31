@@ -7,14 +7,13 @@ use rocket::http::{
     ContentType,
     MediaType
 };
-// use async_std::task;
-// use cors::*;
-// use std::env;
+use std::{
+    path, fs
+};
 use log;
 use s3::Bucket;
-use std::path;  // time::Duration
-use std::fs;
-use crate::models::uploads::{
+
+use crate::models::http::uploads::{
     DeleteImageResponse, UploadImage, UploadImageResponse
 };
 use crate::utils::s3::images::get_img;
