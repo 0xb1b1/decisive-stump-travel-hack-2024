@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
@@ -12,7 +11,6 @@ class SearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppPalette.black,
       body: NestedScrollView(
         headerSliverBuilder: (_, __) => [
           SliverAppBar(
