@@ -1,7 +1,5 @@
 use core::fmt;
 
-use log::kv::Error;
-
 use super::generic;
 
 pub enum MlQueryType {

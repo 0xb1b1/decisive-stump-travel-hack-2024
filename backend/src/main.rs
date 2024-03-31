@@ -3,6 +3,7 @@ extern crate rocket;
 
 use env_logger;
 use rocket::serde::json::Json;
+use s3::Bucket;
 
 mod connections;
 mod models;
@@ -48,7 +49,7 @@ async fn rocket() -> _ {
     log::info!("Created RSMQ pool.");
 
     log::info!("Connecting to Minio...");
-    let minio_bucket = connections::s3::get_bucket().await.unwrap();
+    let bucket = connections::s3::get_bucket(None).await.unwrap();
     log::info!("Connected to Minio.");
 
     log::info!("Connecting to ClickHouse...");
@@ -61,7 +62,7 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(redis_pool)
         .manage(rsmq_pool)
-        .manage(minio_bucket)
+        .manage(bucket)
         .manage(click)
         .mount(
             "/",

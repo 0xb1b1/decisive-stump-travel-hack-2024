@@ -11,6 +11,7 @@ use rocket::http::{
     ContentType,
     MediaType
 };
+use tokio::io::AsyncReadExt;
 use log;
 use std::{
     path,
@@ -169,19 +170,29 @@ async fn test_s3(form: Form<TestS3<'_>>, bucket: &rocket::State<Bucket>) -> stat
         }
     };
 
+    // Create a proper file path
+    let mut file_buffer: Vec<u8> = Vec::new();
+    form.file.open().await.unwrap().read_buf(&mut file_buffer).await.unwrap();
+
     let file_name: String;
     let file_path: String;
     {
         let media_type: &MediaType = file_type.media_type();
         let file_hash = crate::utils::hash::hash_file(
-            &mut fs::File::open(
-                path::Path::new(&form.file.path().unwrap())
-            ).unwrap());
-        file_name = format!("{}.{}", file_hash, media_type.sub());
-        file_path = String::from("tests/") + file_name.as_str();
+            &file_buffer
+        );
+
+        let file_ext;
+        if media_type.sub() == "jpeg" {
+            file_ext = "jpg";
+        } else {
+            file_ext = media_type.sub().as_str();
+        }
+
+        file_name = format!("{}.{}", file_hash, file_ext);
+        file_path = file_name.clone();  // For flexibility
         log::debug!("File will be saved in S3 as {}", &file_path);
     }
-
     log::debug!("Sending data to S3...");
     let mut file_buffer = form.file.open().await.unwrap();
     match bucket.put_object_stream(&mut file_buffer, &file_path).await {

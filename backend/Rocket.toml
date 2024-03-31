@@ -1,6 +1,14 @@
 [default]
 port = 8080
 
+[default.limits]
+form = "64 MiB"
+"data-form" = "64 MiB"
+file = "64 MiB"
+json = "2 MiB"
+msgpack = "64 MiB"
+
+
 [debug]
 address = "127.0.0.1"
 

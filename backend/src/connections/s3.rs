@@ -7,7 +7,7 @@ use s3::{
 use std::env;
 
 // Get minio images bucket
-pub async fn get_bucket() -> Result<Bucket, String> {
+pub async fn get_bucket(bucket_name: Option<&str>) -> Result<Bucket, String> {
     // Get credentials
     let access_key = match env::var("DS_MINIO_IMAGES_ACCESS_KEY") {
         Ok(var) => var,
@@ -37,11 +37,22 @@ pub async fn get_bucket() -> Result<Bucket, String> {
         }
     };
 
-    let bucket_name = match env::var("DS_MINIO_BUCKET_NAME") {
-        Ok(var) => var,
-        Err(_) => {
-            log::warn!("Minio Bucket Name not defined, using fallback `images` bucket.");
-            "images".into()
+    let final_bucket_name = match bucket_name {
+        Some(name) => {
+            log::debug!("Using custom bucket name: {}", name);
+            name.to_string()
+        }
+        None => {
+            match env::var("DS_MINIO_BUCKET_NAME") {
+                Ok(var) => {
+                    log::debug!("Using env Minio bucket name: {}", var);
+                    var
+                }
+                Err(_) => {
+                    log::warn!("Minio Bucket Name not defined, using fallback `images` bucket.");
+                    "images".to_string()
+                }
+            }
         }
     };
 
@@ -59,7 +70,7 @@ pub async fn get_bucket() -> Result<Bucket, String> {
     };
 
     let bucket = match Bucket::create_with_path_style(
-        &bucket_name,
+        &final_bucket_name,
         region.clone(),
         credentials.clone(),
         BucketConfiguration::default()
@@ -68,7 +79,7 @@ pub async fn get_bucket() -> Result<Bucket, String> {
         Err(err) => {
             log::debug!("Failed to create bucket, initializing instead: {}", err);
             match Bucket::new(
-                &bucket_name,
+                &final_bucket_name,
                 region,
                 credentials
             ) {

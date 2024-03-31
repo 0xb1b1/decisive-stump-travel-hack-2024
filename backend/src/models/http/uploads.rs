@@ -1,5 +1,7 @@
 use serde::Serialize;
 use rocket::fs::TempFile;
+use rocket::form::FromForm;
+
 
 #[derive(FromForm)]
 pub struct UploadImage<'f> {
