@@ -4,34 +4,23 @@ use rocket::{
     response::status,
 };
 use async_std::task;
-// use cors::*;
-// use std::env;
 use log;
 use s3::Bucket;
-use serde::{Deserialize, Serialize};
+
 use crate::utils::s3::images::get_img;
 use crate::locks::{
     self,
     ml_analyze::MlQueryType
+};
+use crate::models::http::ml_user::{
+    MLAnalyzeImage,
+    MLAnalyzeImageResponse
 };
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         ml_analyze_image
     ]
-}
-
-#[derive(Deserialize, Debug)]
-pub struct MLAnalyzeImage {
-    pub filename: String
-}
-
-#[derive(Serialize, Debug)]
-pub struct MLAnalyzeImageResponse {
-    pub is_ml_processed: bool,
-    pub tags: Option<Vec<String>>,
-    pub filename: String,
-    pub error: Option<String>
 }
 
 // accept json of MLAnalyzeImage
@@ -44,6 +33,7 @@ pub async fn ml_analyze_image(
     log::debug!("ML Analyze request received: {:?}", image);
 
     // Check if ML Analyze is occupied
+    // TODO: Replace by Redis Queue?
     let mut lock_counter = 0;
     loop {
         let is_locked = match locks::ml_analyze::check(&MlQueryType::AnalyzeImage, pool)
