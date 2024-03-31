@@ -41,8 +41,9 @@ flutter:
   assets:
     - assets/bg.jpeg
     - assets/icons/
-    - assets/test.png
+    - assets/test.jpg
     - assets/stats/
+    - assets/app_bar/
 
   fonts:
     - family: SuisseIntl
@@ -52,4 +53,4 @@ flutter:
         - asset: assets/fonts/SuisseIntl-Regular.otf
           weight: 400
         - asset: assets/fonts/SuisseIntl-Medium.otf
-          weight: 500
+          weight: 600

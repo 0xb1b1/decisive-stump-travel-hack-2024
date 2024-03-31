@@ -1,3 +1,3 @@
 abstract class AppConstants {
-  static const aspectRatio = 1.4;
+  static const aspectRatio = 1.7;
 }

@@ -1,17 +1,20 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
+import 'package:travel_frontend/src/common/app_typography.dart';
 
 class SideButton extends StatelessWidget {
   final String title;
-  final String iconPath;
+  final SvgPicture icon;
   final VoidCallback onTap;
 
   const SideButton({
     super.key,
     required this.title,
-    required this.iconPath,
+    required this.icon,
     required this.onTap,
   });
 
@@ -21,8 +24,8 @@ class SideButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 12,
+          vertical: 12,
+          horizontal: 16,
         ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
@@ -31,9 +34,15 @@ class SideButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title),
+            Expanded(
+              child: AutoSizeText(
+                title,
+                style: AppTypography.boldText,
+                maxLines: 2,
+              ),
+            ),
             const SizedBox(width: 8),
-            SvgPicture.asset(iconPath),
+            icon,
           ],
         ),
       ),
