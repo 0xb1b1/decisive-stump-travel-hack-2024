@@ -2,7 +2,7 @@ use bb8;
 use bb8_redis;
 use std::env;
 
-pub async fn pool() -> Result<bb8::Pool<bb8_redis::RedisConnectionManager>, String> {
+pub async fn get_pool() -> Result<bb8::Pool<bb8_redis::RedisConnectionManager>, String> {
     let manager = bb8_redis::RedisConnectionManager::new(
         match env::var("DS_REDIS_URL") {
             Ok(var) => var,
