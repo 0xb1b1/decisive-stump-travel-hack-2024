@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:travel_frontend/src/common/app_typography.dart';
+import 'package:travel_frontend/src/common/assets_provider.dart';
 
-import '../../src/common/app_palette.dart';
+import '../../../../../common/app_palette.dart';
 
 class SimilarButton extends StatefulWidget {
   const SimilarButton({super.key});
@@ -16,17 +18,20 @@ class _SimilarButtonState extends State<SimilarButton> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppPalette.black.withOpacity(0.15),
+        color: AppPalette.white.withOpacity(0.25),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SvgPicture.asset('assets/activity.svg'),
+          AssetsProvider.share,
           const SizedBox(
             width: 8,
           ),
-          const Text('Похожие'),
+          const Text(
+            'Похожие',
+            style: AppTypography.hoverDescr,
+          ),
         ],
       ),
     );

@@ -13,14 +13,18 @@ class _CheckboxWidgetState extends State<CheckboxWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Checkbox(
-      activeColor: AppPalette.yellow,
-      value: isChecked,
-      onChanged: (bool? value) {
-        setState(() {
-          isChecked = value!;
-        });
-      },
+    return SizedBox(
+      height: 20,
+      width: 20,
+      child: Checkbox(
+        activeColor: AppPalette.yellow,
+        value: isChecked,
+        onChanged: (bool? value) {
+          setState(() {
+            isChecked = value!;
+          });
+        },
+      ),
     );
   }
 }

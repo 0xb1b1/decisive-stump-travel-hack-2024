@@ -10,6 +10,13 @@ class AppTheme {
 
     return sourceTheme.copyWith(
       scaffoldBackgroundColor: AppPalette.white,
+      checkboxTheme: CheckboxThemeData(
+        fillColor: const MaterialStatePropertyAll(AppPalette.white),
+        splashRadius: 16,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
     );
   }();
 }

@@ -10,13 +10,13 @@ class AppTypography {
   );
 
   static const boldText = TextStyle(
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     fontSize: 16,
     color: Colors.black,
   );
 
   static const tags = TextStyle(
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     fontSize: 14,
     color: Colors.black,
   );
@@ -25,5 +25,17 @@ class AppTypography {
     fontWeight: FontWeight.w400,
     fontSize: 16,
     color: Colors.black,
+  );
+
+  static const hoverTitle = TextStyle(
+    fontWeight: FontWeight.w700,
+    fontSize: 16,
+    color: Colors.white,
+  );
+
+  static const hoverDescr = TextStyle(
+    fontWeight: FontWeight.w600,
+    fontSize: 14,
+    color: Colors.white,
   );
 }
