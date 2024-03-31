@@ -16,13 +16,16 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  final List<String> yearTime = ['Зима', 'Весна', 'Лето', 'Осень'];
+  final List<String> dayTime = ['Утро', 'День', 'Вечер', 'Ночь'];
+
+  MyHomePage({super.key, required this.title});
 
   final String title;
 
@@ -31,7 +34,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String dropdownValue = 'One';
+  String dropdownValue1 = 'Зима';
+  String dropdownValue2 = 'Утро';
 
   @override
   Widget build(BuildContext context) {
@@ -46,79 +50,95 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Container(
               width: double.infinity,
-              child: const Text('Загрузка успешна'),
               color: Colors.green,
+              child: const Text('Загрузка успешна'),
             ),
             const SizedBox(
               height: 14,
             ),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.asset('assets/img/Rectangle.png', height: 200, width: 300,fit: BoxFit.cover,),
+                    Image.asset(
+                      'assets/img/Rectangle.png',
+                      height: 200,
+                      width: 300,
+                      fit: BoxFit.cover,
+                    ),
                     const SizedBox(
                       height: 14,
                     ),
-                    const Text('JPEG, 150MB'), 
+                    const Text('JPEG, 150MB'),
                     const Text('9999х9999, Горизонтальное')
                   ],
                 ),
-                const SizedBox(width: 12,),
+                const SizedBox(
+                  width: 12,
+                ),
                 Column(
                   children: [
-                    const Text('Наименование файла'), 
-                    SizedBox(height: 10,),
-                    Container(
-                      child: const Text('Kremlin.jpeg'),
-                      color: Colors.grey,
+                    const Text('Наименование файла'),
+                    const SizedBox(
+                      height: 10,
                     ),
-                    SizedBox(height: 10,),
+                    Container(
+                      color: Colors.grey,
+                      child: const Text('Kremlin.jpeg'),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     Row(
                       children: [
                         Column(
                           children: [
-                            const Text('Время года'), 
+                            const Text('Время года'),
                             DropdownButton<String>(
-                              value: dropdownValue,
+                              value: dropdownValue1,
                               onChanged: (String? newValue) {
                                 setState(() {
-                                  dropdownValue = newValue!;
+                                  dropdownValue1 = newValue!;
                                 });
                               },
-                              items: <String>['Зима', 'Весна', 'Лето', 'Осень']
-                                  .map<DropdownMenuItem<String>>((String value) {
+                              items: widget.yearTime
+                                  .map<DropdownMenuItem<String>>(
+                                      (String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(value),
                                 );
                               }).toList(),
                             ),
-                        ],),
+                          ],
+                        ),
                         Column(
                           children: [
-                            const Text('Время дня'), 
+                            const Text('Время дня'),
                             DropdownButton<String>(
-                              value: dropdownValue,
+                              value: dropdownValue2,
                               onChanged: (String? newValue) {
                                 setState(() {
-                                  dropdownValue = newValue!;
+                                  dropdownValue2 = newValue!;
                                 });
                               },
-                              items: <String>['Утро', 'День', 'Вечер', 'Ночь']
-                                  .map<DropdownMenuItem<String>>((String value) {
+                              items: widget.dayTime
+                                  .map<DropdownMenuItem<String>>(
+                                      (String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(value),
                                 );
                               }).toList(),
                             ),
-                        ],),
-                        ],)
-                      ],)
-                  ],),
-                const SizedBox(width: 12,),
+                          ],
+                        ),
+                      ],
+                    )
+                  ],
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -127,12 +147,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {},
                       child: const Text('Черновик'),
                     ),
-                    SizedBox(height: 14,),
+                    const SizedBox(
+                      height: 14,
+                    ),
                     ElevatedButton(
                       onPressed: () {},
                       child: const Text('Опубликовать'),
                     ),
-                   SizedBox(height: 14,),
+                    const SizedBox(
+                      height: 14,
+                    ),
                     ElevatedButton(
                       onPressed: () {},
                       child: const Text('Удалить'),
@@ -141,7 +165,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
+            const SizedBox(
+              width: 12,
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
