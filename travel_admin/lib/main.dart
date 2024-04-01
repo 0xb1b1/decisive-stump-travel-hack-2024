@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:travel_admin/widgets/dropdown_row.dart';
 
 void main() {
   runApp(const MyApp());
@@ -91,50 +93,68 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(
                       height: 10,
                     ),
+                    DropwornRow(),
+                  ],
+                ),
+                // const SizedBox(
+                //           width: 20,
+                // ),
+                Column(
+                  //crossAxisAlignment: CrossAxisAlignment.start,
+                  //mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
                         Column(
                           children: [
-                            const Text('Время года'),
-                            DropdownButton<String>(
-                              value: dropdownValue1,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  dropdownValue1 = newValue!;
-                                });
-                              },
-                              items: widget.yearTime
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                            const Text('Наименование фотографии'),
+                            const SizedBox(
+                              height: 10,
                             ),
+                            const TextField(
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Enter something',
+                              ),
+                            )
                           ],
+                        ),
+                        const SizedBox(
+                          width: 20,
                         ),
                         Column(
                           children: [
-                            const Text('Время дня'),
-                            DropdownButton<String>(
-                              value: dropdownValue2,
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  dropdownValue2 = newValue!;
-                                });
-                              },
-                              items: widget.dayTime
-                                  .map<DropdownMenuItem<String>>(
-                                      (String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
+                            const Text('Слаг'),
+                            const SizedBox(
+                              height: 10,
                             ),
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Enter something',
+                                ),
+                              ),
+                            )
                           ],
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        const Text('Теги'),
+                        const SizedBox(
+                          height: 10,
                         ),
+                        TextField(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Enter something',
+                          ),
+                        )
                       ],
                     )
                   ],
