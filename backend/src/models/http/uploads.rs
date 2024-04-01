@@ -21,6 +21,6 @@ pub struct UploadImageResponse {
 
 #[derive(Serialize)]
 pub struct DeleteImageResponse {
-    pub is_deleted: bool,
+    pub is_deletion_pending: bool,
     pub error: Option<String>
 }

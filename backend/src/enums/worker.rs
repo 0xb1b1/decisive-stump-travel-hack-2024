@@ -6,13 +6,10 @@ pub enum TaskType {
     CompressImage {
         filename: String
     },
+    DeleteImage {
+        filename: String
+    },
 }
-impl TaskType {
-    pub fn file_name(&self) -> Option<&str> {
-        match self {
-            TaskType::CompressImage { filename } => {
-                Some(filename.as_str())
-            }
-        }
-    }
-}
+// impl TaskType {
+
+// }

@@ -130,6 +130,9 @@ pub async fn compress_image(
             remove_tmp_file(&tmp_path_dest).unwrap();
             return Ok(ImageInfo {
                 filename: format!("{}.{}", &file_name_no_ext, "jpg"),
+                s3_presigned_url: None,  // TODO: Generate?
+                label: None,
+                description: None,
                 tags: None,
                 error: None
             })

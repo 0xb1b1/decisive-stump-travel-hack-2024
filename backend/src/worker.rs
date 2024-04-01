@@ -27,10 +27,24 @@ async fn main() {
     let bucket_images_thumbs = connections::s3::get_bucket(Some("images-thumbs")).await.unwrap();
     log::info!("Connected to Minio.");
 
+    let mut process_failed_queue_counter: u8 = 0;
     loop {
         log::debug!("Checking RSMQ...");
+
+        // Set queue name to check
+        let queue_name: RsmqDsQueue;
+        if process_failed_queue_counter > 4 {
+            queue_name = RsmqDsQueue::BackendWorkerFailed;
+            process_failed_queue_counter = 0;
+        } else {
+            queue_name = RsmqDsQueue::BackendWorker;
+            process_failed_queue_counter += 1;
+        }
+
+        log::debug!("Working in task queue: {}", queue_name.as_str());
+
         let message = match rsmq_pool.pop_message::<String>(
-            RsmqDsQueue::BackendWorker.as_str()
+            queue_name.as_str()
         ).await {
             Ok(msg) => msg,
             Err(err) => {
@@ -53,98 +67,44 @@ async fn main() {
 
             // Process task
             match task {
-                TaskType::CompressImage { filename } => {
-                    log::info!("Downloading image: {}", filename);
-                    let original_file = match tasks::utils::files::tmp::download_s3_file(
+                TaskType::DeleteImage { filename } => {
+                    log::info!("Received DeleteImage task: {}", filename);
+                    match tasks::task_types::delete_image::delete_from_all_buckets(
+                        &filename,
                         &bucket_images,
-                        &filename
-                    ).await {
-                        Ok(data) => {
-                            log::debug!("Downloaded image from S3");
-                            data
-                        },
-                        Err(err) => {
-                            log::error!("Failed to download image from S3: {}", err);
-                            continue;  // TODO: Send back to queue?
-                        }
-                    };
-
-                    log::info!("Compressing image (comp bucket): {}", filename);
-                    // Check file size (if it's already less than 2MB, just copy it to comp bucket)
-                    let original_file_length = original_file.as_slice().len() as u64;
-                    log::debug!("Original file length: {}", original_file_length);
-                    if original_file_length < 2_000_000 {
-                        log::info!("File is already compressed, copying to comp bucket.");
-                        match bucket_images_compressed.put_object(&filename, original_file.as_slice()).await {
-                            Ok(_) => {
-                                log::info!("Copied image to comp bucket.");
-                            },
-                            Err(err) => {
-                                log::error!("Failed to copy image to comp bucket: {}", err);
-                                continue;  // TODO: Send back to queue?
-                            }
-                        }
-                    } else {
-                        log::info!("File is not small enough for comp bucket, compressing it.");
-                    }
-
-                    match tasks::compress::compress_image(
-                        &original_file,
-                        &filename,
                         &bucket_images_compressed,
-                        80.,
-                        0.8
+                        &bucket_images_thumbs,
+                        &mut rsmq_pool
                     ).await {
-                        Ok(image_info) => {
-                            log::info!("Compressed image (comp bucket): {:?}", image_info);
+                        Ok(_) => {
+                            log::info!("Deleted image from all buckets.");
                         },
                         Err(err) => {
-                            log::error!("Failed to compress image (comp bucket), sending back to queue: {}", err);
-                            // Send with delay
-                            match rsmq_pool.send_message(
-                                RsmqDsQueue::BackendWorker.as_str(),
-                                msg.message.clone(),
-                                Some(Duration::from_secs(10))
-                            ).await {
-                                Ok(_) => {
-                                    log::info!("Sent message back to queue (comp bucket).");
-                                },
-                                Err(err) => {
-                                    log::error!("Failed to send message back to queue (comp bucket): {}", err);
-                                }
-                            }
+                            log::error!("Failed to delete image from all buckets: {}", err);
+                            continue;
                         }
                     }
 
-                    log::info!("Compressing image (thumbs bucket): {}", filename);
-                    match tasks::compress::compress_image(
-                        &original_file,
+                }
+                TaskType::CompressImage { filename } => {
+                    log::info!("Received CompressImage task: {}", filename);
+
+                    match tasks::task_types::compress_image::compress_normal(
                         &filename,
+                        &bucket_images,
+                        &bucket_images_compressed,
                         &bucket_images_thumbs,
-                        60.,
-                        0.4
+                        &mut rsmq_pool
                     ).await {
-                        Ok(image_info) => {
-                            log::info!("Compressed image (thumbs bucket): {:?}", image_info);
+                        Ok(_) => {
+                            log::info!("Compressed image.");
                         },
                         Err(err) => {
-                            log::error!("Failed to compress image (thumbs bucket), sending back to queue: {}", err);
-                            // Send with delay
-                            match rsmq_pool.send_message(
-                                RsmqDsQueue::BackendWorker.as_str(),
-                                msg.message.clone(),
-                                Some(Duration::from_secs(10))
-                            ).await {
-                                Ok(_) => {
-                                    log::info!("Sent message back to queue (thumbs bucket).");
-                                },
-                                Err(err) => {
-                                    log::error!("Failed to send message back to queue (thumbs bucket): {}", err);
-                                }
-                            }
+                            log::error!("Failed to compress image: {}", err);
+                            continue;
                         }
                     }
-                }
+                },
             }
         }
 

@@ -82,12 +82,15 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
     // Create queues if they don't exist
     let queues: Vec<&str> = vec![
         RsmqDsQueue::BackendWorker.as_str(),
+        RsmqDsQueue::BackendWorkerFailed.as_str(),
         RsmqDsQueue::AnalyzeBackendMl.as_str(),
         RsmqDsQueue::AnalyzeBackendMlResp.as_str(),
         RsmqDsQueue::SearchBackendMl.as_str(),
         RsmqDsQueue::SearchBackendMlResp.as_str(),
         RsmqDsQueue::MlMl.as_str(),
-        RsmqDsQueue::MlMlResp.as_str()
+        RsmqDsQueue::MlMlResp.as_str(),
+        RsmqDsQueue::UploadAnalyzeMl.as_str(),
+        RsmqDsQueue::UploadAnalyzeMlResp.as_str()
     ];
     for queue in queues {
         match pool.create_queue(&queue, None, None, None).await {
