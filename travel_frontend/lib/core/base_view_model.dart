@@ -1,22 +1,20 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
+import 'package:travel_frontend/core/view_model_hooks.dart';
 
-abstract class BaseViewModel<ViewState> extends ChangeNotifier {
+abstract class BaseViewModel<ViewState> extends ChangeNotifier
+    implements ViewModelHooks<ViewState> {
   late ViewState _state;
 
   ViewState get initState;
 
-  ViewState get state => _state;
-
   @override
-  @mustCallSuper
-  Future<void> dispose();
+  ViewState get state => _state;
 
   @override
   @mustCallSuper
   void init() {
     _state = initState;
+    notifyListeners();
   }
 
   void emit(ViewState newState) {

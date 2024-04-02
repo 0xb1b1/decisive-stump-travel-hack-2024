@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 
-import 'selected_checkbox_widget.dart';
-import 'similar_button.dart';
+import 'widgets/selected_checkbox_widget.dart';
+import 'widgets/similar_button.dart';
 
 class HoverImage extends StatefulWidget {
   final String title;

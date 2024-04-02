@@ -5,7 +5,14 @@ import 'search_input.dart';
 import 'side_button.dart';
 
 class SearchBlock extends StatelessWidget {
-  const SearchBlock({super.key});
+  final VoidCallback onSearchPhoto;
+  final VoidCallback onFiltersTap;
+
+  const SearchBlock({
+    super.key,
+    required this.onSearchPhoto,
+    required this.onFiltersTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +29,13 @@ class SearchBlock extends StatelessWidget {
           child: SideButton(
             title: 'Cкрыть фильтры',
             icon: AssetsProvider.cross,
-            onTap: () {},
+            onTap: onFiltersTap,
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: SideButton(
-            onTap: () {},
+            onTap: onSearchPhoto,
             title: 'Поиск по изображению',
             icon: AssetsProvider.photo,
           ),

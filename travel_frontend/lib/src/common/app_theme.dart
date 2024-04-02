@@ -9,7 +9,7 @@ class AppTheme {
     );
 
     return sourceTheme.copyWith(
-      scaffoldBackgroundColor: AppPalette.white,
+      scaffoldBackgroundColor: AppPalette.black,
       checkboxTheme: CheckboxThemeData(
         fillColor: const MaterialStatePropertyAll(AppPalette.white),
         splashRadius: 16,

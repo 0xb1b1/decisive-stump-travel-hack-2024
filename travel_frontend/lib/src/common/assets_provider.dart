@@ -1,4 +1,7 @@
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
+import 'package:flutter_svg/flutter_svg.dart' hide Svg;
 import 'package:travel_frontend/src/common/app_palette.dart';
 
 abstract class AssetsPath {
@@ -9,7 +12,7 @@ abstract class AssetsPath {
   static const share = 'assets/icons/share.svg';
 
   static const appBar = 'assets/app_bar/app_bar.svg';
-  static const fullAppBar = 'assets/app_bar/full_app_bar.svg';
+  static const fullAppBar = 'assets/app_bar/test2.svg';
   static const bottomBar = 'assets/app_bar/bottom_bar.svg';
 }
 
@@ -32,7 +35,7 @@ abstract class AssetsProvider {
         AssetsPath.photo,
         height: 24,
         width: 24,
-        color: AppPalette.black,
+        color: AppPalette.white,
       );
 
   static get search => SvgPicture.asset(
@@ -59,5 +62,6 @@ abstract class AssetsProvider {
 
   static get bottomBar => SvgPicture.asset(
         AssetsPath.bottomBar,
+        fit: BoxFit.fill,
       );
 }
