@@ -1,4 +1,3 @@
-// use rocket::http::uncased::UncasedStr;
 use rocket::{
     serde::json::Json, form::Form,
     http::Status,
@@ -10,18 +9,16 @@ use rocket::http::{
 };
 use rsmq_async::{PooledRsmq, RsmqConnection};
 use tokio::io::AsyncReadExt;
-// use std::{
-//     path, fs
-// };
 use log;
 use s3::Bucket;
 
 use crate::enums::rsmq::RsmqDsQueue;
 use crate::enums::worker::TaskType;
 use crate::models::http::images::ImageInfo;
-// use crate::connections::rsmq;
 use crate::models::http::uploads::{
-    DeleteImageResponse, UploadImage, UploadImageResponse
+    DeleteImageResponse,
+    UploadImage,
+    UploadImageResponse
 };
 use crate::utils::s3::images::get_img;
 use crate::{locks, utils};
@@ -39,8 +36,8 @@ pub fn routes() -> Vec<rocket::Route> {
 async fn upload_image(
     form: Form<UploadImage<'_>>,
     bucket: &rocket::State<Bucket>,
-    pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    rsmq: &rocket::State<PooledRsmq>
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    rsmq_pool: &rocket::State<PooledRsmq>
 ) -> status::Custom<Json<UploadImageResponse>> {
     {
         let filename = match form.file.name() {
@@ -52,8 +49,14 @@ async fn upload_image(
                     Json(UploadImageResponse {
                         is_stored: false,
                         is_accepted: false,
-                        is_ml_processed: Some(false),
-                        tags: Some(form.tags.clone().unwrap_or_default()),
+                        label: form.label.clone(),
+                        tags: form.tags.clone(),
+                        time_of_day: form.time_of_day.clone(),
+                        atmosphere: form.atmosphere.clone(),
+                        season: form.season.clone(),
+                        number_of_people: form.number_of_people.clone(),
+                        main_color: form.main_color.clone(),
+                        landmark: form.landmark.clone(),
                         filename: None,
                         error: Some("Failed to get file name.".into())
                     }
@@ -77,8 +80,14 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: false,
                     is_accepted: false,
-                    is_ml_processed: Some(false),
-                    tags:Some(form.tags.clone().unwrap_or_default()),
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
                     filename: None,
                     error: Some("Failed to get file type.".into())
                 }
@@ -93,8 +102,14 @@ async fn upload_image(
             Json(UploadImageResponse {
                 is_stored: false,  // File is definitely not stored since it's not an image
                 is_accepted: false,
-                is_ml_processed: Some(false),
-                tags: Some(form.tags.clone().unwrap_or_default()),
+                label: form.label.clone(),
+                tags: form.tags.clone(),
+                time_of_day: form.time_of_day.clone(),
+                atmosphere: form.atmosphere.clone(),
+                season: form.season.clone(),
+                number_of_people: form.number_of_people.clone(),
+                main_color: form.main_color.clone(),
+                landmark: form.landmark.clone(),
                 filename: None,
                 error: Some("Unsupported file type.".into())
             }
@@ -141,8 +156,14 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: false,
-                    is_ml_processed: Some(true),  // TODO: Should be pulled from ClickHouse
-                    tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
                     filename: Some(file_name.clone()),
                     error: Some("File already exists.".into())
                 }
@@ -152,7 +173,7 @@ async fn upload_image(
     }
 
     // Check for image lock
-    let is_locked = match locks::image_upload::check(&file_path, &pool)
+    let is_locked = match locks::image_upload::check(&file_path, &redis_pool)
         .await {
             Ok(locked) => locked,
             Err(e) => {
@@ -162,8 +183,14 @@ async fn upload_image(
                     Json(UploadImageResponse {
                         is_stored: false,
                         is_accepted: false,
-                        is_ml_processed: Some(false),
-                        tags: Some(form.tags.clone().unwrap_or_default()),
+                        label: form.label.clone(),
+                        tags: form.tags.clone(),
+                        time_of_day: form.time_of_day.clone(),
+                        atmosphere: form.atmosphere.clone(),
+                        season: form.season.clone(),
+                        number_of_people: form.number_of_people.clone(),
+                        main_color: form.main_color.clone(),
+                        landmark: form.landmark.clone(),
                         filename: None,
                         error: Some(format!("Failed to check image lock: {}", e))
                     }
@@ -177,9 +204,15 @@ async fn upload_image(
             Status::Locked,
             Json(UploadImageResponse {
                 is_stored: false,
-                is_accepted: false,
-                is_ml_processed: Some(false),  // TODO: Should be pulled from ClickHouse
-                tags: Some(form.tags.clone().unwrap_or_default()),
+                is_accepted: false,  // TODO: Should be pulled from ClickHouse
+                label: form.label.clone(),
+                tags: form.tags.clone(),
+                time_of_day: form.time_of_day.clone(),
+                atmosphere: form.atmosphere.clone(),
+                season: form.season.clone(),
+                number_of_people: form.number_of_people.clone(),
+                main_color: form.main_color.clone(),
+                landmark: form.landmark.clone(),
                 filename: None,
                 error: Some("Image is locked.".into())
             }
@@ -187,7 +220,7 @@ async fn upload_image(
     }
 
     // Lock the image
-    match locks::image_upload::lock(&file_path, &pool).await {
+    match locks::image_upload::lock(&file_path, &redis_pool).await {
         Ok(_) => (),
         Err(e) => {
             log::error!("Failed to lock image: {}", e);
@@ -196,8 +229,14 @@ async fn upload_image(
                 Json(UploadImageResponse {
                     is_stored: false,
                     is_accepted: false,
-                    is_ml_processed: Some(false),
-                    tags: Some(form.tags.clone().unwrap_or_default()),
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
                     filename: None,
                     error: Some(format!("Failed to lock image: {}", e))
                 }
@@ -213,18 +252,24 @@ async fn upload_image(
     match bucket.put_object_stream(&mut file_buffer, &file_path).await {
         Ok(_) => {
             log::debug!("Data sent to S3.");
-            locks::image_upload::unlock(&file_path, &pool).await.unwrap();
+            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
         },
         Err(e) => {
             log::error!("Failed to send data to S3: {}", e);
-            locks::image_upload::unlock(&file_path, &pool).await.unwrap();
+            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: false,
-                    is_ml_processed: None,
-                    tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse (or response from ML)
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
                     filename: None,
                     error: Some(format!("Failed to save file: {}", e))
                 }
@@ -232,8 +277,38 @@ async fn upload_image(
         }
     };
 
+    log::info!("Setting image info in Redis...");
+    match utils::redis::images::set_image_info(
+        // Get the object in form and use .to_image_info() to convert it to ImageInfo
+        &form.to_image_info(&file_name),
+        &redis_pool
+    ).await {
+        Ok(_) => (),
+        Err(e) => {
+            log::error!("Failed to set image info in Redis: {}", e);
+            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+            return status::Custom(
+                Status::InternalServerError,
+                Json(UploadImageResponse {
+                    is_stored: true,
+                    is_accepted: true,
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
+                    filename: Some(file_name),
+                    error: Some(format!("Failed to set image info in Redis: {}", e))
+                }
+            ));
+        }
+    }
+
     log::info!("Sending processing task for worker to RSMQ...");
-    let worker_queue_msg_id = match rsmq.inner().clone().send_message(
+    let worker_queue_msg_id = match rsmq_pool.inner().clone().send_message(
         RsmqDsQueue::BackendWorker.as_str(),
         serde_json::to_string(&TaskType::CompressImage {
             filename: file_name.clone()
@@ -243,13 +318,20 @@ async fn upload_image(
         Ok(msg) => msg,
         Err(e) => {
             log::error!("Failed to send message to RSMQ: {}", e);
+            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
                     is_stored: true,
                     is_accepted: true,
-                    is_ml_processed: Some(false),
-                    tags: Some(form.tags.clone().unwrap_or_default()),
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
                     filename: Some(file_name),
                     error: Some(format!("Failed to send message to RSMQ: {}", e))
                 }
@@ -258,13 +340,21 @@ async fn upload_image(
     };
     log::info!("Sent processing task for worker to RSMQ: {:?}", worker_queue_msg_id);
 
+    locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+
     status::Custom(
         Status::Ok,
         Json(UploadImageResponse {
             is_stored: true,
             is_accepted: true,
-            is_ml_processed: None,
-            tags: Some(form.tags.clone().unwrap_or_default()),  // TODO: Should be pulled from ClickHouse (or response from ML)
+            label: form.label.clone(),
+            tags: form.tags.clone(),
+            time_of_day: form.time_of_day.clone(),
+            atmosphere: form.atmosphere.clone(),
+            season: form.season.clone(),
+            number_of_people: form.number_of_people.clone(),
+            main_color: form.main_color.clone(),
+            landmark: form.landmark.clone(),
             filename: Some(file_name),
             error: None
         }
@@ -419,9 +509,14 @@ async fn get_image_full(
                     Json(ImageInfo {
                         filename: file_name.to_string(),
                         s3_presigned_url: None,
-                        label: None,  // TODO: Add field
-                        description: None,  // TODO: Add field
+                        label: None,  // TODO: Add fields!!!!!!
                         tags: None,
+                        time_of_day: None,
+                        atmosphere: None,
+                        season: None,
+                        number_of_people: None,
+                        main_color: None,
+                        landmark: None,
                         error: Some("Failed to get presigned URL.".into())
                     }
                 ));
@@ -433,9 +528,14 @@ async fn get_image_full(
         Json(ImageInfo {
             filename: file_name.to_string(),
             s3_presigned_url: Some(s3_presigned_url),
-            label: None,  // TODO: Add field
-            description: None,  // TODO: Add field
+            label: None,  // TODO: Add fields!!!!!!
             tags: None,
+            time_of_day: None,
+            atmosphere: None,
+            season: None,
+            number_of_people: None,
+            main_color: None,
+            landmark: None,
             error: None
         }
     ))
