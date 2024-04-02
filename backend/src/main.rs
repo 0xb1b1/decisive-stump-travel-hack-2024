@@ -3,7 +3,7 @@ extern crate rocket;
 
 use env_logger;
 use rocket::serde::json::Json;
-use s3::Bucket;
+// use s3::Bucket;
 
 mod connections;
 mod models;

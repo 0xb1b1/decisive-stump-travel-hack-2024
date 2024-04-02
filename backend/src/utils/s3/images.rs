@@ -1,8 +1,5 @@
 use log;
-use s3::{
-    Bucket,
-    request::ResponseData
-};
+use s3::{request::ResponseData, Bucket};
 
 // Read file and return its object if exists
 pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
@@ -15,6 +12,37 @@ pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
         },
         Err(e) => {
             log::error!("Failed to get file: {}", e);
+            None
+        }
+    }
+}
+
+// pub async fn get_image_list(bucket: &Bucket) -> Option<Vec<String>> {  // TODO: Fix this returns only `images`
+//     // List everything in the images bucket
+//     match bucket.list("/images".into(), Some("/".into())).await {
+//         Ok(list) => {
+//             let mut files = Vec::new();
+//             for obj in list.into_iter() {
+//                 files.push(obj.name);
+//             }
+//             Some(files)
+//         },
+//         Err(e) => {
+//             log::error!("Failed to get file list: {}", e);
+//             None
+//         }
+//     }
+// }
+
+pub async fn get_presigned_url(file_path: &str, bucket: &Bucket) -> Option<String> {
+    // WARNING: This function will result in a presigned URL even if the file doesn't exist
+    match bucket.presign_get(file_path, 3600, None) {
+        Ok(url) => {
+            log::info!("Presigned URL generated: {}", url);
+            Some(url)
+        },
+        Err(e) => {
+            log::error!("Failed to generate presigned URL: {}", e);
             None
         }
     }
