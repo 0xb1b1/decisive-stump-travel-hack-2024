@@ -1,0 +1,71 @@
+---
+name: "ds-travel-hack-2024"
+
+networks:
+  default:
+    driver: bridge
+    attachable: false
+
+services:
+  haproxy:
+    image: "haproxy:2.9"
+    restart: "on-failure"
+    deploy:
+      replicas: 1
+    # sysctls:
+    #   - "net.ipv4.ip_unprivileged_port_start=0"
+    volumes:
+      - "./docker/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
+    ports:
+      - "8580:8080"  # Backend service: http://localhost:8580/
+      - "8404:8404"  # HAProxy stats: http://localhost:8404/
+    networks:
+      - default
+
+  backend:
+    # This microservice is designed to handle user requests
+    # and forward them to either a worker or an ML worker.
+    # Its port (8080 by default and configurable via ROCKET_PORT)
+    # should be exposed to the internet.
+    image: "0xb1b1/ds-backend-travel-hack-2024:latest"
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    restart: "on-failure"
+    deploy:
+      mode: "replicated"
+      replicas: 2
+    env_file:
+      - .env
+    environment:
+      RUST_LOG: "info"
+      ROCKET_ADDRESS: "0.0.0.0"
+      # ROCKET_PORT: 8000
+    # ports:  # Managed by HAProxy
+    #   - "8000:8000"
+    networks:
+      - default
+
+  worker:
+    # This microservice is designed to process tasks from the backend.
+    # It could (easily) be further separated into multiple microservices
+    # that handle only specific tasks.
+    # However, for simplicity of deployment by the hachathon organizers,
+    # we will keep it as a single service.
+    image: "0xb1b1/ds-worker-travel-hack-2024:latest"
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    restart: "on-failure"
+    deploy:
+      mode: "replicated"
+      replicas: 2
+    env_file:
+      - .env
+    environment:
+      RUST_LOG: "info"
+      ROCKET_ADDRESS: "0.0.0.0"
+    networks:
+      - default
+
+# TODO: Add ML, DBs, ...
