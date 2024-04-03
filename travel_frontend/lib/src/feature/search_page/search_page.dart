@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dropdown_search_block.dart';
+
 import 'package:travel_frontend/src/feature/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
 import 'package:travel_frontend/src/widgets/image_gallery.dart';
-import 'package:travel_frontend/src/feature/search_page/widgets/search_block/search_block.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/search_block/widgets/search_block.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
-import '../../widgets/full_app_bar.dart';
+import '../../widgets/painters/full_app_bar.dart';
 
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});
@@ -32,8 +34,9 @@ class SearchPage extends ConsumerWidget {
                 pinned: false,
                 expandedHeight: 324.0,
                 flexibleSpace: FlexibleSpaceBar(
+                  // background: AssetsProvider.fullAppBar,
                   background: CustomPaint(
-                    size: const Size(1440, 324),
+                    size: const Size(double.infinity, 324),
                     painter: Painter(),
                   ),
                 ),
@@ -48,7 +51,7 @@ class SearchPage extends ConsumerWidget {
                   SliverList(
                     delegate: SliverChildListDelegate(
                       [
-                        SearchBlock(
+                        DropdownSearchBlock(
                           onFiltersTap: vm.changeGallery,
                           onSearchPhoto: vm.pickImage,
                         ),
@@ -63,8 +66,20 @@ class SearchPage extends ConsumerWidget {
                       isHoverEnabled: true,
                       onImageTap: vm.onImageTap,
                     ),
-                    loading: () => const CircularProgressIndicator(),
-                    error: () => const CircularProgressIndicator(),
+                    loading: () => const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 300,
+                        width: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                    error: () => const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 300,
+                        width: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
                   ),
                   const SliverToBoxAdapter(
                     child: SizedBox(height: 56),

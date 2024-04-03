@@ -28,28 +28,29 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   SearchViewState get errorState => const SearchViewState.error();
 
   @override
-  SearchViewState get initState => SearchViewState.data(
-        images: List.generate(
-          23,
-          (index) => GalleryImage.mock(),
-        ),
-      );
+  SearchViewState get initState => const SearchViewState.loading();
 
   @override
-  void init() {
+  Future<void> init() async {
     super.init();
+    try {
+      final gallery = await _searchRepository.getGallery();
+      emit(SearchViewState.data(images: gallery.images));
+    } on Object catch (e, _) {
+      emit(errorState);
+    }
   }
 
   void changeGallery() {
-    final currentState = state;
-    if (currentState is! SearchViewStateData) {
-      return;
-    }
-
-    final targetState = currentState.copyWith(
-      images: [GalleryImage.mock()],
-    );
-    emit(targetState);
+    // final currentState = state;
+    // if (currentState is! SearchViewStateData) {
+    //   return;
+    // }
+    //
+    // final targetState = currentState.copyWith(
+    //   images: [GalleryImage.mock()],
+    // );
+    // emit(targetState);
   }
 
   void onImageTap(String uuid) =>

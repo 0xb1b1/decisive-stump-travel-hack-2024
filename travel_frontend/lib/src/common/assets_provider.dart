@@ -9,10 +9,10 @@ abstract class AssetsPath {
   static const cross = 'assets/icons/cross.svg';
   static const photo = 'assets/icons/photo.svg';
   static const search = 'assets/icons/search.svg';
-  static const share = 'assets/icons/share.svg';
+  static const similar = 'assets/icons/similar.svg';
 
   static const appBar = 'assets/app_bar/app_bar.svg';
-  static const fullAppBar = 'assets/app_bar/test2.svg';
+  static const fullAppBar = 'assets/app_bar/full_app_bar.svg';
   static const bottomBar = 'assets/app_bar/bottom_bar.svg';
 }
 
@@ -40,16 +40,10 @@ abstract class AssetsProvider {
 
   static get search => SvgPicture.asset(
         AssetsPath.search,
-        height: 24,
-        width: 24,
-        color: AppPalette.black,
       );
 
-  static get share => SvgPicture.asset(
-        AssetsPath.search,
-        height: 16,
-        width: 16,
-        color: AppPalette.white,
+  static get similar => SvgPicture.asset(
+        AssetsPath.similar,
       );
 
   static get appBar => SvgPicture.asset(
@@ -58,6 +52,7 @@ abstract class AssetsProvider {
 
   static get fullAppBar => SvgPicture.asset(
         AssetsPath.fullAppBar,
+    color: Colors.white,
       );
 
   static get bottomBar => SvgPicture.asset(

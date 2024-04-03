@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:travel_frontend/src/api/models/gallery_image.dart';
+import 'package:travel_frontend/src/api/models/gallery.dart';
 
 abstract class ApiPath {
   static const uploadImage = 'http://127.0.0.1:8000/img/upload';
@@ -13,11 +13,18 @@ class AppApi {
 
   const AppApi(this._dio);
 
-  Future<GalleryImage> getGallery() async {
+  Future<Gallery> getGallery() async {
     const path = ApiPath.getGallery;
+    final queryParams = {
+      'amount': 20,
+      // if (token != null) 'token': token,
+    };
 
-    final response = await _dio.get(path);
-    return response.data;
+    final response = await _dio.get(
+      path,
+      queryParameters: queryParams,
+    );
+    return Gallery.fromJson(response.data);
   }
 
   Future<bool> uploadImage(File file) async {

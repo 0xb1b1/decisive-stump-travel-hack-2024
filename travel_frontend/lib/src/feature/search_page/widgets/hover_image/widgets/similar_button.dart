@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
 
@@ -24,12 +23,16 @@ class _SimilarButtonState extends State<SimilarButton> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AssetsProvider.share,
+          SizedBox(
+            height: 16,
+            width: 16,
+            child: AssetsProvider.similar,
+          ),
           const SizedBox(
             width: 8,
           ),
           const Text(
-            'Похожие',
+            'Похожeе',
             style: AppTypography.hoverDescr,
           ),
         ],

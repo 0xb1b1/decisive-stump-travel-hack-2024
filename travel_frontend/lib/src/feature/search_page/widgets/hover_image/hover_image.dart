@@ -9,11 +9,13 @@ import 'widgets/similar_button.dart';
 class HoverImage extends StatefulWidget {
   final String title;
   final String description;
+  final String url;
 
   const HoverImage({
     super.key,
     required this.title,
     required this.description,
+    required this.url,
   });
 
   @override
@@ -33,8 +35,8 @@ class _HoverImageState extends State<HoverImage> {
         children: [
           Container(
             decoration: BoxDecoration(
-              image: const DecorationImage(
-                image: AssetImage('assets/test.jpg'),
+              image: DecorationImage(
+                image: NetworkImage(widget.url),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),

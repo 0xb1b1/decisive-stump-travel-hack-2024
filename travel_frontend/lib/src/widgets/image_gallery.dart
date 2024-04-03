@@ -34,6 +34,7 @@ class ImageGallery extends StatelessWidget {
               ? HoverImage(
                   title: images[index].label,
                   description: images[index].tags.join(', '),
+                  url: images[index].s3PresignedUrl,
                 )
               : Container(
                   decoration: BoxDecoration(
