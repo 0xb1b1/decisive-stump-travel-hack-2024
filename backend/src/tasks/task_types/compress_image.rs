@@ -206,7 +206,20 @@ pub async fn compress_normal(
     };
 
     // Send upload task for ML here since it only uses the comp bucket
-    send_ml_upload_task(&filename, rsmq_pool).await?;
+    match send_ml_upload_task(&filename, rsmq_pool).await {
+        Ok(_) => {
+            log::info!("Sent ML Upload task for file {}", &filename);
+        },
+        Err(err) => {
+            log::error!("Failed to send upload task to ML; sending to error queue: {}", err);
+            let _ = send_to_error_queue(
+                &TaskType::CompressImage {
+                    filename: filename.to_string(),
+                },
+                rsmq_pool,
+            ).await;
+        }
+    }
 
     if let Some(params) = compression_params_thumb {
         thumb_result =

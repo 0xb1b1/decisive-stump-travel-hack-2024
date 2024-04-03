@@ -40,6 +40,7 @@ services:
     environment:
       RUST_LOG: "info"
       ROCKET_ADDRESS: "0.0.0.0"
+      ROCKET_LIMITS: '{form="64 MiB","data-form"="64 MiB",file="64 MiB",json="2 MiB",msgpack="64 MiB"}'
       # ROCKET_PORT: 8000
     # ports:  # Managed by HAProxy
     #   - "8000:8000"
@@ -64,7 +65,6 @@ services:
       - .env
     environment:
       RUST_LOG: "info"
-      ROCKET_ADDRESS: "0.0.0.0"
     networks:
       - default
 

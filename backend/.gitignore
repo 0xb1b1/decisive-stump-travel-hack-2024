@@ -1,6 +1,3 @@
-# Temporary files used for testing
-uploads/
-
 # Private files
 .env
 .env.remote

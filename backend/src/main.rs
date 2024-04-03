@@ -8,24 +8,6 @@ use rocket::serde::json::Json;
 
 use ds_travel_hack_2024::connections;
 
-// fn main() {
-//     if env::var("RUST_LOG").is_err() {
-//         env::set_var("RUST_LOG", "debug");
-//         env_logger::init();
-//         log::warn!("RUST_LOG env var unset.")
-//     } else {
-//         env_logger::init();
-//     }
-
-//     let click: clickhouse::Client = match connections::click::get_client() {
-//         Ok(conn) => conn,
-//         Err(e) => {
-//             log::error!("{}", format!("Failed to create connection to ClickHouse: {}", e));
-//             panic!("Unexpected error during ClickHouse connection.")
-//         }
-//     };
-// }
-
 #[get("/")]
 async fn get_root() -> Json<String> {
     return Json(String::from("Ok."));
