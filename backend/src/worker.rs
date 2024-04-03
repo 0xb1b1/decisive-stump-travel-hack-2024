@@ -150,13 +150,14 @@ async fn main() {
                             Ok(gallery) => {
                                 let mut gallery_full: Vec<ImageInfoGallery> = Vec::new();
                                 for image in gallery.images {
-                                    let presigned_url = ds_travel_hack_2024::utils::s3::images::get_presigned_url(
-                                        &image.filename,
-                                        &bucket_images_thumbs,
-                                        21_600, // 6 hours
-                                    )
-                                    .await
-                                    .unwrap();
+                                    let presigned_url =
+                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                            &image.filename,
+                                            &bucket_images_thumbs,
+                                            21_600, // 6 hours
+                                        )
+                                        .await
+                                        .unwrap();
                                     gallery_full.push(ImageInfoGallery {
                                         filename: image.filename,
                                         s3_presigned_url: Some(presigned_url),

@@ -3,9 +3,9 @@ use log;
 use rocket::{http::Status, response::status, serde::json::Json};
 use s3::Bucket;
 
-use ds_travel_hack_2024::utils::s3::images::get_img;
 use ds_travel_hack_2024::locks::{self, ml_analyze::MlQueryType};
 use ds_travel_hack_2024::models::http::ml_user::{MLAnalyzeImage, MLAnalyzeImageResponse};
+use ds_travel_hack_2024::utils::s3::images::get_img;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![ml_analyze_image]

@@ -3,8 +3,8 @@ use image_compressor::{compressor::Compressor, Factor};
 use s3::request::ResponseData;
 use s3::Bucket;
 
-use crate::tasks::utils::files::tmp::{get_file_name_no_ext, remove_tmp_file};
 use crate::models::http::images::ImageInfo;
+use crate::tasks::utils::files::tmp::{get_file_name_no_ext, remove_tmp_file};
 
 pub async fn compress_image(
     file: &ResponseData,

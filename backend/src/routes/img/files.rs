@@ -3,16 +3,16 @@ use rocket::http::{ContentType, MediaType};
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
 use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
-use tokio::io::AsyncReadExt;  // Required for reading file contents (e.g. .read_to_end())
+use tokio::io::AsyncReadExt; // Required for reading file contents (e.g. .read_to_end())
 
-use ds_travel_hack_2024::utils::s3::images::get_img;
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+use ds_travel_hack_2024::locks;
 use ds_travel_hack_2024::models::http::images::ImageInfo;
 use ds_travel_hack_2024::models::http::uploads::{
     DeleteImageResponse, UploadImage, UploadImageResponse,
 };
-use ds_travel_hack_2024::locks;
 use ds_travel_hack_2024::utils;
+use ds_travel_hack_2024::utils::s3::images::get_img;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
