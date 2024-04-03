@@ -1,7 +1,8 @@
 use rsmq_async::PooledRsmq;
 use s3::Bucket;
 
-use crate::{enums::worker::TaskType, tasks::task_types::utils::queues::send_to_error_queue};
+use crate::tasks::task_types::utils::queues::send_to_error_queue;
+use crate::enums::worker::TaskType;
 
 pub async fn delete_from_all_buckets(
     filename: &str,

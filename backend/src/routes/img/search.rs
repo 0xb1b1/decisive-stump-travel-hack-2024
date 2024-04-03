@@ -2,7 +2,7 @@ use log;
 use rocket::{http::Status, response::status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 
-use crate::models::http::images::ImageInfo;
+use ds_travel_hack_2024::models::http::images::ImageInfo;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![search_image_by_text]
@@ -25,7 +25,6 @@ pub struct SearchImageResponse {
 #[post("/search/text", data = "<text>")]
 pub async fn search_image_by_text(
     text: Json<SearchImageByText>,
-    click: &rocket::State<klickhouse::Client>,
 ) -> status::Custom<Json<SearchImageResponse>> {
     log::debug!("Search request received: {:?}", text);
 

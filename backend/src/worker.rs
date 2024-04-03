@@ -3,18 +3,10 @@ use redis::RedisError;
 use rsmq_async::RsmqConnection;
 use std::time::Duration;
 
-mod connections;
-mod enums;
-mod locks;
-mod models;
-mod tasks;
-mod utils;
-
-use crate::connections::urls::get_urls;
-use crate::enums::rsmq::RsmqDsQueue;
-use crate::enums::worker::TaskType;
-use crate::models::http::images::ImageInfoGallery;
-use crate::models::http::main_page::RedisGalleryStore;
+use ds_travel_hack_2024::connections::{self, urls::get_urls};
+use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+use ds_travel_hack_2024::locks;
+use ds_travel_hack_2024::models::http::{images::ImageInfoGallery, main_page::RedisGalleryStore};
 
 #[tokio::main]
 async fn main() {
@@ -109,7 +101,7 @@ async fn main() {
                 }
             }
 
-            let mut ml_generated_gallery: Option<String> = match redis::cmd("GET")
+            let ml_generated_gallery: Option<String> = match redis::cmd("GET")
                 .arg("images:collections:main")
                 .query_async(&mut *redis_pool.get().await.unwrap())
                 .await
@@ -158,7 +150,7 @@ async fn main() {
                             Ok(gallery) => {
                                 let mut gallery_full: Vec<ImageInfoGallery> = Vec::new();
                                 for image in gallery.images {
-                                    let presigned_url = utils::s3::images::get_presigned_url(
+                                    let presigned_url = ds_travel_hack_2024::utils::s3::images::get_presigned_url(
                                         &image.filename,
                                         &bucket_images_thumbs,
                                         21_600, // 6 hours
@@ -247,7 +239,7 @@ async fn main() {
                 match task {
                     TaskType::DeleteImage { filename } => {
                         log::info!("Received DeleteImage task: {}", filename);
-                        match tasks::task_types::delete_image::delete_from_all_buckets(
+                        match ds_travel_hack_2024::tasks::task_types::delete_image::delete_from_all_buckets(
                             &filename,
                             &bucket_images,
                             &bucket_images_compressed,
@@ -269,12 +261,11 @@ async fn main() {
                     TaskType::CompressImage { filename } => {
                         log::info!("Received CompressImage task: {}", filename);
 
-                        match tasks::task_types::compress_image::compress_normal(
+                        match ds_travel_hack_2024::tasks::task_types::compress_image::compress_normal(
                             &filename,
                             &bucket_images,
                             &bucket_images_compressed,
                             &bucket_images_thumbs,
-                            &redis_pool,
                             &mut rsmq_pool,
                         )
                         .await

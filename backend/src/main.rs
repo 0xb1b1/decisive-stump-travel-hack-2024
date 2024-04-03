@@ -1,16 +1,12 @@
 #[macro_use]
 extern crate rocket;
 
+mod routes;
+
 use env_logger;
 use rocket::serde::json::Json;
-// use s3::Bucket;
 
-mod connections;
-mod enums;
-mod locks;
-mod models;
-mod routes;
-mod utils;
+use ds_travel_hack_2024::connections;
 
 // fn main() {
 //     if env::var("RUST_LOG").is_err() {
@@ -49,7 +45,9 @@ async fn rocket() -> _ {
     log::info!("Created RSMQ pool.");
 
     log::info!("Connecting to Minio...");
-    let bucket = connections::s3::get_bucket(None).await.unwrap();
+    let bucket = ds_travel_hack_2024::connections::s3::get_bucket(None)
+        .await
+        .unwrap();
     log::info!("Connected to Minio.");
 
     log::info!("Connecting to ClickHouse...");

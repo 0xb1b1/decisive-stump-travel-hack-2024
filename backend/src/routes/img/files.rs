@@ -3,14 +3,16 @@ use rocket::http::{ContentType, MediaType};
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
 use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
-use tokio::io::AsyncReadExt;
+use tokio::io::AsyncReadExt;  // Required for reading file contents (e.g. .read_to_end())
 
-use crate::enums::rsmq::RsmqDsQueue;
-use crate::enums::worker::TaskType;
-use crate::models::http::images::ImageInfo;
-use crate::models::http::uploads::{DeleteImageResponse, UploadImage, UploadImageResponse};
-use crate::utils::s3::images::get_img;
-use crate::{locks, utils};
+use ds_travel_hack_2024::utils::s3::images::get_img;
+use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+use ds_travel_hack_2024::models::http::images::ImageInfo;
+use ds_travel_hack_2024::models::http::uploads::{
+    DeleteImageResponse, UploadImage, UploadImageResponse,
+};
+use ds_travel_hack_2024::locks;
+use ds_travel_hack_2024::utils;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
@@ -115,7 +117,7 @@ async fn upload_image(
     let file_path: String;
     {
         let media_type: &MediaType = file_type.media_type();
-        let file_hash = crate::utils::hash::hash_file(&contents);
+        let file_hash = ds_travel_hack_2024::utils::hash::hash_file(&contents);
 
         let file_ext;
         if media_type.sub() == "jpeg" {

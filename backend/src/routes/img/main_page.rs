@@ -14,10 +14,9 @@ use s3::Bucket;
 
 // use crate::enums::rsmq::RsmqDsQueue;
 // use crate::enums::worker::TaskType;
-use crate::models::http::images::{ImageInfo, ImageInfoGallery};
-use crate::models::http::main_page::{GalleryResponse, RedisGalleryStore};
+use ds_travel_hack_2024::models::http::main_page::{GalleryResponse, RedisGalleryStore};
 // use crate::utils::s3::images::get_img;
-use crate::utils;
+use ds_travel_hack_2024::utils;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![get_gallery,]
@@ -27,25 +26,10 @@ pub fn routes() -> Vec<rocket::Route> {
 async fn get_gallery(
     token: Option<String>,
     limit: Option<u32>,
-    bucket: &rocket::State<Bucket>, // TODO: Remove this after moving parser to worker?
+    _bucket: &rocket::State<Bucket>, // TODO: Remove this after moving parser to worker?
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
 ) -> status::Custom<Json<GalleryResponse>> {
     log::debug!("Gallery request received ({:?}): limit={:?}", token, limit);
-
-    // Get `images::collections::main` key value from redis_pool
-    let mut conn = match redis_pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            log::error!("Failed to get Redis connection: {}", e);
-            return status::Custom(
-                Status::InternalServerError,
-                Json(GalleryResponse {
-                    images: vec![],
-                    error: Some("Failed to get Redis connection.".to_string()),
-                }),
-            );
-        }
-    };
 
     // Get images:collections:main:full from redis
     let gallery: RedisGalleryStore =

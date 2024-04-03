@@ -1,6 +1,7 @@
-use crate::models::http::main_page::RedisGalleryStore;
 use bb8_redis;
 use redis;
+
+use crate::models::http::main_page::RedisGalleryStore;
 
 pub async fn get_main_gallery(
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,

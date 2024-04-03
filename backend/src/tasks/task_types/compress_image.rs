@@ -1,12 +1,12 @@
-use bb8::Pool;
-use bb8_redis::RedisConnectionManager;
+// use bb8::Pool;
+// use bb8_redis::RedisConnectionManager;
 use rocket::serde::json;
 use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
 use serde::Serialize;
 
-use crate::enums::rsmq::RsmqDsQueue;
-use crate::enums::worker::TaskType;
+use crate::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+
 use crate::tasks::task_types::utils::queues::send_to_error_queue;
 
 mod job;
@@ -88,7 +88,6 @@ pub async fn compress_normal(
     bucket_images: &Bucket,
     bucket_images_compressed: &Bucket,
     bucket_images_thumbs: &Bucket,
-    redis_pool: &Pool<RedisConnectionManager>,
     rsmq_pool: &mut PooledRsmq,
 ) -> Result<(), String> {
     log::info!("Downloading image: {}", filename);

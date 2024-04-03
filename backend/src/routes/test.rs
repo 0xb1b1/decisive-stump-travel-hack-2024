@@ -17,7 +17,7 @@ use redis;
 use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
 // use crate::enums::rsmq::RsmqDsQueue;
-use crate::utils;
+use ds_travel_hack_2024::utils;
 
 // use crate::models::uploads;
 
@@ -177,7 +177,7 @@ async fn test_s3(
     let file_path: String;
     {
         let media_type: &MediaType = file_type.media_type();
-        let file_hash = crate::utils::hash::hash_file(&file_buffer);
+        let file_hash = ds_travel_hack_2024::utils::hash::hash_file(&file_buffer);
 
         let file_ext;
         if media_type.sub() == "jpeg" {

@@ -1,6 +1,7 @@
-use crate::models::http::images::ImageInfo;
 use bb8_redis;
 use redis;
+
+use crate::models::http::images::ImageInfo;
 
 pub async fn set_image_info(
     image_info: &ImageInfo,

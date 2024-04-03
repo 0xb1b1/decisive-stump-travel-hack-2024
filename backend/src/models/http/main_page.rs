@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::images::{ImageInfo, ImageInfoGallery};
+use super::images::ImageInfoGallery;
 
 #[derive(Serialize, Debug)]
 pub struct GalleryResponse {
