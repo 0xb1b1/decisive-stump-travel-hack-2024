@@ -39,7 +39,6 @@ spec:
             cpu: "500m"
 
 ---
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:

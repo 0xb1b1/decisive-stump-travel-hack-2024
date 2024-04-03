@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  test:
+    desc: A test task.
+    cmds:
+      - echo "Running test task."
+  build:
+    desc: Build all backend binaries.
+    cmds:
+      - echo "Building backend binaries..."
+      - cargo build --release
