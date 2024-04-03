@@ -10,7 +10,6 @@ use rocket::{
 // use rsmq_async::{PooledRsmq, RsmqConnection};
 // use tokio::io::AsyncReadExt;
 use log;
-use redis::RedisError;
 use s3::Bucket;
 
 // use crate::enums::rsmq::RsmqDsQueue;

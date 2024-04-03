@@ -14,7 +14,7 @@ use crate::connections::urls::get_urls;
 use crate::enums::rsmq::RsmqDsQueue;
 use crate::enums::worker::TaskType;
 use crate::models::http::images::ImageInfoGallery;
-use crate::models::http::main_page::{GalleryResponse, RedisGalleryStore};
+use crate::models::http::main_page::RedisGalleryStore;
 
 #[tokio::main]
 async fn main() {

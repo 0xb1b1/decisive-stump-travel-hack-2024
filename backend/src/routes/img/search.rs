@@ -1,15 +1,7 @@
-use async_std::task;
 use log;
-use rocket::{http::uri::Query, http::Status, response::status, serde::json::Json};
-use s3::Bucket;
+use rocket::{http::Status, response::status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 
-use crate::routes::img::search;
-use crate::utils::s3::images::get_img;
-// use crate::models::http::images::{
-//     SearchImageByText,
-//     SearchImageResponse
-// };
 use crate::models::http::images::ImageInfo;
 
 pub fn routes() -> Vec<rocket::Route> {

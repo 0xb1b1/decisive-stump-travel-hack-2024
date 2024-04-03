@@ -7,7 +7,6 @@ use serde::Serialize;
 
 use crate::enums::rsmq::RsmqDsQueue;
 use crate::enums::worker::TaskType;
-use crate::models::http::images::ImageInfo;
 use crate::tasks::task_types::utils::queues::send_to_error_queue;
 
 mod job;
