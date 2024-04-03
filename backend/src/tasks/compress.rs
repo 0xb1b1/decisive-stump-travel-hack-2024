@@ -138,11 +138,13 @@ pub async fn compress_image(
                 label: None,
                 tags: None,
                 time_of_day: None,
+                weather: None,
                 atmosphere: None,
                 season: None,
                 number_of_people: None,
-                main_color: None,
+                colors: None,
                 landmark: None,
+                grayscale: None,
                 error: None,
             });
         }
