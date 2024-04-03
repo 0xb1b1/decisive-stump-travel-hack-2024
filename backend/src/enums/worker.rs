@@ -6,6 +6,3 @@ pub enum TaskType {
     CompressImage { filename: String },
     DeleteImage { filename: String },
 }
-// impl TaskType {
-
-// }

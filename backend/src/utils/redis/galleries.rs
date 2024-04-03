@@ -42,3 +42,91 @@ pub async fn get_main_gallery(
 
     Ok(gallery)
 }
+
+pub async fn get_gallery_by_token(
+    token: &str,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+) -> Option<RedisGalleryStore> {
+    let mut conn = match redis_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get connection from Redis pool: {}", e);
+            return None;
+        }
+    };
+
+    // Get key
+    let gallery: RedisGalleryStore = match redis::cmd("GET")
+        .arg(format!("images:collections:main:full:by_token:{}", token))
+        .query_async::<_, Option<String>>(&mut *conn)
+        .await
+    {
+        Ok(Some(gallery)) => {
+            log::info!(
+                "Gallery found: images:collections:main:full:by_token:{}",
+                token
+            );
+            match serde_json::from_str(&gallery) {
+                Ok(gallery) => gallery,
+                Err(e) => {
+                    log::error!("Failed to parse gallery: {}", e);
+                    return None;
+                }
+            }
+        }
+        Ok(None) => {
+            log::info!(
+                "Gallery not found: images:collections:main:full:by_token:{}",
+                token
+            );
+            RedisGalleryStore { images: vec![] }
+        }
+        Err(e) => {
+            log::error!("Failed to get gallery: {}", e);
+            return None;
+        }
+    };
+
+    Some(gallery)
+}
+
+pub async fn set_gallery_by_token(
+    token: &str,
+    gallery: &RedisGalleryStore,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+) -> Result<(), String> {
+    let mut conn = match redis_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get connection from Redis pool: {}", e);
+            return Err(format!("Failed to get connection from Redis pool: {}", e).into());
+        }
+    };
+
+    // Convert GalleryResponse to RedisGalleryStore
+    let gallery = RedisGalleryStore {
+        images: gallery.images.clone(),
+    };
+
+    // Set key
+    let _: () = match redis::cmd("SET")
+        .arg(format!("images:collections:main:full:by_token:{}", token))
+        .arg(serde_json::to_string(&gallery).unwrap())
+        .arg("EX")
+        .arg(60 * 120) // 2 hours
+        .query_async::<_, ()>(&mut *conn)
+        .await
+    {
+        Ok(_) => {
+            log::info!(
+                "Gallery set: images:collections:main:full:by_token:{}",
+                token
+            );
+            return Ok(());
+        }
+        Err(e) => {
+            log::error!("Failed to set gallery: {}", e);
+            return Err(format!("Failed to set gallery: {}", e).into());
+        }
+    };
+}

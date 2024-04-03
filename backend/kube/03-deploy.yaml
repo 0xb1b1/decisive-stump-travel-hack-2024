@@ -7,7 +7,7 @@ metadata:
   labels:
     app: backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: backend
@@ -47,7 +47,7 @@ metadata:
   labels:
     app: worker
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: worker
@@ -75,5 +75,5 @@ spec:
             memory: "128Mi"
             cpu: "300m"
           limits:
-            memory: "512Mi"
+            memory: "800Mi"
             cpu: "600m"

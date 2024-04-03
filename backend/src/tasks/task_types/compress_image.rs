@@ -120,41 +120,41 @@ pub async fn compress_normal(
     let compression_params_comp: Option<job::CompressionParams>;
     let compression_params_thumb: Option<job::CompressionParams>;
     if original_file_size < 2_000_000 {
-        log::info!("File is already small enough, copying to comp bucket.");
+        log::info!("File is already small enough, copying to comp bucket (lt 2MB).");
         compression_params_comp = None;
         compression_params_thumb = Some(job::CompressionParams {
             quality: 60.,
-            size_ratio: 0.9,
+            size_ratio: 0.7,
         })
     } else if original_file_size < 5_000_000 {
-        log::info!("File is not small enough for comp bucket, compressing it.");
+        log::info!("File is not small enough for comp bucket, compressing it (lt 5MB).");
         compression_params_comp = Some(job::CompressionParams {
             quality: 90.,
             size_ratio: 0.9,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 60.,
-            size_ratio: 0.7,
+            quality: 50.,
+            size_ratio: 0.5,
         });
     } else if original_file_size < 15_000_000 {
-        log::info!("File is not small enough for comp bucket, compressing it.");
+        log::info!("File is not small enough for comp bucket, compressing it (lt 15MB).");
         compression_params_comp = Some(job::CompressionParams {
             quality: 85.,
             size_ratio: 0.85,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 60.,
-            size_ratio: 0.6,
+            quality: 50.,
+            size_ratio: 0.4,
         });
     } else {
-        log::info!("File is not small enough for comp bucket, compressing it.");
+        log::info!("File is not small enough for comp bucket, compressing it (gt 15MB).");
         compression_params_comp = Some(job::CompressionParams {
             quality: 80.,
             size_ratio: 0.8,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 60.,
-            size_ratio: 0.6,
+            quality: 50.,
+            size_ratio: 0.3,
         });
     }
 
@@ -209,15 +209,19 @@ pub async fn compress_normal(
     match send_ml_upload_task(&filename, rsmq_pool).await {
         Ok(_) => {
             log::info!("Sent ML Upload task for file {}", &filename);
-        },
+        }
         Err(err) => {
-            log::error!("Failed to send upload task to ML; sending to error queue: {}", err);
+            log::error!(
+                "Failed to send upload task to ML; sending to error queue: {}",
+                err
+            );
             let _ = send_to_error_queue(
                 &TaskType::CompressImage {
                     filename: filename.to_string(),
                 },
                 rsmq_pool,
-            ).await;
+            )
+            .await;
         }
     }
 

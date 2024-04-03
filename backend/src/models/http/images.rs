@@ -15,7 +15,7 @@ pub struct ImageInfo {
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageInfoGallery {
     pub filename: String,
     pub s3_presigned_url: Option<String>,

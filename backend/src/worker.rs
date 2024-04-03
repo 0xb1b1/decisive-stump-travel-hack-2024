@@ -35,7 +35,7 @@ async fn main() {
         .unwrap();
     log::info!("Connected to Minio.");
 
-    log::info!("Gettings DS URLs from environment...");
+    log::info!("Getting DS URLs from environment...");
     let ds_urls = get_urls();
     log::info!("DS URLs: {:?}", ds_urls);
 
@@ -46,6 +46,10 @@ async fn main() {
 
         // Set queue name to check
         let scheduled_queue: Option<RsmqDsQueue>;
+        let requeue_killed_jobs: bool; // Skips queue processing.
+                                       // ^ These are set as Redis keys before the worker starts processing a message.
+                                       // ^ If the worker is killed, the keys remain set for them to be processed by another worker.
+                                       // ^ These differ from failed jobs in that they are not requeued since the worker is killed.
         let check_main_gallery: bool; // Skips queue processing
 
         log::debug!("Worker queue counter: {}", worker_queue_counter);
@@ -56,10 +60,12 @@ async fn main() {
                         log::debug!("Main gallery is locked. Processing BackendWorker queue.");
                         scheduled_queue = Some(RsmqDsQueue::BackendWorker);
                         check_main_gallery = false;
+                        requeue_killed_jobs = false;
                     } else {
                         log::debug!("Main gallery is not locked. Checking main gallery.");
                         scheduled_queue = None;
                         check_main_gallery = true;
+                        requeue_killed_jobs = false;
                     }
                 }
                 Err(err) => {
@@ -69,21 +75,110 @@ async fn main() {
                     );
                     scheduled_queue = Some(RsmqDsQueue::BackendWorker);
                     check_main_gallery = false;
+                    requeue_killed_jobs = false;
                 }
             };
         } else if worker_queue_counter % 4 == 0 {
             log::debug!("Checking BackendWorkerFailed queue.");
             scheduled_queue = Some(RsmqDsQueue::BackendWorkerFailed);
             check_main_gallery = false;
+            requeue_killed_jobs = false;
+        } else if worker_queue_counter % 17 == 0 {
+            log::debug!("Processing keys set by failed workers.");
+            scheduled_queue = None;
+            check_main_gallery = false;
+            requeue_killed_jobs = true;
         } else {
             log::debug!("Processing BackendWorker queue.");
             scheduled_queue = Some(RsmqDsQueue::BackendWorker);
             check_main_gallery = false;
+            requeue_killed_jobs = false;
         }
 
         // Reset counter on 253
         if worker_queue_counter >= 253 {
             worker_queue_counter = 0;
+        }
+
+        if requeue_killed_jobs {
+            // TODO: Test this block
+            log::debug!("Processing keys set by failed workers...");
+            let keys: Vec<String> = match redis::cmd("KEYS")
+                .arg("worker:failed:*")
+                .query_async(&mut *redis_pool.get().await.unwrap())
+                .await
+            {
+                Ok(keys) => keys,
+                Err(err) => {
+                    log::error!("Failed to get keys set by failed workers: {}", err);
+                    worker_queue_counter += 1;
+                    continue;
+                }
+            };
+
+            log::debug!("Keys set by failed workers: {:?}", keys);
+
+            for key in keys {
+                let task: String = match redis::cmd("GET")
+                    .arg(&key)
+                    .query_async(&mut *redis_pool.get().await.unwrap())
+                    .await
+                {
+                    Ok(task) => task,
+                    Err(err) => {
+                        log::error!("Failed to get task set by failed worker: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                };
+
+                let task: TaskType = match serde_json::from_str(&task) {
+                    Ok(task) => task,
+                    Err(err) => {
+                        log::error!("Failed to parse task set by failed worker: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                };
+
+                log::info!(
+                    "Requeuing task from failed worker: {}",
+                    serde_json::to_string(&task).unwrap()
+                );
+
+                match rsmq_pool
+                    .send_message(
+                        RsmqDsQueue::BackendWorkerFailed.as_str(),
+                        serde_json::to_string(&task).unwrap(),
+                        None,
+                    )
+                    .await
+                {
+                    Ok(_) => {
+                        log::info!("Requeued task from failed worker.");
+                    }
+                    Err(err) => {
+                        log::error!("Failed to requeue task from failed worker: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                };
+
+                match redis::cmd("DEL")
+                    .arg(&key)
+                    .query_async::<_, Option<String>>(&mut *redis_pool.get().await.unwrap())
+                    .await
+                {
+                    Ok(_) => {
+                        log::info!("Deleted key set by failed worker.");
+                    }
+                    Err(err) => {
+                        log::error!("Failed to delete key set by failed worker: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                }
+            }
         }
 
         if check_main_gallery {
