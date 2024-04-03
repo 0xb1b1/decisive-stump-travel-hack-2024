@@ -119,6 +119,15 @@ async fn main() {
             log::debug!("Keys set by failed workers: {:?}", keys);
 
             for key in keys {
+                // If task is less than 10 minutes old, skip (separate key by : and get the last element)
+                let key_split: Vec<&str> = key.split(":").collect();
+                let entry_timestamp: i64 = key_split[key_split.len() - 1].parse().unwrap();
+
+                if chrono::Utc::now().timestamp() - entry_timestamp < 600 {
+                    log::info!("Task is less than 10 minutes old, skipping.");
+                    continue;
+                }
+
                 let task: String = match redis::cmd("GET")
                     .arg(&key)
                     .query_async(&mut *redis_pool.get().await.unwrap())
@@ -330,6 +339,27 @@ async fn main() {
                     "Received a new message (task): {}",
                     serde_json::to_string(&task).unwrap()
                 );
+
+                // Set task key to Redis
+                let unix_timestamp = chrono::Utc::now().timestamp();
+                let task_key = format!("worker:running-task:{}:{}", task.as_str(), unix_timestamp);
+                match redis::cmd("SET")
+                    .arg(&task_key)
+                    .arg(serde_json::to_string(&task).unwrap())
+                    .arg("EX")
+                    .arg(60 * 60 * 24)
+                    .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
+                    .await
+                {
+                    Ok(_) => {
+                        log::info!("Set task key to Redis.");
+                    }
+                    Err(err) => {
+                        log::error!("Failed to set task key to Redis: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                }
 
                 // Process task
                 match task {
