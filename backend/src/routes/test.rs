@@ -110,7 +110,7 @@ async fn test_redis(data: Json<TestRedis>, pool: &rocket::State<bb8::Pool<bb8_re
     };
 
     let _: () = match redis::cmd("SET")
-        .arg(format!("test_redis-{}", &data.key))
+        .arg(format!("test:redis:{}", &data.key))
         .arg(&data.value)
         .arg("EX")
         .arg("10")
