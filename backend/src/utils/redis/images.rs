@@ -3,7 +3,6 @@ use redis;
 use bb8_redis;
 
 
-
 pub async fn set_image_info(image_info: &ImageInfo, redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>) -> Result<(), String> {
     let mut conn = match redis_pool.get().await {
         Ok(conn) => conn,

@@ -5,7 +5,7 @@ pub async fn lock(
     prefix: &str,
     key: &str,
     expiration_seconds: u32,
-    pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>
+    pool: &bb8::Pool<bb8_redis::RedisConnectionManager>
 ) -> Result<(), String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
@@ -17,14 +17,14 @@ pub async fn lock(
 
     // Set key
     let _: () = match redis::cmd("SET")
-        .arg(format!("lock-{}-{}", prefix, key))
+        .arg(format!("lock:{}:{}", prefix, key))
         .arg("1")
         .arg("EX")
         .arg(expiration_seconds)
         .query_async::<_, ()>(&mut *conn)
         .await {
             Ok(_) => {
-                log::info!("Lock set: lock-{}-{}", prefix, key);
+                log::info!("Lock set: lock:{}:{}", prefix, key);
                 return Ok(());
             },
             Err(e) => {
@@ -34,7 +34,7 @@ pub async fn lock(
         };
 }
 
-pub async fn unlock(prefix: &str, key: &str, pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>) -> Result<(), String> {
+pub async fn unlock(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisConnectionManager>) -> Result<(), String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -44,13 +44,13 @@ pub async fn unlock(prefix: &str, key: &str, pool: &rocket::State<bb8::Pool<bb8_
     };
 
     // Delete key
-    log::debug!("Removing lock: lock-{}-{}", prefix, key);
+    log::debug!("Removing lock: lock:{}:{}", prefix, key);
     let _: () = match redis::cmd("DEL")
-        .arg(format!("lock-{}-{}", prefix, key))
+        .arg(format!("lock:{}:{}", prefix, key))
         .query_async::<_, ()>(&mut *conn)
         .await {
             Ok(_) => {
-                log::info!("Lock removed: lock-{}-{}", prefix, key);
+                log::info!("Lock removed: lock:{}:{}", prefix, key);
                 return Ok(());
             },
             Err(e) => {
@@ -60,7 +60,7 @@ pub async fn unlock(prefix: &str, key: &str, pool: &rocket::State<bb8::Pool<bb8_
     };
 }
 
-pub async fn check(prefix: &str, key: &str, pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>) -> Result<bool, String> {
+pub async fn check(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisConnectionManager>) -> Result<bool, String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -77,11 +77,11 @@ pub async fn check(prefix: &str, key: &str, pool: &rocket::State<bb8::Pool<bb8_r
             Ok(data) => {
                 match data {
                     redis::Value::Data(_) => {
-                        log::info!("Lock exists: lock-{}-{}", prefix, key);
+                        log::debug!("Lock exists: lock:{}:{}", prefix, key);
                         return Ok(true);
                     },
                     _ => {
-                        log::info!("Lock does not exist: lock-{}-{}", prefix, key);
+                        log::debug!("Lock does not exist: lock:{}:{}", prefix, key);
                         return Ok(false);
                     }
                 }

@@ -1,16 +1,96 @@
-use rsmq_async::PooledRsmq;
+use bb8::Pool;
+use bb8_redis::RedisConnectionManager;
+use rocket::serde::json;
+use rsmq_async::{RsmqConnection, PooledRsmq};
 use s3::Bucket;
+use serde::Serialize;
 
+use crate::enums::rsmq::RsmqDsQueue;
 use crate::enums::worker::TaskType;
+use crate::models::http::images::ImageInfo;
 use crate::tasks::task_types::utils::queues::send_to_error_queue;
 
 mod job;
+
+// Move the following into a specialized module (hence pub)
+#[derive(Serialize, Debug)]
+pub struct MlUploadAnalyzeMessage {
+    pub filename: String,
+}
+
+async fn send_ml_upload_task(
+    filename: &str,
+    rsmq_pool: &mut PooledRsmq
+) -> Result<(), String> {
+    // This task is meant for ML to recognize possible tags and shove then into a redis key with format
+    // images:upload:ready-{filename}. After that the frontend eventually gets the tags and proceeds with
+    // finalizing the upload.
+
+    // The following commented code is not needed here,
+    // but it will be used in the finalizing stage of the upload (after frontend query.)
+    // // Get image info from Redis
+    // let mut redis_conn = match redis_pool.get().await {
+    //     Ok(conn) => conn,
+    //     Err(err) => {
+    //         log::error!("Failed to get Redis connection: {}", err);
+    //         return Err("Failed to get Redis connection.".into());
+    //     }
+    // };
+
+    // let image_info: Option<String> = match redis::cmd("GET")
+    //     .arg(&format!("image-info:upload:{}", filename))
+    //     .query_async::<_, Option<String>>(&mut *redis_conn)
+    //     .await {
+    //         Ok(Some(info)) => Some(info),
+    //         Ok(None) => None,
+    //         Err(err) => {
+    //             log::error!("Failed to get image info from Redis: {}", err);
+    //             return Err("Failed to get image info from Redis.".into());
+    //         }
+    // };
+
+    // if None == image_info {
+    //     log::error!("Image info not found in Redis: {}", filename);
+    //     return Err("Image info not found in Redis.".into());
+    // }
+
+    // let image_info: ImageInfo = match json::from_str(&image_info.unwrap()) {
+    //     Ok(info) => info,
+    //     Err(err) => {
+    //         log::error!("Failed to parse image info: {}", err);
+    //         return Err("Failed to parse image info.".into());
+    //     }
+    // };
+
+    let message = MlUploadAnalyzeMessage {
+        filename: filename.to_string(),
+    };
+
+    // Send task to ML neighbors using queue
+    let task = RsmqDsQueue::UploadAnalyzeMl;
+    match rsmq_pool.send_message(
+        &task.as_str(),
+        json::to_string(&message).unwrap(),
+        None,
+    ).await {
+        Ok(_) => {
+            log::info!("Sent message to RSMQ queue: {}", task.as_str());
+            Ok(())
+        },
+        Err(err) => {
+            log::error!("Failed to send message to RSMQ queue: {}: {}", task.as_str(), err);
+            Err("Failed to send message to RSMQ queue.".into())
+        }
+    }
+
+}
 
 pub async fn compress_normal(
     filename: &str,
     bucket_images: &Bucket,
     bucket_images_compressed: &Bucket,
     bucket_images_thumbs: &Bucket,
+    redis_pool: &Pool<RedisConnectionManager>,
     rsmq_pool: &mut PooledRsmq,
 ) -> Result<(), String> {
     log::info!("Downloading image: {}", filename);
@@ -120,6 +200,9 @@ pub async fn compress_normal(
             }
         }
     };
+
+    // Send upload task for ML here since it only uses the comp bucket
+    send_ml_upload_task(&filename, rsmq_pool).await?;
 
     if let Some(params) = compression_params_thumb {
         thumb_result = match job::compress(

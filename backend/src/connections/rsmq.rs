@@ -45,7 +45,7 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
                     Some(var)
                 },
                 Err(_) => {
-                    log::info!("No Redis username found in env.");
+                    log::info!("No Redis username found in env. Using default (None).");
                     None
                 }
             },

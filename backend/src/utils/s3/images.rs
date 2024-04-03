@@ -34,11 +34,11 @@ pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
 //     }
 // }
 
-pub async fn get_presigned_url(file_path: &str, bucket: &Bucket) -> Option<String> {
+pub async fn get_presigned_url(file_path: &str, bucket: &Bucket, expiry_secs: u32) -> Option<String> {
     // WARNING: This function will result in a presigned URL even if the file doesn't exist
-    match bucket.presign_get(file_path, 3600, None) {
+    match bucket.presign_get(file_path, expiry_secs, None) {
         Ok(url) => {
-            log::info!("Presigned URL generated: {}", url);
+            log::info!("Presigned URL generated, valid for {} seconds: {}", expiry_secs, url);
             Some(url)
         },
         Err(e) => {

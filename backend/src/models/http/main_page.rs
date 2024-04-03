@@ -1,15 +1,15 @@
 use serde::{Serialize, Deserialize};
 
-use super::images::ImageInfo;
+use super::images::{ImageInfo, ImageInfoGallery};
 
 #[derive(Serialize, Debug)]
 pub struct GalleryResponse {
-    pub images: Vec<ImageInfo>,
+    pub images: Vec<ImageInfoGallery>,
     pub error: Option<String>
 }
 
 // TODO: Move to another module to avoid confusion?
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RedisGalleryStore {
-    pub images: Vec<ImageInfo>
+    pub images: Vec<ImageInfoGallery>
 }

@@ -9,14 +9,14 @@ use std::env;
 // Get minio images bucket
 pub async fn get_bucket(bucket_name: Option<&str>) -> Result<Bucket, String> {
     // Get credentials
-    let access_key = match env::var("DS_MINIO_IMAGES_ACCESS_KEY") {
+    let access_key = match env::var("DS_MINIO_ACCESS_KEY") {
         Ok(var) => var,
         Err(_) => {
             return Err("Minio Access Key not defined.".into());
         }
     };
 
-    let secret_key = match env::var("DS_MINIO_IMAGES_SECRET_KEY") {
+    let secret_key = match env::var("DS_MINIO_SECRET_KEY") {
         Ok(var) => var,
         Err(_) => {
             return Err("Minio Secret Key not defined.".into());
@@ -43,7 +43,7 @@ pub async fn get_bucket(bucket_name: Option<&str>) -> Result<Bucket, String> {
             name.to_string()
         }
         None => {
-            match env::var("DS_MINIO_BUCKET_NAME") {
+            match env::var("DS_MINIO_DEFAULT_BUCKET") {
                 Ok(var) => {
                     log::debug!("Using env Minio bucket name: {}", var);
                     var

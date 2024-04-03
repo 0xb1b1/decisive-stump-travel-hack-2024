@@ -14,3 +14,12 @@ pub struct ImageInfo {
     pub landmark: Option<String>,
     pub error: Option<String>
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ImageInfoGallery {
+    pub filename: String,
+    pub s3_presigned_url: Option<String>,
+    pub label: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub error: Option<String>
+}

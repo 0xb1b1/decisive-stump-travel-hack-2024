@@ -499,29 +499,32 @@ async fn get_image_full(
 ) -> status::Custom<Json<ImageInfo>> {
     log::debug!("Fetching image: {}", file_name);
     // Get presigned URL
-    let s3_presigned_url = match utils::s3::images::get_presigned_url(&file_name, &bucket)
-        .await {
-            Some(url) => url,
-            None => {
-                log::error!("Failed to get presigned URL.");
-                return status::Custom(
-                    Status::InternalServerError,
-                    Json(ImageInfo {
-                        filename: file_name.to_string(),
-                        s3_presigned_url: None,
-                        label: None,  // TODO: Add fields!!!!!!
-                        tags: None,
-                        time_of_day: None,
-                        atmosphere: None,
-                        season: None,
-                        number_of_people: None,
-                        main_color: None,
-                        landmark: None,
-                        error: Some("Failed to get presigned URL.".into())
-                    }
-                ));
-            }
-        };
+    let s3_presigned_url = match utils::s3::images::get_presigned_url(
+        &file_name,
+        &bucket,
+        900  // 15 minutes
+    ).await {
+        Some(url) => url,
+        None => {
+            log::error!("Failed to get presigned URL.");
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageInfo {
+                    filename: file_name.to_string(),
+                    s3_presigned_url: None,
+                    label: None,  // TODO: Add fields!!!!!!
+                    tags: None,
+                    time_of_day: None,
+                    atmosphere: None,
+                    season: None,
+                    number_of_people: None,
+                    main_color: None,
+                    landmark: None,
+                    error: Some("Failed to get presigned URL.".into())
+                }
+            ));
+        }
+    };
 
     status::Custom(
         Status::Ok,
