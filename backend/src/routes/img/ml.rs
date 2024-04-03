@@ -1,26 +1,14 @@
-use rocket::{
-    serde::json::Json,
-    http::Status,
-    response::status,
-};
 use async_std::task;
 use log;
+use rocket::{http::Status, response::status, serde::json::Json};
 use s3::Bucket;
 
+use crate::locks::{self, ml_analyze::MlQueryType};
+use crate::models::http::ml_user::{MLAnalyzeImage, MLAnalyzeImageResponse};
 use crate::utils::s3::images::get_img;
-use crate::locks::{
-    self,
-    ml_analyze::MlQueryType
-};
-use crate::models::http::ml_user::{
-    MLAnalyzeImage,
-    MLAnalyzeImageResponse
-};
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![
-        ml_analyze_image
-    ]
+    routes![ml_analyze_image]
 }
 
 // accept json of MLAnalyzeImage
@@ -28,7 +16,7 @@ pub fn routes() -> Vec<rocket::Route> {
 pub async fn ml_analyze_image(
     image: Json<MLAnalyzeImage>,
     bucket: &rocket::State<Bucket>,
-    pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>
+    pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
 ) -> status::Custom<Json<MLAnalyzeImageResponse>> {
     log::debug!("ML Analyze request received: {:?}", image);
 
@@ -36,8 +24,7 @@ pub async fn ml_analyze_image(
     // TODO: Replace by Redis Queue?
     let mut lock_counter = 0;
     loop {
-        let is_locked = match locks::ml_analyze::check(&MlQueryType::AnalyzeImage, pool)
-            .await {
+        let is_locked = match locks::ml_analyze::check(&MlQueryType::AnalyzeImage, pool).await {
             Ok(locked) => locked,
             Err(e) => {
                 log::error!("Failed to check ML Analyze lock: {}", e);
@@ -47,14 +34,17 @@ pub async fn ml_analyze_image(
                         is_ml_processed: false,
                         tags: None,
                         filename: image.filename.clone(),
-                        error: Some(String::from("Failed to check ML Analyze lock."))
+                        error: Some(String::from("Failed to check ML Analyze lock.")),
                     }),
                 );
             }
         };
         if is_locked {
-            if lock_counter > 20 {  // TODO: Needs to be configurable via env.
-                log::error!("Another ML Analyze request is already being processed. Lock counter exceeded.");
+            if lock_counter > 20 {
+                // TODO: Needs to be configurable via env.
+                log::error!(
+                    "Another ML Analyze request is already being processed. Lock counter exceeded."
+                );
                 return status::Custom(
                     Status::InternalServerError,
                     Json(MLAnalyzeImageResponse {
@@ -78,14 +68,16 @@ pub async fn ml_analyze_image(
         Ok(_) => log::info!("ML Analyze locked."),
         Err(e) => {
             log::error!("Failed to lock ML Analyze: {}", e);
-            locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool).await.unwrap();
+            locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool)
+                .await
+                .unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(MLAnalyzeImageResponse {
                     is_ml_processed: false,
                     tags: None,
                     filename: image.filename.clone(),
-                    error: Some(String::from("Failed to lock ML Analyze."))
+                    error: Some(String::from("Failed to lock ML Analyze.")),
                 }),
             );
         }
@@ -96,17 +88,19 @@ pub async fn ml_analyze_image(
     match get_img(&image.filename, &bucket).await {
         Some(_) => {
             log::debug!("Image found: {}", &image.filename);
-        },
+        }
         None => {
             log::error!("Image not found: {}", &image.filename);
-            locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool).await.unwrap();
+            locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool)
+                .await
+                .unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(MLAnalyzeImageResponse {
                     is_ml_processed: false,
                     tags: None,
                     filename: image.filename.clone(),
-                    error: Some(String::from("Image not found."))
+                    error: Some(String::from("Image not found.")),
                 }),
             );
         }
@@ -118,14 +112,16 @@ pub async fn ml_analyze_image(
     task::sleep(std::time::Duration::from_secs(5)).await;
 
     // TODO: Use real values
-    locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool).await.unwrap();
+    locks::ml_analyze::unlock(&MlQueryType::AnalyzeImage, pool)
+        .await
+        .unwrap();
     return status::Custom(
         Status::Ok,
         Json(MLAnalyzeImageResponse {
             is_ml_processed: true,
             tags: Some(vec![String::from("tag1"), String::from("tag2")]),
             filename: image.filename.clone(),
-            error: None
+            error: None,
         }),
     );
 }

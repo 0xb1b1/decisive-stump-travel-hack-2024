@@ -1,7 +1,4 @@
-use klickhouse::{
-    Client,
-    ClientOptions
-};
+use klickhouse::{Client, ClientOptions};
 use std::env;
 
 pub async fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
@@ -34,13 +31,10 @@ pub async fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
 
     log::debug!("Connecting to ClickHouse at {}...", &url);
 
-     match Client::connect(
-        url,
-        client_options
-    ).await {
+    match Client::connect(url, client_options).await {
         Ok(client) => {
             return Ok(client);
-        },
+        }
         Err(e) => {
             return Err(format!("Failed to create ClickHouse client: {}", e).into());
         }

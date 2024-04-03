@@ -12,7 +12,7 @@ pub enum RsmqDsQueue {
     MlMlResp,
 
     UploadAnalyzeMl,
-    UploadAnalyzeMlResp
+    UploadAnalyzeMlResp,
 }
 impl RsmqDsQueue {
     pub fn as_str(&self) -> &str {
@@ -50,7 +50,7 @@ impl RsmqDsQueue {
             "upload-analyze-ml" => Ok(RsmqDsQueue::UploadAnalyzeMl),
             "upload-analyze-ml-resp" => Ok(RsmqDsQueue::UploadAnalyzeMlResp),
 
-            _ => Err(format!("Invalid queue name: {}", queue))
+            _ => Err(format!("Invalid queue name: {}", queue)),
         }
     }
 }

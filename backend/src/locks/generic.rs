@@ -5,7 +5,7 @@ pub async fn lock(
     prefix: &str,
     key: &str,
     expiration_seconds: u32,
-    pool: &bb8::Pool<bb8_redis::RedisConnectionManager>
+    pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
 ) -> Result<(), String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
@@ -22,19 +22,24 @@ pub async fn lock(
         .arg("EX")
         .arg(expiration_seconds)
         .query_async::<_, ()>(&mut *conn)
-        .await {
-            Ok(_) => {
-                log::info!("Lock set: lock:{}:{}", prefix, key);
-                return Ok(());
-            },
-            Err(e) => {
-                log::error!("Failed to set lock: {}", e);
-                return Err(format!("Failed to set lock: {}", e).into());
-            }
-        };
+        .await
+    {
+        Ok(_) => {
+            log::info!("Lock set: lock:{}:{}", prefix, key);
+            return Ok(());
+        }
+        Err(e) => {
+            log::error!("Failed to set lock: {}", e);
+            return Err(format!("Failed to set lock: {}", e).into());
+        }
+    };
 }
 
-pub async fn unlock(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisConnectionManager>) -> Result<(), String> {
+pub async fn unlock(
+    prefix: &str,
+    key: &str,
+    pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
+) -> Result<(), String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -48,19 +53,24 @@ pub async fn unlock(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisCo
     let _: () = match redis::cmd("DEL")
         .arg(format!("lock:{}:{}", prefix, key))
         .query_async::<_, ()>(&mut *conn)
-        .await {
-            Ok(_) => {
-                log::info!("Lock removed: lock:{}:{}", prefix, key);
-                return Ok(());
-            },
-            Err(e) => {
-                log::error!("Failed to remove lock: {}", e);
-                return Err(format!("Failed to remove lock: {}", e).into());
-            }
+        .await
+    {
+        Ok(_) => {
+            log::info!("Lock removed: lock:{}:{}", prefix, key);
+            return Ok(());
+        }
+        Err(e) => {
+            log::error!("Failed to remove lock: {}", e);
+            return Err(format!("Failed to remove lock: {}", e).into());
+        }
     };
 }
 
-pub async fn check(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisConnectionManager>) -> Result<bool, String> {
+pub async fn check(
+    prefix: &str,
+    key: &str,
+    pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
+) -> Result<bool, String> {
     let mut conn = match pool.get().await {
         Ok(conn) => conn,
         Err(e) => {
@@ -73,22 +83,21 @@ pub async fn check(prefix: &str, key: &str, pool: &bb8::Pool<bb8_redis::RedisCon
     match redis::cmd("GET")
         .arg(format!("{}-{}", prefix, key))
         .query_async(&mut *conn)
-        .await {
-            Ok(data) => {
-                match data {
-                    redis::Value::Data(_) => {
-                        log::debug!("Lock exists: lock:{}:{}", prefix, key);
-                        return Ok(true);
-                    },
-                    _ => {
-                        log::debug!("Lock does not exist: lock:{}:{}", prefix, key);
-                        return Ok(false);
-                    }
-                }
-            },
-            Err(e) => {
-                log::error!("Failed to check lock: {}", e);
-                return Err(format!("Failed to check lock: {}", e).into());
+        .await
+    {
+        Ok(data) => match data {
+            redis::Value::Data(_) => {
+                log::debug!("Lock exists: lock:{}:{}", prefix, key);
+                return Ok(true);
             }
+            _ => {
+                log::debug!("Lock does not exist: lock:{}:{}", prefix, key);
+                return Ok(false);
+            }
+        },
+        Err(e) => {
+            log::error!("Failed to check lock: {}", e);
+            return Err(format!("Failed to check lock: {}", e).into());
         }
+    }
 }

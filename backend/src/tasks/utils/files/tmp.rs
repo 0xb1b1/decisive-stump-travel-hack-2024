@@ -7,7 +7,7 @@ pub async fn download_s3_file(bucket: &Bucket, file_name: &str) -> Result<Respon
         Ok(file) => {
             log::info!("Downloaded file: {}", file_name);
             file
-        },
+        }
         Err(err) => {
             log::error!("Failed to download file: {}", err);
             return Err(format!("Failed to download file: {}", err));
@@ -30,7 +30,7 @@ pub fn remove_tmp_file(file_path: &PathBuf) -> Result<(), ()> {
         Ok(_) => {
             log::info!("Removed tmp file: {:?}", file_path);
             Ok(())
-        },
+        }
         Err(err) => {
             log::error!("Failed to remove tmp file: {:?}", err);
             Err(())
@@ -43,7 +43,7 @@ pub fn get_file_name_no_ext(file_name: &str) -> Result<String, String> {
     let parts: Vec<&str> = file_name.split('.').collect();
     // Collect all parts except the last one
     let mut new_parts: Vec<&str> = Vec::new();
-    for i in 0..parts.len()-1 {
+    for i in 0..parts.len() - 1 {
         new_parts.push(parts[i]);
     }
 

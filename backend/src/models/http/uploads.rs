@@ -1,6 +1,6 @@
-use serde::Serialize;
-use rocket::fs::TempFile;
 use rocket::form::FromForm;
+use rocket::fs::TempFile;
+use serde::Serialize;
 
 use super::images::ImageInfo;
 
@@ -9,14 +9,14 @@ pub struct UploadImage<'f> {
     pub file: TempFile<'f>,
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub time_of_day: Option<String>,  // TODO: Should be verified by crate::enums::images::TimeOfDay
+    pub time_of_day: Option<String>, // TODO: Should be verified by crate::enums::images::TimeOfDay
     pub atmosphere: Option<String>,  // TODO: Should be verified by crate::enums::images::Atmosphere
-    pub season: Option<String>,  // TODO: Should be verified by crate::enums::images::Season
+    pub season: Option<String>,      // TODO: Should be verified by crate::enums::images::Season
     pub number_of_people: Option<u32>,
-    pub main_color: Option<String>,  // TODO: Should be verified by crate::enums::images::MainColor
-    pub landmark: Option<String>
+    pub main_color: Option<String>, // TODO: Should be verified by crate::enums::images::MainColor
+    pub landmark: Option<String>,
 }
-impl UploadImage<'_>{
+impl UploadImage<'_> {
     pub fn to_image_info(&self, filename: &str) -> ImageInfo {
         ImageInfo {
             filename: filename.to_string(),
@@ -29,15 +29,15 @@ impl UploadImage<'_>{
             number_of_people: self.number_of_people,
             main_color: self.main_color.clone(),
             landmark: self.landmark.clone(),
-            error: None
+            error: None,
         }
     }
 }
 
 #[derive(Serialize)]
 pub struct UploadImageResponse {
-    pub is_stored: bool,  // File is stored (whether it was uploaded or already existed)
-    pub is_accepted: bool,  // File is accepted (whether the upload succeeded)
+    pub is_stored: bool, // File is stored (whether it was uploaded or already existed)
+    pub is_accepted: bool, // File is accepted (whether the upload succeeded)
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
     pub time_of_day: Option<String>,
@@ -47,11 +47,11 @@ pub struct UploadImageResponse {
     pub main_color: Option<String>,
     pub landmark: Option<String>,
     pub filename: Option<String>,
-    pub error: Option<String>
+    pub error: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct DeleteImageResponse {
     pub is_deletion_pending: bool,
-    pub error: Option<String>
+    pub error: Option<String>,
 }

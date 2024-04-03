@@ -1,25 +1,14 @@
-use rocket::{
-    serde::json::Json, form::Form,
-    http::Status,
-    response::status,
-};
-use rocket::http::{
-    ContentType,
-    MediaType
-};
-use rsmq_async::{PooledRsmq, RsmqConnection};
-use tokio::io::AsyncReadExt;
 use log;
+use rocket::http::{ContentType, MediaType};
+use rocket::{form::Form, http::Status, response::status, serde::json::Json};
+use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
+use tokio::io::AsyncReadExt;
 
 use crate::enums::rsmq::RsmqDsQueue;
 use crate::enums::worker::TaskType;
 use crate::models::http::images::ImageInfo;
-use crate::models::http::uploads::{
-    DeleteImageResponse,
-    UploadImage,
-    UploadImageResponse
-};
+use crate::models::http::uploads::{DeleteImageResponse, UploadImage, UploadImageResponse};
 use crate::utils::s3::images::get_img;
 use crate::{locks, utils};
 
@@ -37,7 +26,7 @@ async fn upload_image(
     form: Form<UploadImage<'_>>,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    rsmq_pool: &rocket::State<PooledRsmq>
+    rsmq_pool: &rocket::State<PooledRsmq>,
 ) -> status::Custom<Json<UploadImageResponse>> {
     {
         let filename = match form.file.name() {
@@ -58,9 +47,9 @@ async fn upload_image(
                         main_color: form.main_color.clone(),
                         landmark: form.landmark.clone(),
                         filename: None,
-                        error: Some("Failed to get file name.".into())
-                    }
-                ));
+                        error: Some("Failed to get file name.".into()),
+                    }),
+                );
             }
         };
 
@@ -68,7 +57,7 @@ async fn upload_image(
     }
     match &form.tags {
         Some(tags) => log::debug!("Image tags: {:?}", tags),
-        None => log::debug!("No tags provided.")  // TODO: remove tags from uploads entirely.
+        None => log::debug!("No tags provided."), // TODO: remove tags from uploads entirely.
     }
 
     let file_type: &ContentType = match form.file.content_type() {
@@ -89,9 +78,9 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: None,
-                    error: Some("Failed to get file type.".into())
-                }
-            ));
+                    error: Some("Failed to get file type.".into()),
+                }),
+            );
         }
     };
     // Reject non-image files
@@ -100,7 +89,7 @@ async fn upload_image(
         return status::Custom(
             Status::UnsupportedMediaType,
             Json(UploadImageResponse {
-                is_stored: false,  // File is definitely not stored since it's not an image
+                is_stored: false, // File is definitely not stored since it's not an image
                 is_accepted: false,
                 label: form.label.clone(),
                 tags: form.tags.clone(),
@@ -111,9 +100,9 @@ async fn upload_image(
                 main_color: form.main_color.clone(),
                 landmark: form.landmark.clone(),
                 filename: None,
-                error: Some("Unsupported file type.".into())
-            }
-        ));
+                error: Some("Unsupported file type.".into()),
+            }),
+        );
     }
 
     // Create a proper file path
@@ -126,9 +115,7 @@ async fn upload_image(
     let file_path: String;
     {
         let media_type: &MediaType = file_type.media_type();
-        let file_hash = crate::utils::hash::hash_file(
-            &contents
-        );
+        let file_hash = crate::utils::hash::hash_file(&contents);
 
         let file_ext;
         if media_type.sub() == "jpeg" {
@@ -138,13 +125,13 @@ async fn upload_image(
         }
 
         file_name = format!("{}.{}", file_hash, file_ext);
-        file_path = file_name.clone();  // For flexibility
+        file_path = file_name.clone(); // For flexibility
         log::info!("File will be saved in S3 as {}", &file_path);
     }
 
     let s3_image_exists = match get_img(&file_path, &bucket).await {
         Some(_) => true,
-        None => false
+        None => false,
     };
 
     // Check if the file already exists
@@ -165,38 +152,37 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: Some(file_name.clone()),
-                    error: Some("File already exists.".into())
-                }
-            ));
-        },
-        false => ()
+                    error: Some("File already exists.".into()),
+                }),
+            );
+        }
+        false => (),
     }
 
     // Check for image lock
-    let is_locked = match locks::image_upload::check(&file_path, &redis_pool)
-        .await {
-            Ok(locked) => locked,
-            Err(e) => {
-                log::error!("Failed to check image lock: {}", e);
-                return status::Custom(
-                    Status::InternalServerError,
-                    Json(UploadImageResponse {
-                        is_stored: false,
-                        is_accepted: false,
-                        label: form.label.clone(),
-                        tags: form.tags.clone(),
-                        time_of_day: form.time_of_day.clone(),
-                        atmosphere: form.atmosphere.clone(),
-                        season: form.season.clone(),
-                        number_of_people: form.number_of_people.clone(),
-                        main_color: form.main_color.clone(),
-                        landmark: form.landmark.clone(),
-                        filename: None,
-                        error: Some(format!("Failed to check image lock: {}", e))
-                    }
-                ));
-            }
-        };
+    let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
+        Ok(locked) => locked,
+        Err(e) => {
+            log::error!("Failed to check image lock: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(UploadImageResponse {
+                    is_stored: false,
+                    is_accepted: false,
+                    label: form.label.clone(),
+                    tags: form.tags.clone(),
+                    time_of_day: form.time_of_day.clone(),
+                    atmosphere: form.atmosphere.clone(),
+                    season: form.season.clone(),
+                    number_of_people: form.number_of_people.clone(),
+                    main_color: form.main_color.clone(),
+                    landmark: form.landmark.clone(),
+                    filename: None,
+                    error: Some(format!("Failed to check image lock: {}", e)),
+                }),
+            );
+        }
+    };
 
     if is_locked {
         log::error!("Image is locked: {}", &file_path);
@@ -204,7 +190,7 @@ async fn upload_image(
             Status::Locked,
             Json(UploadImageResponse {
                 is_stored: false,
-                is_accepted: false,  // TODO: Should be pulled from ClickHouse
+                is_accepted: false, // TODO: Should be pulled from ClickHouse
                 label: form.label.clone(),
                 tags: form.tags.clone(),
                 time_of_day: form.time_of_day.clone(),
@@ -214,9 +200,9 @@ async fn upload_image(
                 main_color: form.main_color.clone(),
                 landmark: form.landmark.clone(),
                 filename: None,
-                error: Some("Image is locked.".into())
-            }
-        ));
+                error: Some("Image is locked.".into()),
+            }),
+        );
     }
 
     // Lock the image
@@ -238,9 +224,9 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: None,
-                    error: Some(format!("Failed to lock image: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to lock image: {}", e)),
+                }),
+            );
         }
     };
 
@@ -252,11 +238,15 @@ async fn upload_image(
     match bucket.put_object_stream(&mut file_buffer, &file_path).await {
         Ok(_) => {
             log::debug!("Data sent to S3.");
-            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
-        },
+            locks::image_upload::unlock(&file_path, &redis_pool)
+                .await
+                .unwrap();
+        }
         Err(e) => {
             log::error!("Failed to send data to S3: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+            locks::image_upload::unlock(&file_path, &redis_pool)
+                .await
+                .unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
@@ -271,9 +261,9 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: None,
-                    error: Some(format!("Failed to save file: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to save file: {}", e)),
+                }),
+            );
         }
     };
 
@@ -281,12 +271,16 @@ async fn upload_image(
     match utils::redis::images::set_image_info(
         // Get the object in form and use .to_image_info() to convert it to ImageInfo
         &form.to_image_info(&file_name),
-        &redis_pool
-    ).await {
+        &redis_pool,
+    )
+    .await
+    {
         Ok(_) => (),
         Err(e) => {
             log::error!("Failed to set image info in Redis: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+            locks::image_upload::unlock(&file_path, &redis_pool)
+                .await
+                .unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
@@ -301,24 +295,33 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: Some(file_name),
-                    error: Some(format!("Failed to set image info in Redis: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to set image info in Redis: {}", e)),
+                }),
+            );
         }
     }
 
     log::info!("Sending processing task for worker to RSMQ...");
-    let worker_queue_msg_id = match rsmq_pool.inner().clone().send_message(
-        RsmqDsQueue::BackendWorker.as_str(),
-        serde_json::to_string(&TaskType::CompressImage {
-            filename: file_name.clone()
-        }).unwrap().as_str(),
-        None
-    ).await {
+    let worker_queue_msg_id = match rsmq_pool
+        .inner()
+        .clone()
+        .send_message(
+            RsmqDsQueue::BackendWorker.as_str(),
+            serde_json::to_string(&TaskType::CompressImage {
+                filename: file_name.clone(),
+            })
+            .unwrap()
+            .as_str(),
+            None,
+        )
+        .await
+    {
         Ok(msg) => msg,
         Err(e) => {
             log::error!("Failed to send message to RSMQ: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+            locks::image_upload::unlock(&file_path, &redis_pool)
+                .await
+                .unwrap();
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
@@ -333,14 +336,19 @@ async fn upload_image(
                     main_color: form.main_color.clone(),
                     landmark: form.landmark.clone(),
                     filename: Some(file_name),
-                    error: Some(format!("Failed to send message to RSMQ: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to send message to RSMQ: {}", e)),
+                }),
+            );
         }
     };
-    log::info!("Sent processing task for worker to RSMQ: {:?}", worker_queue_msg_id);
+    log::info!(
+        "Sent processing task for worker to RSMQ: {:?}",
+        worker_queue_msg_id
+    );
 
-    locks::image_upload::unlock(&file_path, &redis_pool).await.unwrap();
+    locks::image_upload::unlock(&file_path, &redis_pool)
+        .await
+        .unwrap();
 
     status::Custom(
         Status::Ok,
@@ -356,9 +364,9 @@ async fn upload_image(
             main_color: form.main_color.clone(),
             landmark: form.landmark.clone(),
             filename: Some(file_name),
-            error: None
-        }
-    ))
+            error: None,
+        }),
+    )
 }
 
 #[delete("/delete/<file_name>")]
@@ -366,14 +374,14 @@ async fn delete_image(
     file_name: &str,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    rsmq: &rocket::State<PooledRsmq>
+    rsmq: &rocket::State<PooledRsmq>,
 ) -> status::Custom<Json<DeleteImageResponse>> {
     log::debug!("Deleting image: {}", file_name);
 
     let file_path = file_name.to_string();
     let s3_image_exists = match get_img(&file_path, &bucket).await {
         Some(_) => true,
-        None => false
+        None => false,
     };
 
     // Check if the file exists
@@ -385,27 +393,26 @@ async fn delete_image(
                 Status::NotFound,
                 Json(DeleteImageResponse {
                     is_deletion_pending: false,
-                    error: Some("File does not exist.".into())
-                }
-            ));
+                    error: Some("File does not exist.".into()),
+                }),
+            );
         }
     }
 
     // Check for image lock
-    let is_locked = match locks::image_upload::check(&file_path, &redis_pool)
-        .await {
-            Ok(locked) => locked,
-            Err(e) => {
-                log::error!("Failed to check image lock: {}", e);
-                return status::Custom(
-                    Status::InternalServerError,
-                    Json(DeleteImageResponse {
-                        is_deletion_pending: false,
-                        error: Some(format!("Failed to check image lock: {}", e))
-                    }
-                ));
-            }
-        };
+    let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
+        Ok(locked) => locked,
+        Err(e) => {
+            log::error!("Failed to check image lock: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(DeleteImageResponse {
+                    is_deletion_pending: false,
+                    error: Some(format!("Failed to check image lock: {}", e)),
+                }),
+            );
+        }
+    };
 
     if is_locked {
         log::error!("Image is locked: {}", &file_path);
@@ -413,9 +420,9 @@ async fn delete_image(
             Status::Locked,
             Json(DeleteImageResponse {
                 is_deletion_pending: false,
-                error: Some("Image is locked.".into())
-            }
-        ));
+                error: Some("Image is locked.".into()),
+            }),
+        );
     }
 
     // Lock the image
@@ -427,20 +434,27 @@ async fn delete_image(
                 Status::InternalServerError,
                 Json(DeleteImageResponse {
                     is_deletion_pending: false,
-                    error: Some(format!("Failed to lock image: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to lock image: {}", e)),
+                }),
+            );
         }
     };
 
     log::debug!("Sending deletion task for worker to RSMQ...");
-    let worker_queue_msg_id = match rsmq.inner().clone().send_message(
-        RsmqDsQueue::BackendWorker.as_str(),
-        serde_json::to_string(&TaskType::DeleteImage {
-            filename: file_name.to_string()
-        }).unwrap().as_str(),
-        None
-    ).await {
+    let worker_queue_msg_id = match rsmq
+        .inner()
+        .clone()
+        .send_message(
+            RsmqDsQueue::BackendWorker.as_str(),
+            serde_json::to_string(&TaskType::DeleteImage {
+                filename: file_name.to_string(),
+            })
+            .unwrap()
+            .as_str(),
+            None,
+        )
+        .await
+    {
         Ok(msg) => msg,
         Err(e) => {
             log::error!("Failed to send message to RSMQ: {}", e);
@@ -448,20 +462,23 @@ async fn delete_image(
                 Status::InternalServerError,
                 Json(DeleteImageResponse {
                     is_deletion_pending: false,
-                    error: Some(format!("Failed to send message to RSMQ: {}", e))
-                }
-            ));
+                    error: Some(format!("Failed to send message to RSMQ: {}", e)),
+                }),
+            );
         }
     };
-    log::info!("Sent deletion task for worker to RSMQ: {:?}", worker_queue_msg_id);
+    log::info!(
+        "Sent deletion task for worker to RSMQ: {:?}",
+        worker_queue_msg_id
+    );
 
     status::Custom(
         Status::Ok,
         Json(DeleteImageResponse {
             is_deletion_pending: true,
-            error: None
-        }
-    ))
+            error: None,
+        }),
+    )
 }
 
 // #[get("/get/list")]
@@ -495,15 +512,15 @@ async fn delete_image(
 async fn get_image_full(
     file_name: &str,
     // pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    bucket: &rocket::State<Bucket>
+    bucket: &rocket::State<Bucket>,
 ) -> status::Custom<Json<ImageInfo>> {
     log::debug!("Fetching image: {}", file_name);
     // Get presigned URL
     let s3_presigned_url = match utils::s3::images::get_presigned_url(
-        &file_name,
-        &bucket,
-        900  // 15 minutes
-    ).await {
+        &file_name, &bucket, 900, // 15 minutes
+    )
+    .await
+    {
         Some(url) => url,
         None => {
             log::error!("Failed to get presigned URL.");
@@ -512,7 +529,7 @@ async fn get_image_full(
                 Json(ImageInfo {
                     filename: file_name.to_string(),
                     s3_presigned_url: None,
-                    label: None,  // TODO: Add fields!!!!!!
+                    label: None, // TODO: Add fields!!!!!!
                     tags: None,
                     time_of_day: None,
                     atmosphere: None,
@@ -520,9 +537,9 @@ async fn get_image_full(
                     number_of_people: None,
                     main_color: None,
                     landmark: None,
-                    error: Some("Failed to get presigned URL.".into())
-                }
-            ));
+                    error: Some("Failed to get presigned URL.".into()),
+                }),
+            );
         }
     };
 
@@ -531,7 +548,7 @@ async fn get_image_full(
         Json(ImageInfo {
             filename: file_name.to_string(),
             s3_presigned_url: Some(s3_presigned_url),
-            label: None,  // TODO: Add fields!!!!!!
+            label: None, // TODO: Add fields!!!!!!
             tags: None,
             time_of_day: None,
             atmosphere: None,
@@ -539,7 +556,7 @@ async fn get_image_full(
             number_of_people: None,
             main_color: None,
             landmark: None,
-            error: None
-        }
-    ))
+            error: None,
+        }),
+    )
 }

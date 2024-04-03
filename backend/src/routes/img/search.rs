@@ -1,11 +1,6 @@
-use rocket::{
-    serde::json::Json,
-    http::Status,
-    http::uri::Query,
-    response::status,
-};
 use async_std::task;
 use log;
+use rocket::{http::uri::Query, http::Status, response::status, serde::json::Json};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 
@@ -18,21 +13,19 @@ use crate::utils::s3::images::get_img;
 use crate::models::http::images::ImageInfo;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![
-        search_image_by_text
-    ]
+    routes![search_image_by_text]
 }
 
 #[derive(Deserialize, Debug)]
 pub struct SearchImageByText {
-    pub text: String
+    pub text: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct SearchImageResponse {
     pub images_count: u32,
     pub images: Vec<ImageInfo>,
-    pub error: Option<String>
+    pub error: Option<String>,
 }
 
 // Do not use HTTP GET since it's idempotent
@@ -56,7 +49,7 @@ pub async fn search_image_by_text(
         Json(SearchImageResponse {
             images_count: 0,
             images: vec![],
-            error: None
-        })
+            error: None,
+        }),
     )
 }

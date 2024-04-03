@@ -1,7 +1,7 @@
 use bb8::Pool;
 use bb8_redis::RedisConnectionManager;
 use rocket::serde::json;
-use rsmq_async::{RsmqConnection, PooledRsmq};
+use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
 use serde::Serialize;
 
@@ -18,10 +18,7 @@ pub struct MlUploadAnalyzeMessage {
     pub filename: String,
 }
 
-async fn send_ml_upload_task(
-    filename: &str,
-    rsmq_pool: &mut PooledRsmq
-) -> Result<(), String> {
+async fn send_ml_upload_task(filename: &str, rsmq_pool: &mut PooledRsmq) -> Result<(), String> {
     // This task is meant for ML to recognize possible tags and shove then into a redis key with format
     // images:upload:ready-{filename}. After that the frontend eventually gets the tags and proceeds with
     // finalizing the upload.
@@ -68,21 +65,23 @@ async fn send_ml_upload_task(
 
     // Send task to ML neighbors using queue
     let task = RsmqDsQueue::UploadAnalyzeMl;
-    match rsmq_pool.send_message(
-        &task.as_str(),
-        json::to_string(&message).unwrap(),
-        None,
-    ).await {
+    match rsmq_pool
+        .send_message(&task.as_str(), json::to_string(&message).unwrap(), None)
+        .await
+    {
         Ok(_) => {
             log::info!("Sent message to RSMQ queue: {}", task.as_str());
             Ok(())
-        },
+        }
         Err(err) => {
-            log::error!("Failed to send message to RSMQ queue: {}: {}", task.as_str(), err);
+            log::error!(
+                "Failed to send message to RSMQ queue: {}: {}",
+                task.as_str(),
+                err
+            );
             Err("Failed to send message to RSMQ queue.".into())
         }
     }
-
 }
 
 pub async fn compress_normal(
@@ -94,23 +93,24 @@ pub async fn compress_normal(
     rsmq_pool: &mut PooledRsmq,
 ) -> Result<(), String> {
     log::info!("Downloading image: {}", filename);
-    let original_file = match crate::tasks::utils::files::tmp::download_s3_file(
-        &bucket_images,
-        &filename
-    ).await {
-        Ok(data) => {
-            log::debug!("Downloaded image from S3");
-            data
-        },
-        Err(err) => {
-            log::error!("Failed to download image from S3: {}", err);
-            let _ = send_to_error_queue(
-                &TaskType::CompressImage { filename: filename.to_string() },
-                rsmq_pool
-            ).await;
-            return Err("Failed to download image from S3.".into());
-        }
-    };
+    let original_file =
+        match crate::tasks::utils::files::tmp::download_s3_file(&bucket_images, &filename).await {
+            Ok(data) => {
+                log::debug!("Downloaded image from S3");
+                data
+            }
+            Err(err) => {
+                log::error!("Failed to download image from S3: {}", err);
+                let _ = send_to_error_queue(
+                    &TaskType::CompressImage {
+                        filename: filename.to_string(),
+                    },
+                    rsmq_pool,
+                )
+                .await;
+                return Err("Failed to download image from S3.".into());
+            }
+        };
 
     log::info!("Compressing image (comp bucket): {}", filename);
 
@@ -126,37 +126,37 @@ pub async fn compress_normal(
         compression_params_comp = None;
         compression_params_thumb = Some(job::CompressionParams {
             quality: 60.,
-            size_ratio: 0.9
+            size_ratio: 0.9,
         })
     } else if original_file_size < 5_000_000 {
         log::info!("File is not small enough for comp bucket, compressing it.");
         compression_params_comp = Some(job::CompressionParams {
             quality: 90.,
-            size_ratio: 0.9
+            size_ratio: 0.9,
         });
         compression_params_thumb = Some(job::CompressionParams {
             quality: 60.,
-            size_ratio: 0.7
+            size_ratio: 0.7,
         });
     } else if original_file_size < 15_000_000 {
         log::info!("File is not small enough for comp bucket, compressing it.");
         compression_params_comp = Some(job::CompressionParams {
             quality: 85.,
-            size_ratio: 0.85
+            size_ratio: 0.85,
         });
         compression_params_thumb = Some(job::CompressionParams {
             quality: 60.,
-            size_ratio: 0.6
+            size_ratio: 0.6,
         });
     } else {
         log::info!("File is not small enough for comp bucket, compressing it.");
         compression_params_comp = Some(job::CompressionParams {
             quality: 80.,
-            size_ratio: 0.8
+            size_ratio: 0.8,
         });
         compression_params_thumb = Some(job::CompressionParams {
             quality: 60.,
-            size_ratio: 0.6
+            size_ratio: 0.6,
         });
     }
 
@@ -164,38 +164,44 @@ pub async fn compress_normal(
     let thumb_result: Result<(), ()>;
     // Compress image
     if let Some(params) = compression_params_comp {
-        compressed_result = match job::compress(
-            &original_file,
-            &filename,
-            &bucket_images_compressed,
-            params
-        ).await {
-            Ok(_) => {
-                log::info!("Compressed image (comp bucket): {:?}", filename);
-                Ok(())
-            },
-            Err(err) => {
-                log::error!("Failed to compress image (comp bucket), failing: {}", err);
-                let _ = send_to_error_queue(
-                    &TaskType::CompressImage { filename: filename.to_string() },
-                    rsmq_pool
-                ).await;
-                Err(())
-            },
-        }
+        compressed_result =
+            match job::compress(&original_file, &filename, &bucket_images_compressed, params).await
+            {
+                Ok(_) => {
+                    log::info!("Compressed image (comp bucket): {:?}", filename);
+                    Ok(())
+                }
+                Err(err) => {
+                    log::error!("Failed to compress image (comp bucket), failing: {}", err);
+                    let _ = send_to_error_queue(
+                        &TaskType::CompressImage {
+                            filename: filename.to_string(),
+                        },
+                        rsmq_pool,
+                    )
+                    .await;
+                    Err(())
+                }
+            }
     } else {
         log::info!("File is already small enough, copying to comp bucket.");
-        compressed_result = match bucket_images_compressed.put_object(&filename, original_file.as_slice()).await {
+        compressed_result = match bucket_images_compressed
+            .put_object(&filename, original_file.as_slice())
+            .await
+        {
             Ok(_) => {
                 log::info!("Copied image to comp bucket.");
                 Ok(())
-            },
+            }
             Err(err) => {
                 log::error!("Failed to copy image to comp bucket: {}", err);
                 let _ = send_to_error_queue(
-                    &TaskType::CompressImage { filename: filename.to_string() },
-                    rsmq_pool
-                ).await;
+                    &TaskType::CompressImage {
+                        filename: filename.to_string(),
+                    },
+                    rsmq_pool,
+                )
+                .await;
                 Err(())
             }
         }
@@ -205,38 +211,43 @@ pub async fn compress_normal(
     send_ml_upload_task(&filename, rsmq_pool).await?;
 
     if let Some(params) = compression_params_thumb {
-        thumb_result = match job::compress(
-            &original_file,
-            &filename,
-            &bucket_images_thumbs,
-            params
-        ).await {
-            Ok(_) => {
-                log::info!("Compressed image (thumb bucket): {:?}", filename);
-                Ok(())
-            },
-            Err(err) => {
-                log::error!("Failed to compress image (thumb bucket), failing: {}", err);
-                let _ = send_to_error_queue(
-                    &TaskType::CompressImage { filename: filename.to_string() },
-                    rsmq_pool
-                ).await;
-                Err(())
+        thumb_result =
+            match job::compress(&original_file, &filename, &bucket_images_thumbs, params).await {
+                Ok(_) => {
+                    log::info!("Compressed image (thumb bucket): {:?}", filename);
+                    Ok(())
+                }
+                Err(err) => {
+                    log::error!("Failed to compress image (thumb bucket), failing: {}", err);
+                    let _ = send_to_error_queue(
+                        &TaskType::CompressImage {
+                            filename: filename.to_string(),
+                        },
+                        rsmq_pool,
+                    )
+                    .await;
+                    Err(())
+                }
             }
-        }
     } else {
         log::info!("File is already small enough, copying to thumb bucket.");
-        thumb_result = match bucket_images_thumbs.put_object(&filename, original_file.as_slice()).await {
+        thumb_result = match bucket_images_thumbs
+            .put_object(&filename, original_file.as_slice())
+            .await
+        {
             Ok(_) => {
                 log::info!("Copied image to thumb bucket.");
                 Ok(())
-            },
+            }
             Err(err) => {
                 log::error!("Failed to copy image to thumb bucket: {}", err);
                 let _ = send_to_error_queue(
-                    &TaskType::CompressImage { filename: filename.to_string() },
-                    rsmq_pool
-                ).await;
+                    &TaskType::CompressImage {
+                        filename: filename.to_string(),
+                    },
+                    rsmq_pool,
+                )
+                .await;
                 Err(())
             }
         }

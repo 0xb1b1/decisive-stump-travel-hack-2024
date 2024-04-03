@@ -3,16 +3,14 @@ use s3::Bucket;
 
 pub struct CompressionParams {
     pub quality: f32,
-    pub size_ratio: f32
+    pub size_ratio: f32,
 }
-
 
 pub async fn compress(
     file: &ResponseData,
     filename: &str,
     output_bucket: &Bucket,
-    params: CompressionParams
-
+    params: CompressionParams,
 ) -> Result<(), String> {
     // if original_file_length < 2_000_000 {
     //     log::info!("File is already compressed, copying to comp bucket.");
@@ -33,12 +31,14 @@ pub async fn compress(
         &filename,
         &output_bucket,
         params.quality,
-        params.size_ratio
-    ).await {
+        params.size_ratio,
+    )
+    .await
+    {
         Ok(image_info) => {
             log::info!("Compressed image (comp bucket): {:?}", image_info);
             return Ok(());
-        },
+        }
         Err(err) => {
             log::error!("Failed to compress image (comp bucket), failing: {}", err);
             return Err("Failed to compress image (comp bucket), failing.".into());

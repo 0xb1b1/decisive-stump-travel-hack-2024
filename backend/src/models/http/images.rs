@@ -12,7 +12,7 @@ pub struct ImageInfo {
     pub number_of_people: Option<u32>,
     pub main_color: Option<String>,
     pub landmark: Option<String>,
-    pub error: Option<String>
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,5 +21,5 @@ pub struct ImageInfoGallery {
     pub s3_presigned_url: Option<String>,
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub error: Option<String>
+    pub error: Option<String>,
 }

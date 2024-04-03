@@ -15,7 +15,7 @@ pub async fn delete_from_all_buckets(
         Ok(_) => {
             log::info!("Deleted image from images bucket.");
             Ok(())
-        },
+        }
         Err(err) => {
             log::error!("Failed to delete image from images bucket: {}", err);
             Err(())
@@ -27,7 +27,7 @@ pub async fn delete_from_all_buckets(
         Ok(_) => {
             log::info!("Deleted image from images-comp bucket.");
             Ok(())
-        },
+        }
         Err(err) => {
             log::error!("Failed to delete image from images-comp bucket: {}", err);
             Err(())
@@ -39,7 +39,7 @@ pub async fn delete_from_all_buckets(
         Ok(_) => {
             log::info!("Deleted image from images-thumbs bucket.");
             Ok(())
-        },
+        }
         Err(err) => {
             log::error!("Failed to delete image from images-thumbs bucket: {}", err);
             Err(())
@@ -50,9 +50,12 @@ pub async fn delete_from_all_buckets(
         Ok(())
     } else {
         let _ = send_to_error_queue(
-            &TaskType::DeleteImage { filename: filename.to_string() },
-            rsmq_pool
-        ).await;
+            &TaskType::DeleteImage {
+                filename: filename.to_string(),
+            },
+            rsmq_pool,
+        )
+        .await;
         Err("Failed to delete image from all buckets. Sending to error queue.".to_string())
     }
 }

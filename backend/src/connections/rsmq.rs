@@ -14,12 +14,10 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
                 }
             },
             port: match env::var("DS_REDIS_PORT") {
-                Ok(var) => {
-                    match var.parse::<u16>() {
-                        Ok(port) => port,
-                        Err(_) => {
-                            return Err("Redis port must be a number.".into());
-                        }
+                Ok(var) => match var.parse::<u16>() {
+                    Ok(port) => port,
+                    Err(_) => {
+                        return Err("Redis port must be a number.".into());
                     }
                 },
                 Err(_) => {
@@ -27,12 +25,10 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
                 }
             },
             db: match env::var("DS_REDIS_DB") {
-                Ok(var) => {
-                    match var.parse::<u8>() {
-                        Ok(db) => db,
-                        Err(_) => {
-                            return Err("Redis database must be a number.".into());
-                        }
+                Ok(var) => match var.parse::<u8>() {
+                    Ok(db) => db,
+                    Err(_) => {
+                        return Err("Redis database must be a number.".into());
                     }
                 },
                 Err(_) => {
@@ -43,7 +39,7 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
                 Ok(var) => {
                     log::info!("Using Redis username from env.");
                     Some(var)
-                },
+                }
                 Err(_) => {
                     log::info!("No Redis username found in env. Using default (None).");
                     None
@@ -65,14 +61,15 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
                     log::info!("Using default DS RSMQ namespace (rsmq).");
                     "rsmq:".to_string()
                 }
-            }
+            },
         },
         PoolOptions {
             max_size: None,
-            min_idle: None
-        }
-
-    ).await {
+            min_idle: None,
+        },
+    )
+    .await
+    {
         Ok(client) => client,
         Err(e) => {
             return Err(format!("Failed to create RSMQ client: {}", e));
@@ -90,13 +87,13 @@ pub async fn get_pool() -> Result<PooledRsmq, String> {
         RsmqDsQueue::MlMl.as_str(),
         RsmqDsQueue::MlMlResp.as_str(),
         RsmqDsQueue::UploadAnalyzeMl.as_str(),
-        RsmqDsQueue::UploadAnalyzeMlResp.as_str()
+        RsmqDsQueue::UploadAnalyzeMlResp.as_str(),
     ];
     for queue in queues {
         match pool.create_queue(&queue, None, None, None).await {
             Ok(_) => {
                 log::info!("Queue {} created.", &queue);
-            },
+            }
             Err(e) => {
                 // If the queue already exists, ignore the error
                 if !e.to_string().contains("Queue already exists") {

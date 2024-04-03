@@ -1,7 +1,7 @@
 mod files;
-mod search;
-mod ml;
 mod main_page;
+mod ml;
+mod search;
 
 pub fn routes() -> Vec<rocket::Route> {
     let mut rocket_routes = files::routes();

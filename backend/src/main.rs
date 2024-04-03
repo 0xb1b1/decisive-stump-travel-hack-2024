@@ -6,11 +6,11 @@ use rocket::serde::json::Json;
 // use s3::Bucket;
 
 mod connections;
+mod enums;
+mod locks;
 mod models;
 mod routes;
 mod utils;
-mod locks;
-mod enums;
 
 // fn main() {
 //     if env::var("RUST_LOG").is_err() {
@@ -32,7 +32,7 @@ mod enums;
 
 #[get("/")]
 async fn get_root() -> Json<String> {
-    return Json(String::from("Ok."))
+    return Json(String::from("Ok."));
 }
 
 #[launch]
@@ -64,16 +64,7 @@ async fn rocket() -> _ {
         .manage(rsmq_pool)
         .manage(bucket)
         .manage(click)
-        .mount(
-            "/",
-            routes![get_root]
-        )
-        .mount(
-            "/img",
-            routes::img::routes()
-        )
-        .mount(
-            "/test",
-            routes::test::routes()
-        )
+        .mount("/", routes![get_root])
+        .mount("/img", routes::img::routes())
+        .mount("/test", routes::test::routes())
 }
