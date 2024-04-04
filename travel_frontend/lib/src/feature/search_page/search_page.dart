@@ -54,7 +54,7 @@ class SearchPage extends ConsumerWidget {
                     delegate: SliverChildListDelegate(
                       [
                         DropdownSearchBlock(
-                          onFiltersTap: vm.changeGallery,
+                          onFiltersTap: () {},
                           onSearchPhoto: vm.pickImage,
                           filtersViewModel: filtersVm,
                         ),
@@ -66,21 +66,29 @@ class SearchPage extends ConsumerWidget {
                     data: (images) => ImageGallery(
                       images: images,
                       crossAxisCount: 4,
-                      isHoverEnabled: true,
+                      isButtonsEnabled: true,
                       onImageTap: vm.onImageTap,
                     ),
                     loading: () => const SliverToBoxAdapter(
                       child: SizedBox(
                         height: 300,
                         width: 200,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppPalette.yellow,
+                          ),
+                        ),
                       ),
                     ),
                     error: () => const SliverToBoxAdapter(
                       child: SizedBox(
                         height: 300,
                         width: 200,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppPalette.yellow,
+                          ),
+                        ),
                       ),
                     ),
                   ),

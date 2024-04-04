@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
@@ -10,12 +11,16 @@ class HoverImage extends StatefulWidget {
   final String title;
   final String description;
   final String url;
+  final VoidCallback onSimilarTap;
+  final bool isButtonsEnabled;
 
   const HoverImage({
     super.key,
     required this.title,
     required this.description,
     required this.url,
+    required this.onSimilarTap,
+    required this.isButtonsEnabled,
   });
 
   @override
@@ -51,16 +56,19 @@ class _HoverImageState extends State<HoverImage> {
             ),
             duration: const Duration(milliseconds: 300),
           ),
-          if (isHovering) ...[
+          if (isHovering && widget.isButtonsEnabled) ...[
             const Positioned(
               left: 14,
               top: 14,
               child: CheckboxWidget(),
             ),
-            const Positioned(
+            Positioned(
               right: 8,
               top: 8,
-              child: SimilarButton(),
+              child: GestureDetector(
+                onTap: widget.onSimilarTap,
+                child: const SimilarButton(),
+              ),
             ),
             Align(
               alignment: Alignment.bottomLeft,

@@ -19,7 +19,7 @@ class GalleryImage with _$GalleryImage {
   factory GalleryImage.mock() => const GalleryImage(
         filename: 'ARTPLAY_3.jpeg',
         s3PresignedUrl:
-            'https://www.marthastewart.com/thmb/g-FunKfdiZombJQ7pB4wb8BF4C8=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/cat-kitten-138468381-4cd82b91d7be45cb9f9aa8366e10bce4.jpg',
+            'https://img.freepik.com/free-photo/the-adorable-illustration-of-kittens-playing-in-the-forest-generative-ai_260559-483.jpg?size=338&ext=jpg&ga=GA1.1.632798143.1712188800&semt=ais',
         label: 'Милый котик <3',
         tags: ['Любовь', 'Малыш', 'Счастье'],
       );

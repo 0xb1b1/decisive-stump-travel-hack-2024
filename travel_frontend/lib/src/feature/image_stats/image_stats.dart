@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/full_image.dart';
 import 'package:travel_frontend/src/api/models/gallery_image.dart';
 
 import 'package:travel_frontend/src/common/app_typography.dart';
@@ -9,25 +10,12 @@ import 'package:travel_frontend/src/widgets/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
 class ImageStats extends StatelessWidget {
-  final String filename;
-
-  // final String title;
-  final List<String> tags = ['лето', 'cолнце', 'жара'];
-
-  // final List<String> similarItems;
-  // final int downloaded;
-  // final int viewed;
-
+  final FullImage image;
   final _photoBlockHeight = 400.0;
 
-  ImageStats({
+  const ImageStats({
     super.key,
-    required this.filename,
-    // required this.title,
-    // required this.tags,
-    // required this.similarItems,
-    // required this.downloaded,
-    // required this.viewed,
+    required this.image,
   });
 
   @override
@@ -47,9 +35,9 @@ class ImageStats extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
+                    child: Image.network(
                       height: _photoBlockHeight,
-                      'assets/test.jpg',
+                      image.s3PresignedUrl,
                       fit: BoxFit.fill,
                     ),
                   ),
@@ -64,8 +52,8 @@ class ImageStats extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const AutoSizeText(
-                                'тайтлвывывывывыв',
+                              AutoSizeText(
+                                image.label,
                                 style: AppTypography.header,
                                 maxLines: 2,
                               ),
@@ -73,8 +61,9 @@ class ImageStats extends StatelessWidget {
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children:
-                                    tags.map((e) => ImageTag(tag: e)).toList(),
+                                children: image.tags
+                                    .map((e) => ImageTag(tag: e))
+                                    .toList(),
                               ),
                             ],
                           ),
@@ -123,7 +112,7 @@ class ImageStats extends StatelessWidget {
                 (index) => GalleryImage.mock(),
               ),
               crossAxisCount: 4,
-              isHoverEnabled: false,
+              isButtonsEnabled: false,
               onImageTap: (_) {},
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 32)),

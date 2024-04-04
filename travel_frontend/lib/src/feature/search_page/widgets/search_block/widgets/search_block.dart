@@ -9,19 +9,24 @@ import 'side_button.dart';
 class SearchBlock extends StatelessWidget {
   final VoidCallback onSearchPhoto;
   final VoidCallback onFiltersTap;
+  final bool isFiltersChosen;
 
   const SearchBlock({
     super.key,
     required this.onSearchPhoto,
     required this.onFiltersTap,
+    required this.isFiltersChosen,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(
-          child: SearchInput(),
+        Expanded(
+          child: SearchInput(
+            onSearchTap: () {},
+            isFiltersChosen: isFiltersChosen,
+          ),
         ),
         const SizedBox(
           width: 10,

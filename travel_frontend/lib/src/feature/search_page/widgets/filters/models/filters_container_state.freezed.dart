@@ -14,17 +14,11 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-FiltersContainerState _$FiltersContainerStateFromJson(
-    Map<String, dynamic> json) {
-  return _FiltersContainerState.fromJson(json);
-}
-
 /// @nodoc
 mixin _$FiltersContainerState {
   FiltersList get filtersList => throw _privateConstructorUsedError;
   String get search => throw _privateConstructorUsedError;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $FiltersContainerStateCopyWith<FiltersContainerState> get copyWith =>
       throw _privateConstructorUsedError;
@@ -123,13 +117,10 @@ class __$$FiltersContainerStateImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$FiltersContainerStateImpl implements _FiltersContainerState {
   const _$FiltersContainerStateImpl(
       {required this.filtersList, required this.search});
-
-  factory _$FiltersContainerStateImpl.fromJson(Map<String, dynamic> json) =>
-      _$$FiltersContainerStateImplFromJson(json);
 
   @override
   final FiltersList filtersList;
@@ -151,7 +142,6 @@ class _$FiltersContainerStateImpl implements _FiltersContainerState {
             (identical(other.search, search) || other.search == search));
   }
 
-  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, filtersList, search);
 
@@ -161,22 +151,12 @@ class _$FiltersContainerStateImpl implements _FiltersContainerState {
   _$$FiltersContainerStateImplCopyWith<_$FiltersContainerStateImpl>
       get copyWith => __$$FiltersContainerStateImplCopyWithImpl<
           _$FiltersContainerStateImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$FiltersContainerStateImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _FiltersContainerState implements FiltersContainerState {
   const factory _FiltersContainerState(
       {required final FiltersList filtersList,
       required final String search}) = _$FiltersContainerStateImpl;
-
-  factory _FiltersContainerState.fromJson(Map<String, dynamic> json) =
-      _$FiltersContainerStateImpl.fromJson;
 
   @override
   FiltersList get filtersList;

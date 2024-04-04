@@ -14,20 +14,16 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-FiltersList _$FiltersListFromJson(Map<String, dynamic> json) {
-  return _FiltersList.fromJson(json);
-}
-
 /// @nodoc
 mixin _$FiltersList {
-  FiltersSection get dayTime => throw _privateConstructorUsedError;
-  FiltersSection get season => throw _privateConstructorUsedError;
-  FiltersSection get weather => throw _privateConstructorUsedError;
-  FiltersSection get atmosphere => throw _privateConstructorUsedError;
-  FiltersSection get persons => throw _privateConstructorUsedError;
-  FiltersSection get orientation => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get dayTime => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get season => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get weather => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get atmosphere => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get persons => throw _privateConstructorUsedError;
+  FiltersSection<Filter> get orientation => throw _privateConstructorUsedError;
+  FiltersSection<ColorsFilter> get colors => throw _privateConstructorUsedError;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $FiltersListCopyWith<FiltersList> get copyWith =>
       throw _privateConstructorUsedError;
@@ -40,19 +36,21 @@ abstract class $FiltersListCopyWith<$Res> {
       _$FiltersListCopyWithImpl<$Res, FiltersList>;
   @useResult
   $Res call(
-      {FiltersSection dayTime,
-      FiltersSection season,
-      FiltersSection weather,
-      FiltersSection atmosphere,
-      FiltersSection persons,
-      FiltersSection orientation});
+      {FiltersSection<Filter> dayTime,
+      FiltersSection<Filter> season,
+      FiltersSection<Filter> weather,
+      FiltersSection<Filter> atmosphere,
+      FiltersSection<Filter> persons,
+      FiltersSection<Filter> orientation,
+      FiltersSection<ColorsFilter> colors});
 
-  $FiltersSectionCopyWith<$Res> get dayTime;
-  $FiltersSectionCopyWith<$Res> get season;
-  $FiltersSectionCopyWith<$Res> get weather;
-  $FiltersSectionCopyWith<$Res> get atmosphere;
-  $FiltersSectionCopyWith<$Res> get persons;
-  $FiltersSectionCopyWith<$Res> get orientation;
+  $FiltersSectionCopyWith<Filter, $Res> get dayTime;
+  $FiltersSectionCopyWith<Filter, $Res> get season;
+  $FiltersSectionCopyWith<Filter, $Res> get weather;
+  $FiltersSectionCopyWith<Filter, $Res> get atmosphere;
+  $FiltersSectionCopyWith<Filter, $Res> get persons;
+  $FiltersSectionCopyWith<Filter, $Res> get orientation;
+  $FiltersSectionCopyWith<ColorsFilter, $Res> get colors;
 }
 
 /// @nodoc
@@ -74,80 +72,93 @@ class _$FiltersListCopyWithImpl<$Res, $Val extends FiltersList>
     Object? atmosphere = null,
     Object? persons = null,
     Object? orientation = null,
+    Object? colors = null,
   }) {
     return _then(_value.copyWith(
       dayTime: null == dayTime
           ? _value.dayTime
           : dayTime // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       season: null == season
           ? _value.season
           : season // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       weather: null == weather
           ? _value.weather
           : weather // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       atmosphere: null == atmosphere
           ? _value.atmosphere
           : atmosphere // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       persons: null == persons
           ? _value.persons
           : persons // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       orientation: null == orientation
           ? _value.orientation
           : orientation // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
+      colors: null == colors
+          ? _value.colors
+          : colors // ignore: cast_nullable_to_non_nullable
+              as FiltersSection<ColorsFilter>,
     ) as $Val);
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get dayTime {
-    return $FiltersSectionCopyWith<$Res>(_value.dayTime, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get dayTime {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.dayTime, (value) {
       return _then(_value.copyWith(dayTime: value) as $Val);
     });
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get season {
-    return $FiltersSectionCopyWith<$Res>(_value.season, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get season {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.season, (value) {
       return _then(_value.copyWith(season: value) as $Val);
     });
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get weather {
-    return $FiltersSectionCopyWith<$Res>(_value.weather, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get weather {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.weather, (value) {
       return _then(_value.copyWith(weather: value) as $Val);
     });
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get atmosphere {
-    return $FiltersSectionCopyWith<$Res>(_value.atmosphere, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get atmosphere {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.atmosphere, (value) {
       return _then(_value.copyWith(atmosphere: value) as $Val);
     });
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get persons {
-    return $FiltersSectionCopyWith<$Res>(_value.persons, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get persons {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.persons, (value) {
       return _then(_value.copyWith(persons: value) as $Val);
     });
   }
 
   @override
   @pragma('vm:prefer-inline')
-  $FiltersSectionCopyWith<$Res> get orientation {
-    return $FiltersSectionCopyWith<$Res>(_value.orientation, (value) {
+  $FiltersSectionCopyWith<Filter, $Res> get orientation {
+    return $FiltersSectionCopyWith<Filter, $Res>(_value.orientation, (value) {
       return _then(_value.copyWith(orientation: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $FiltersSectionCopyWith<ColorsFilter, $Res> get colors {
+    return $FiltersSectionCopyWith<ColorsFilter, $Res>(_value.colors, (value) {
+      return _then(_value.copyWith(colors: value) as $Val);
     });
   }
 }
@@ -161,25 +172,28 @@ abstract class _$$FiltersListImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {FiltersSection dayTime,
-      FiltersSection season,
-      FiltersSection weather,
-      FiltersSection atmosphere,
-      FiltersSection persons,
-      FiltersSection orientation});
+      {FiltersSection<Filter> dayTime,
+      FiltersSection<Filter> season,
+      FiltersSection<Filter> weather,
+      FiltersSection<Filter> atmosphere,
+      FiltersSection<Filter> persons,
+      FiltersSection<Filter> orientation,
+      FiltersSection<ColorsFilter> colors});
 
   @override
-  $FiltersSectionCopyWith<$Res> get dayTime;
+  $FiltersSectionCopyWith<Filter, $Res> get dayTime;
   @override
-  $FiltersSectionCopyWith<$Res> get season;
+  $FiltersSectionCopyWith<Filter, $Res> get season;
   @override
-  $FiltersSectionCopyWith<$Res> get weather;
+  $FiltersSectionCopyWith<Filter, $Res> get weather;
   @override
-  $FiltersSectionCopyWith<$Res> get atmosphere;
+  $FiltersSectionCopyWith<Filter, $Res> get atmosphere;
   @override
-  $FiltersSectionCopyWith<$Res> get persons;
+  $FiltersSectionCopyWith<Filter, $Res> get persons;
   @override
-  $FiltersSectionCopyWith<$Res> get orientation;
+  $FiltersSectionCopyWith<Filter, $Res> get orientation;
+  @override
+  $FiltersSectionCopyWith<ColorsFilter, $Res> get colors;
 }
 
 /// @nodoc
@@ -199,38 +213,43 @@ class __$$FiltersListImplCopyWithImpl<$Res>
     Object? atmosphere = null,
     Object? persons = null,
     Object? orientation = null,
+    Object? colors = null,
   }) {
     return _then(_$FiltersListImpl(
       dayTime: null == dayTime
           ? _value.dayTime
           : dayTime // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       season: null == season
           ? _value.season
           : season // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       weather: null == weather
           ? _value.weather
           : weather // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       atmosphere: null == atmosphere
           ? _value.atmosphere
           : atmosphere // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       persons: null == persons
           ? _value.persons
           : persons // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
       orientation: null == orientation
           ? _value.orientation
           : orientation // ignore: cast_nullable_to_non_nullable
-              as FiltersSection,
+              as FiltersSection<Filter>,
+      colors: null == colors
+          ? _value.colors
+          : colors // ignore: cast_nullable_to_non_nullable
+              as FiltersSection<ColorsFilter>,
     ));
   }
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$FiltersListImpl implements _FiltersList {
   const _$FiltersListImpl(
       {required this.dayTime,
@@ -238,27 +257,27 @@ class _$FiltersListImpl implements _FiltersList {
       required this.weather,
       required this.atmosphere,
       required this.persons,
-      required this.orientation});
-
-  factory _$FiltersListImpl.fromJson(Map<String, dynamic> json) =>
-      _$$FiltersListImplFromJson(json);
+      required this.orientation,
+      required this.colors});
 
   @override
-  final FiltersSection dayTime;
+  final FiltersSection<Filter> dayTime;
   @override
-  final FiltersSection season;
+  final FiltersSection<Filter> season;
   @override
-  final FiltersSection weather;
+  final FiltersSection<Filter> weather;
   @override
-  final FiltersSection atmosphere;
+  final FiltersSection<Filter> atmosphere;
   @override
-  final FiltersSection persons;
+  final FiltersSection<Filter> persons;
   @override
-  final FiltersSection orientation;
+  final FiltersSection<Filter> orientation;
+  @override
+  final FiltersSection<ColorsFilter> colors;
 
   @override
   String toString() {
-    return 'FiltersList(dayTime: $dayTime, season: $season, weather: $weather, atmosphere: $atmosphere, persons: $persons, orientation: $orientation)';
+    return 'FiltersList(dayTime: $dayTime, season: $season, weather: $weather, atmosphere: $atmosphere, persons: $persons, orientation: $orientation, colors: $colors)';
   }
 
   @override
@@ -273,52 +292,45 @@ class _$FiltersListImpl implements _FiltersList {
                 other.atmosphere == atmosphere) &&
             (identical(other.persons, persons) || other.persons == persons) &&
             (identical(other.orientation, orientation) ||
-                other.orientation == orientation));
+                other.orientation == orientation) &&
+            (identical(other.colors, colors) || other.colors == colors));
   }
 
-  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, dayTime, season, weather, atmosphere, persons, orientation);
+  int get hashCode => Object.hash(runtimeType, dayTime, season, weather,
+      atmosphere, persons, orientation, colors);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$FiltersListImplCopyWith<_$FiltersListImpl> get copyWith =>
       __$$FiltersListImplCopyWithImpl<_$FiltersListImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$FiltersListImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _FiltersList implements FiltersList {
   const factory _FiltersList(
-      {required final FiltersSection dayTime,
-      required final FiltersSection season,
-      required final FiltersSection weather,
-      required final FiltersSection atmosphere,
-      required final FiltersSection persons,
-      required final FiltersSection orientation}) = _$FiltersListImpl;
-
-  factory _FiltersList.fromJson(Map<String, dynamic> json) =
-      _$FiltersListImpl.fromJson;
+      {required final FiltersSection<Filter> dayTime,
+      required final FiltersSection<Filter> season,
+      required final FiltersSection<Filter> weather,
+      required final FiltersSection<Filter> atmosphere,
+      required final FiltersSection<Filter> persons,
+      required final FiltersSection<Filter> orientation,
+      required final FiltersSection<ColorsFilter> colors}) = _$FiltersListImpl;
 
   @override
-  FiltersSection get dayTime;
+  FiltersSection<Filter> get dayTime;
   @override
-  FiltersSection get season;
+  FiltersSection<Filter> get season;
   @override
-  FiltersSection get weather;
+  FiltersSection<Filter> get weather;
   @override
-  FiltersSection get atmosphere;
+  FiltersSection<Filter> get atmosphere;
   @override
-  FiltersSection get persons;
+  FiltersSection<Filter> get persons;
   @override
-  FiltersSection get orientation;
+  FiltersSection<Filter> get orientation;
+  @override
+  FiltersSection<ColorsFilter> get colors;
   @override
   @JsonKey(ignore: true)
   _$$FiltersListImplCopyWith<_$FiltersListImpl> get copyWith =>

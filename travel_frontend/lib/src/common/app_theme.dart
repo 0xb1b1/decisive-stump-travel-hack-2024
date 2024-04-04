@@ -11,6 +11,11 @@ class AppTheme {
     return sourceTheme.copyWith(
       scaffoldBackgroundColor: AppPalette.black,
       checkboxTheme: CheckboxThemeData(
+        visualDensity: VisualDensity.compact,
+        side: const BorderSide(
+          color: AppPalette.darkGrey,
+          width: 2.0,
+        ),
         fillColor: const MaterialStatePropertyAll(AppPalette.white),
         splashRadius: 16,
         shape: RoundedRectangleBorder(

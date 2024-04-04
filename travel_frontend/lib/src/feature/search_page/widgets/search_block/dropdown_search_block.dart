@@ -54,36 +54,37 @@ class _DropdownSearchBlockState extends State<DropdownSearchBlock>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SearchBlock(
-          onSearchPhoto: () {},
-          onFiltersTap: _toggleDropdown,
-        ),
-        SizeTransition(
-          sizeFactor: _animation,
-          axis: Axis.vertical,
-          axisAlignment: -1,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              ViewModelWidget<FiltersViewModel>(
-                builder: (
-                  BuildContext context,
-                  FiltersViewModel vm,
-                  Widget? child,
-                ) =>
-                    FiltersContainer(
+    return ViewModelWidget<FiltersViewModel>(
+      builder: (
+        BuildContext context,
+        FiltersViewModel vm,
+        Widget? child,
+      ) =>
+          Column(
+        children: [
+          SearchBlock(
+            onSearchPhoto: () {},
+            onFiltersTap: _toggleDropdown,
+            isFiltersChosen: widget.filtersViewModel.isFiltersChosen,
+          ),
+          SizeTransition(
+            sizeFactor: _animation,
+            axis: Axis.vertical,
+            axisAlignment: -1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                FiltersContainer(
                   filtersList: vm.state.filtersList,
                   filtersViewModel: vm,
-                ),
-                model: widget.filtersViewModel,
-              )
-            ],
+                )
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+      model: widget.filtersViewModel,
     );
   }
 }

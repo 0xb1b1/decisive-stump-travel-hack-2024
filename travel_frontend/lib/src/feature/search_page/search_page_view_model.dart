@@ -1,9 +1,7 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
-import 'package:travel_frontend/src/api/models/gallery_image.dart';
 import 'package:travel_frontend/src/feature/search_page/models/search_view_state.dart';
 
 import '../../domain/search_repository.dart';
@@ -41,20 +39,18 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     }
   }
 
-  void changeGallery() {
-    // final currentState = state;
-    // if (currentState is! SearchViewStateData) {
-    //   return;
-    // }
-    //
-    // final targetState = currentState.copyWith(
-    //   images: [GalleryImage.mock()],
-    // );
-    // emit(targetState);
+  @override
+  void dispose() {
+    super.dispose();
   }
 
-  void onImageTap(String uuid) =>
-      _navigationService.pushNamed(Routes.imageStats, arguments: uuid);
+  Future<void> onImageTap(String filename) async {
+    final currentState = state;
+    emit(loadingState);
+    final image = await _searchRepository.getImage(filename);
+    _navigationService.pushNamed(Routes.imageStats, arguments: image);
+    emit(currentState);
+  }
 
   Future<void> pickImage() async {
     final image = await _imagePicker.pickImage(source: ImageSource.gallery);

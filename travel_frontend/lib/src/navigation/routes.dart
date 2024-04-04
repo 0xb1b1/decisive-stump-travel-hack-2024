@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/full_image.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page.dart';
 
 import '../feature/image_stats/image_stats.dart';
@@ -14,7 +15,7 @@ abstract class Routes {
           builder: (_) => const SearchPage(),
         ),
     Routes.imageStats: (settings) => MaterialPageRoute<void>(
-          builder: (_) => ImageStats(filename: settings.arguments as String),
+          builder: (_) => ImageStats(image: settings.arguments as FullImage),
           settings: settings,
         ),
   };
