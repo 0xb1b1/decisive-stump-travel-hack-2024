@@ -14,8 +14,8 @@ pub struct ImageInfo {
     pub main_color: Option<String>,
     pub landmark: Option<String>,
     pub grayscale: Option<bool>,
-    pub views_count: Option<u32>,
-    pub downloads_count: Option<u32>,
+    pub view_count: Option<u32>,
+    pub download_count: Option<u32>,
     pub error: Option<String>,
 }
 impl ImageInfo {
@@ -33,8 +33,8 @@ impl ImageInfo {
             main_color: None,
             landmark: None,
             grayscale: None,
-            views_count: None,
-            downloads_count: None,
+            view_count: None,
+            download_count: None,
             error: None,
         }
     }

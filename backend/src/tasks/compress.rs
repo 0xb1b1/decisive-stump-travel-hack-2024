@@ -145,8 +145,8 @@ pub async fn compress_image(
                 main_color: None,
                 landmark: None,
                 grayscale: None,
-                views_count: None,
-                downloads_count: None,
+                view_count: None,
+                download_count: None,
                 error: None,
             });
         }

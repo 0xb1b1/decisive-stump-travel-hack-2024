@@ -34,8 +34,8 @@ impl UploadImage<'_> {
             main_color: self.color.clone(),
             landmark: self.landmark.clone(),
             grayscale: self.grayscale,
-            views_count: None,
-            downloads_count: None,
+            view_count: None,
+            download_count: None,
             error: None,
         }
     }
