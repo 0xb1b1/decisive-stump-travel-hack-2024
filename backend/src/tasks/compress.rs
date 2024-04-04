@@ -142,7 +142,7 @@ pub async fn compress_image(
                 atmosphere: None,
                 season: None,
                 number_of_people: None,
-                colors: None,
+                color: None,
                 landmark: None,
                 grayscale: None,
                 error: None,
