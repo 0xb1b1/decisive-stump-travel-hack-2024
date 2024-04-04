@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_container.dart';
+import 'package:travel_frontend/core/view_model_widget.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/widgets/filters_container.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/search_block/widgets/search_block.dart';
 
 class DropdownSearchBlock extends StatefulWidget {
+  final FiltersViewModel filtersViewModel;
   final VoidCallback onFiltersTap;
   final VoidCallback onSearchPhoto;
 
@@ -11,6 +14,7 @@ class DropdownSearchBlock extends StatefulWidget {
     super.key,
     required this.onFiltersTap,
     required this.onSearchPhoto,
+    required this.filtersViewModel,
   });
 
   @override
@@ -60,11 +64,22 @@ class _DropdownSearchBlockState extends State<DropdownSearchBlock>
           sizeFactor: _animation,
           axis: Axis.vertical,
           axisAlignment: -1,
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 16),
-              FiltersContainer(),
+              const SizedBox(height: 16),
+              ViewModelWidget<FiltersViewModel>(
+                builder: (
+                  BuildContext context,
+                  FiltersViewModel vm,
+                  Widget? child,
+                ) =>
+                    FiltersContainer(
+                  filtersList: vm.state.filtersList,
+                  filtersViewModel: vm,
+                ),
+                model: widget.filtersViewModel,
+              )
             ],
           ),
         ),

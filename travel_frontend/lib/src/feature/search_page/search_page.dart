@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dropdown_search_block.dart';
 
 import 'package:travel_frontend/src/feature/search_page_providers.dart';
@@ -19,6 +20,7 @@ class SearchPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vm = ref.watch(searchViewModelProvider);
+    final filtersVm = ref.watch(filtersViewModelProvider);
 
     return ViewModelWidget<SearchPageViewModel>(
       model: vm,
@@ -54,6 +56,7 @@ class SearchPage extends ConsumerWidget {
                         DropdownSearchBlock(
                           onFiltersTap: vm.changeGallery,
                           onSearchPhoto: vm.pickImage,
+                          filtersViewModel: filtersVm,
                         ),
                         const SizedBox(height: 16),
                       ],

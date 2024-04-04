@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/common/app_palette.dart';
 
 class AppTypography {
   AppTypography._();
@@ -37,5 +38,11 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     fontSize: 14,
     color: Colors.white,
+  );
+
+  static const filtersTitle = TextStyle(
+    fontWeight: FontWeight.w400,
+    fontSize: 14,
+    color: AppPalette.darkGrey,
   );
 }
