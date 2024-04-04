@@ -37,7 +37,7 @@ class FiltersContainer extends StatelessWidget {
           Expanded(
             child: FiltersColumn(
               filtersSection: filtersList.dayTime,
-              onFiltersTap: (_) {},
+              onFiltersTap: filtersViewModel.checkDayTime,
             ),
           ),
           Expanded(

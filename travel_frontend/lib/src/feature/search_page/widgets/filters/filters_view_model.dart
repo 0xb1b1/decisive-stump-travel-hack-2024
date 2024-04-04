@@ -26,16 +26,20 @@ class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
 
   void checkDayTime(String title) {
     final currentDayTime = state.filtersList.dayTime.filters;
-    final targetDayTime = _invertCheckedValue(currentDayTime, title);
 
+    final targetDayTime = _invertCheckedValue(currentDayTime, title);
     final targetFiltersSection =
         state.filtersList.dayTime.copyWith(filters: targetDayTime);
 
     final currentSearch = state.search;
+
     final targetFilters =
         state.filtersList.copyWith(dayTime: targetFiltersSection);
+
     emit(state.copyWith(search: currentSearch, filtersList: targetFilters));
   }
+
+  void getSelectedFilters() {}
 
   List<Filter> _invertCheckedValue(List<Filter> filters, String title) =>
       filters

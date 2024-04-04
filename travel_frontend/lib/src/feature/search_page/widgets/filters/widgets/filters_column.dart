@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filters_section.dart';
 
+import '../../../../../common/app_palette.dart';
+
 class FiltersColumn extends StatelessWidget {
   final FiltersSection filtersSection;
   final void Function(String) onFiltersTap;
@@ -59,7 +61,8 @@ class _FilterItem extends StatelessWidget {
       children: [
         Checkbox(
           value: checked,
-          onChanged: (_) => onCheckboxTap,
+          onChanged: (_) => onCheckboxTap.call(),
+          activeColor: AppPalette.yellow,
         ),
         const SizedBox(width: 8),
         Text(
