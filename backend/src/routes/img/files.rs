@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use async_std::task;
 use log;
 use rocket::http::{ContentType, MediaType};
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
@@ -9,17 +12,20 @@ use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
 use ds_travel_hack_2024::models::http::images::ImageInfo;
 use ds_travel_hack_2024::models::http::uploads::{
-    DeleteImageResponse, UploadImage, UploadImageResponse,
+    DeleteImageResponse, ImageStatusResponse, UploadImage, UploadImageResponse,
 };
 use ds_travel_hack_2024::utils;
 use ds_travel_hack_2024::utils::s3::images::get_img;
+
+use crate::config::DsConfig;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         upload_image,
         delete_image,
         // get_image_list,
-        get_image_full
+        get_image_full,
+        check_image_upload,
     ]
 }
 
@@ -38,20 +44,8 @@ async fn upload_image(
                 return status::Custom(
                     Status::BadRequest,
                     Json(UploadImageResponse {
-                        is_stored: false,
-                        is_accepted: false,
-                        filename: None,
-                        label: form.label.clone(),
-                        tags: form.tags.clone(),
-                        time_of_day: form.time_of_day.clone(),
-                        weather: form.weather.clone(),
-                        atmosphere: form.atmosphere.clone(),
-                        season: form.season.clone(),
-                        number_of_people: form.number_of_people.clone(),
-                        color: form.color.clone(),
-                        landmark: form.landmark.clone(),
-                        grayscale: form.grayscale,
                         error: Some("Failed to get file name.".into()),
+                        ..UploadImageResponse::from_form(&form, false, false)
                     }),
                 );
             }
@@ -71,20 +65,8 @@ async fn upload_image(
             return status::Custom(
                 Status::BadRequest,
                 Json(UploadImageResponse {
-                    is_stored: false,
-                    is_accepted: false,
-                    filename: None,
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale,
                     error: Some("Failed to get file type.".into()),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -95,20 +77,8 @@ async fn upload_image(
         return status::Custom(
             Status::UnsupportedMediaType,
             Json(UploadImageResponse {
-                is_stored: false, // File is definitely not stored since it's not an image
-                is_accepted: false,
-                label: form.label.clone(),
-                filename: None,
-                tags: form.tags.clone(),
-                time_of_day: form.time_of_day.clone(),
-                weather: form.weather.clone(),
-                atmosphere: form.atmosphere.clone(),
-                season: form.season.clone(),
-                number_of_people: form.number_of_people.clone(),
-                color: form.color.clone(),
-                landmark: form.landmark.clone(),
-                grayscale: form.grayscale,
-                error: Some("Unsupported file type.".into()),
+                error: Some("Invalid file type.".into()),
+                ..UploadImageResponse::from_form(&form, false, false)
             }),
         );
     }
@@ -149,20 +119,9 @@ async fn upload_image(
             return status::Custom(
                 Status::Conflict,
                 Json(UploadImageResponse {
-                    is_stored: true,
-                    is_accepted: false,
                     filename: Some(file_name.clone()),
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale,
                     error: Some("File already exists.".into()),
+                    ..UploadImageResponse::from_form(&form, true, false)
                 }),
             );
         }
@@ -177,20 +136,8 @@ async fn upload_image(
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
-                    is_stored: false,
-                    is_accepted: false,
-                    filename: None,
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale,
                     error: Some(format!("Failed to check image lock: {}", e)),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -201,20 +148,8 @@ async fn upload_image(
         return status::Custom(
             Status::Locked,
             Json(UploadImageResponse {
-                is_stored: false,
-                is_accepted: false,
-                filename: None,
-                label: form.label.clone(),
-                tags: form.tags.clone(),
-                time_of_day: form.time_of_day.clone(),
-                weather: form.weather.clone(),
-                atmosphere: form.atmosphere.clone(),
-                season: form.season.clone(),
-                number_of_people: form.number_of_people.clone(),
-                color: form.color.clone(),
-                landmark: form.landmark.clone(),
-                grayscale: form.grayscale.clone(),
                 error: Some("Image is locked.".into()),
+                ..UploadImageResponse::from_form(&form, false, false)
             }),
         );
     }
@@ -227,20 +162,8 @@ async fn upload_image(
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
-                    is_stored: false,
-                    is_accepted: false,
-                    filename: None,
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale,
                     error: Some(format!("Failed to lock image: {}", e)),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -266,20 +189,8 @@ async fn upload_image(
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
-                    is_stored: true,
-                    is_accepted: false,
-                    filename: None,
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale.clone(),
-                    error: Some(format!("Failed to save file: {}", e)),
+                    error: Some(format!("Failed to send data to S3: {}", e)),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -299,23 +210,12 @@ async fn upload_image(
             locks::image_upload::unlock(&file_path, &redis_pool)
                 .await
                 .unwrap();
+            // TODO: Delete image from all buckets?
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
-                    is_stored: true,
-                    is_accepted: true,
-                    filename: Some(file_name),
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale.clone(),
                     error: Some(format!("Failed to set image info in Redis: {}", e)),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -342,23 +242,12 @@ async fn upload_image(
             locks::image_upload::unlock(&file_path, &redis_pool)
                 .await
                 .unwrap();
+            // TODO: Delete image from all buckets?
             return status::Custom(
                 Status::InternalServerError,
                 Json(UploadImageResponse {
-                    is_stored: true,
-                    is_accepted: true,
-                    filename: Some(file_name),
-                    label: form.label.clone(),
-                    tags: form.tags.clone(),
-                    time_of_day: form.time_of_day.clone(),
-                    weather: form.weather.clone(),
-                    atmosphere: form.atmosphere.clone(),
-                    season: form.season.clone(),
-                    number_of_people: form.number_of_people.clone(),
-                    color: form.color.clone(),
-                    landmark: form.landmark.clone(),
-                    grayscale: form.grayscale.clone(),
                     error: Some(format!("Failed to send message to RSMQ: {}", e)),
+                    ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
@@ -375,25 +264,103 @@ async fn upload_image(
     status::Custom(
         Status::Ok,
         Json(UploadImageResponse {
-            is_stored: true,
-            is_accepted: true,
             filename: Some(file_name),
-            label: form.label.clone(),
-            tags: form.tags.clone(),
-            time_of_day: form.time_of_day.clone(),
-            weather: form.weather.clone(),
-            atmosphere: form.atmosphere.clone(),
-            season: form.season.clone(),
-            number_of_people: form.number_of_people.clone(),
-            color: form.color.clone(),
-            landmark: form.landmark.clone(),
-            grayscale: form.grayscale,
-            error: None,
+            ..UploadImageResponse::from_form(&form, true, true)
         }),
     )
 }
 
-#[delete("/delete/<file_name>")]
+#[get("/upload/check?<file_name>")]
+async fn check_image_upload(
+    file_name: &str,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+) -> status::Custom<Json<ImageStatusResponse>> {
+    log::debug!("Checking image upload status: {}", file_name);
+
+    let mut conn = match redis_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get connection from Redis pool: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    ..ImageStatusResponse::new(file_name)
+                }),
+            );
+        }
+    };
+
+    let mut timeout_counter = 0;
+    loop {
+        if timeout_counter >= 10 {
+            log::error!("Image upload check timed out: {}", file_name);
+            return status::Custom(
+                Status::RequestTimeout,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    error: Some("Image upload check timed out.".into()),
+                    ..ImageStatusResponse::new(file_name)
+                }),
+            );
+        }
+
+        let image_exists: bool = redis::cmd("EXISTS")
+            .arg(format!("images:info:{}", file_name))
+            .query_async(&mut *conn)
+            .await
+            .unwrap();
+
+        if !image_exists {
+            log::error!("Image does not exist: {}", file_name);
+            return status::Custom(
+                Status::NotFound,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    error: Some("Image does not exist (it probably timed out.)".into()),
+                    ..ImageStatusResponse::new(file_name)
+                }),
+            );
+        } else {
+            log::debug!("Image exists: {}", file_name);
+        }
+
+        let is_ml_uploaded: Option<bool> = match redis::cmd("EXISTS")
+            .arg(format!("images:upload:ready:{}", file_name))
+            .query_async(&mut *conn)
+            .await
+        {
+            Ok(data) => match data {
+                redis::Value::Data(_) => Some(true),
+                _ => Some(false),
+            },
+            Err(e) => {
+                log::error!("Failed to get image status: {}", e);
+                None
+            }
+        };
+
+        if is_ml_uploaded.is_some() && is_ml_uploaded.unwrap() {
+            log::debug!("Image is ready: {}", file_name);
+            return status::Custom(
+                Status::Ok,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: is_ml_uploaded,
+                    ..ImageStatusResponse::new(file_name)
+                }),
+            );
+        }
+
+        log::debug!(
+            "Image is not ready, waiting before trying again: {}",
+            file_name
+        );
+        timeout_counter += 1;
+        task::sleep(Duration::from_secs(1)).await;
+    }
+}
+
+#[delete("/delete?<file_name>")]
 async fn delete_image(
     file_name: &str,
     bucket: &rocket::State<Bucket>,
@@ -537,8 +504,66 @@ async fn get_image_full(
     file_name: &str,
     // pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
     bucket: &rocket::State<Bucket>,
+    config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<ImageInfo>> {
-    log::debug!("Fetching image: {}", file_name);
+    log::debug!("Getting image info from ML: {}", file_name);
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(40))
+        .build()
+        .unwrap();
+
+    let url = format!("{}/images/info/{}", config.svc_ml_fast, file_name);
+    let req_body: &str = "[\"label\", \"tags\", \"filename\"]";
+
+    let image_info: ImageInfo = match client
+        .post(&url)
+        .body(req_body)
+        .header("Content-Type", "application/json")
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            let resp_body = match resp.text().await {
+                Ok(body) => body,
+                Err(e) => {
+                    log::error!("Failed to get image info: {}", e);
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(ImageInfo {
+                            error: Some(format!("Failed to get image info: {}", e)),
+                            ..ImageInfo::new(file_name)
+                        }),
+                    );
+                }
+            };
+
+            match serde_json::from_str(&resp_body) {
+                Ok(data) => data,
+                Err(e) => {
+                    log::error!("Failed to parse image info: {}", e);
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(ImageInfo {
+                            error: Some(format!("Failed to parse image info: {}", e)),
+                            ..ImageInfo::new(file_name)
+                        }),
+                    );
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to get image info: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageInfo {
+                    error: Some(format!("Failed to get image info: {}", e)),
+                    ..ImageInfo::new(file_name)
+                }),
+            );
+        }
+    };
+
+    log::debug!("Creating presigned URL: {}", file_name);
     // Get presigned URL
     let s3_presigned_url = match utils::s3::images::get_presigned_url(
         &file_name, &bucket, 900, // 15 minutes
@@ -551,19 +576,8 @@ async fn get_image_full(
             return status::Custom(
                 Status::InternalServerError,
                 Json(ImageInfo {
-                    filename: file_name.to_string(),
-                    s3_presigned_url: None,
-                    label: None, // TODO: Add fields!!!!!!
-                    tags: None,
-                    time_of_day: None,
-                    atmosphere: None,
-                    weather: None,
-                    season: None,
-                    number_of_people: None,
-                    color: None,
-                    landmark: None,
-                    grayscale: None,
                     error: Some("Failed to get presigned URL.".into()),
+                    ..ImageInfo::new(file_name)
                 }),
             );
         }
@@ -572,19 +586,8 @@ async fn get_image_full(
     status::Custom(
         Status::Ok,
         Json(ImageInfo {
-            filename: file_name.to_string(),
             s3_presigned_url: Some(s3_presigned_url),
-            label: None, // TODO: Add fields!!!!!!
-            tags: None,
-            time_of_day: None,
-            weather: None,
-            atmosphere: None,
-            season: None,
-            number_of_people: None,
-            color: None,
-            landmark: None,
-            grayscale: None,
-            error: None,
+            ..image_info
         }),
     )
 }

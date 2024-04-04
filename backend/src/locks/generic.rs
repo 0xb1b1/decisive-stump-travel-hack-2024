@@ -81,7 +81,7 @@ pub async fn check(
 
     // Check if key exists
     match redis::cmd("GET")
-        .arg(format!("{}-{}", prefix, key))
+        .arg(format!("lock:{}:{}", prefix, key))
         .query_async(&mut *conn)
         .await
     {

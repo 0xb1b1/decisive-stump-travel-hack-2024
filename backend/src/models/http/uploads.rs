@@ -1,6 +1,6 @@
-use rocket::form::FromForm;
+use rocket::form::{Form, FromForm};
 use rocket::fs::TempFile;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::images::ImageInfo;
 
@@ -31,9 +31,11 @@ impl UploadImage<'_> {
             atmosphere: self.atmosphere.clone(),
             season: self.season.clone(),
             number_of_people: self.number_of_people,
-            color: self.color.clone(),
+            main_color: self.color.clone(),
             landmark: self.landmark.clone(),
             grayscale: self.grayscale,
+            views_count: None,
+            downloads_count: None,
             error: None,
         }
     }
@@ -55,6 +57,48 @@ pub struct UploadImageResponse {
     pub landmark: Option<String>,
     pub grayscale: Option<bool>,
     pub error: Option<String>,
+}
+impl UploadImageResponse {
+    pub fn from_form<'f>(
+        form: &Form<UploadImage<'f>>,
+        is_stored: bool,
+        is_accepted: bool,
+    ) -> UploadImageResponse {
+        UploadImageResponse {
+            is_stored: is_stored,
+            is_accepted: is_accepted,
+            filename: None,
+            label: form.label.clone(),
+            tags: form.tags.clone(),
+            time_of_day: form.time_of_day.clone(),
+            weather: form.weather.clone(),
+            atmosphere: form.atmosphere.clone(),
+            season: form.season.clone(),
+            number_of_people: form.number_of_people,
+            color: form.color.clone(),
+            landmark: form.landmark.clone(),
+            grayscale: form.grayscale,
+            error: form.error.clone(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ImageStatusResponse {
+    pub filename: String,
+    pub is_ml_uploaded: Option<bool>,
+    pub is_ml_published: Option<bool>,
+    pub error: Option<String>,
+}
+impl ImageStatusResponse {
+    pub fn new(filename: &str) -> ImageStatusResponse {
+        ImageStatusResponse {
+            filename: filename.to_string(),
+            is_ml_uploaded: None,
+            is_ml_published: None,
+            error: None,
+        }
+    }
 }
 
 #[derive(Serialize)]

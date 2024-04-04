@@ -3,7 +3,9 @@ use redis::RedisError;
 use rsmq_async::RsmqConnection;
 use std::time::Duration;
 
-use ds_travel_hack_2024::connections::{self, urls::get_urls};
+mod config;
+
+use ds_travel_hack_2024::connections;
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
 use ds_travel_hack_2024::models::http::{images::ImageInfoGallery, main_page::RedisGalleryStore};
@@ -35,9 +37,9 @@ async fn main() {
         .unwrap();
     log::info!("Connected to Minio.");
 
-    log::info!("Getting DS URLs from environment...");
-    let ds_urls = get_urls();
-    log::info!("DS URLs: {:?}", ds_urls);
+    log::info!("Creating configuration...");
+    let config = config::get_config().unwrap();
+    log::info!("Created configuration: {:?}", config);
 
     let mut worker_queue_counter: u8 = 1; // <255
     loop {
@@ -224,7 +226,7 @@ async fn main() {
                 log::debug!("Main gallery not found in Redis.");
                 log::warn!("Asking ML to repopulate the main gallery.");
                 match reqwest::get(
-                    format!("{}/main/{}", ds_urls.ml_neighbors_fast.as_str(), 100), // TODO: Set via ENV
+                    format!("{}/main/{}", config.svc_ml_fast, 100), // TODO: Set via ENV
                 )
                 .await
                 {

@@ -142,9 +142,11 @@ pub async fn compress_image(
                 atmosphere: None,
                 season: None,
                 number_of_people: None,
-                color: None,
+                main_color: None,
                 landmark: None,
                 grayscale: None,
+                views_count: None,
+                downloads_count: None,
                 error: None,
             });
         }

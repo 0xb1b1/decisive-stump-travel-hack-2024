@@ -7,6 +7,7 @@ use rocket::http::Header;
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
 
+mod config;
 mod routes;
 
 use ds_travel_hack_2024::connections;
@@ -61,6 +62,9 @@ async fn rocket() -> _ {
     let click = connections::click::get_client().await.unwrap();
     log::info!("Connected to ClickHouse.");
 
+    log::info!("Creating configuration...");
+    let config = config::get_config().unwrap();
+    log::info!("Created configuration: {:?}", config);
     // let limits = Limits::default()
     //     .limit("data-form", 64.mebibytes())
     //     .limit("file", 64.mebibytes());
@@ -70,6 +74,7 @@ async fn rocket() -> _ {
         .manage(rsmq_pool)
         .manage(bucket)
         .manage(click)
+        .manage(config)
         .mount("/", routes![get_root])
         .mount("/img", routes::img::routes())
         .mount("/test", routes::test::routes())
