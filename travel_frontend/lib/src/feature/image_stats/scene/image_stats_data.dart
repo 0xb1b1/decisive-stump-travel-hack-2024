@@ -12,6 +12,7 @@ class ImageStatsData extends StatelessWidget {
   final Gallery similarImages;
   final void Function(String) onDownloadTap;
   final void Function(String) onImageTap;
+  final void Function(String) onTagTap;
 
   const ImageStatsData({
     super.key,
@@ -19,6 +20,7 @@ class ImageStatsData extends StatelessWidget {
     required this.onDownloadTap,
     required this.similarImages,
     required this.onImageTap,
+    required this.onTagTap,
   });
 
   final _photoBlockHeight = 400.0;
@@ -59,7 +61,10 @@ class ImageStatsData extends StatelessWidget {
                             maxLines: 2,
                           ),
                           const SizedBox(height: 16),
-                          ImageTags(tags: image.tags),
+                          ImageTags(
+                            tags: image.tags,
+                            onTagTap: onTagTap,
+                          ),
                         ],
                       ),
                       const Spacer(),

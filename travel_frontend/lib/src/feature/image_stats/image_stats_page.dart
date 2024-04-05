@@ -50,6 +50,7 @@ class ImageStats extends ConsumerWidget {
                 similarImages: gallery,
                 onDownloadTap: (_) {},
                 onImageTap: vm.onImageTap,
+                onTagTap: vm.searchTag,
               ),
               loading: () => const Center(
                 child: CircularProgressIndicator(

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
@@ -15,12 +16,20 @@ import 'package:travel_frontend/src/feature/search_page/search_page_view_model.d
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
+import '../../navigation/routes.dart';
+
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vm = ref.watch(searchViewModelProvider);
+    final tag = componentArg0f<String>(
+      context,
+      RoutesArgs.tag,
+    );
+    final query = tag == null ? null : ImageSearchQuery(tags: [tag]);
+
+    final vm = ref.watch(searchViewModelProvider(query));
     final filtersVm = ref.watch(filtersViewModelProvider);
 
     return ViewModelWidget<SearchPageViewModel>(

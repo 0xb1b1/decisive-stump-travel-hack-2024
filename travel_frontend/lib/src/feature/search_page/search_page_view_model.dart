@@ -13,14 +13,17 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   final ImagePicker _imagePicker;
   final SearchRepository _searchRepository;
   final NavigationService _navigationService;
+  final ImageSearchQuery? _initialSearch;
 
   SearchPageViewModel({
     required ImagePicker imagePicker,
     required SearchRepository searchRepository,
     required NavigationService navigationService,
+    required ImageSearchQuery? initialSearch,
   })  : _imagePicker = imagePicker,
         _searchRepository = searchRepository,
-        _navigationService = navigationService;
+        _navigationService = navigationService,
+        _initialSearch = initialSearch;
 
   SearchViewState get loadingState => const SearchViewState.loading();
 
@@ -34,6 +37,21 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   @override
   Future<void> init() async {
     super.init();
+
+    if (_initialSearch != null) {
+      try {
+        final gallery = await _searchRepository.search(_initialSearch);
+        if (gallery.images.isEmpty) {
+          emit(emptyState);
+          return;
+        }
+        emit(SearchViewState.data(images: gallery.images));
+      } on Object catch (e, _) {
+        emit(errorState);
+      }
+      return;
+    }
+
     try {
       final gallery = await _searchRepository.getGallery();
       if (gallery.images.isEmpty) {

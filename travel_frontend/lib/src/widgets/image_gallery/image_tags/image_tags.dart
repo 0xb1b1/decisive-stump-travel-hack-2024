@@ -5,10 +5,12 @@ import '../../../utils/utils.dart';
 
 class ImageTags extends StatelessWidget {
   final List<String> tags;
+  final void Function(String) onTagTap;
 
   const ImageTags({
     super.key,
     required this.tags,
+    required this.onTagTap,
   });
 
   @override
@@ -16,7 +18,14 @@ class ImageTags extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: Utils.makeUpperList(tags).map((e) => ImageTag(tag: e)).toList(),
+      children: Utils.makeUpperList(tags)
+          .map(
+            (e) => ImageTag(
+              tag: e,
+              onTagTap: onTagTap,
+            ),
+          )
+          .toList(),
     );
   }
 }

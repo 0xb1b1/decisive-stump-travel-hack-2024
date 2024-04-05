@@ -1,19 +1,26 @@
 import 'package:travel_frontend/core/base_view_model.dart';
 import 'package:travel_frontend/src/api/models/gallery.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/domain/search_repository.dart';
 import 'package:travel_frontend/src/feature/image_stats/models/image_stats_view_state.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
+import '../../navigation/navigation_service.dart';
+import '../../navigation/routes.dart';
+
 class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
   final String _filename;
   final SearchRepository _searchRepository;
+  final NavigationService _navigation;
 
   ImageStatsViewModel({
     required String filename,
     required SearchRepository searchRepository,
+    required NavigationService navigation,
   })  : _filename = filename,
-        _searchRepository = searchRepository;
+        _searchRepository = searchRepository,
+        _navigation = navigation;
 
   @override
   ImageStatsViewState get initState => const ImageStatsViewState.loading();
@@ -41,12 +48,19 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
       emit(
         ImageStatsViewState.data(
           image: image,
-          similarImages: Gallery(images: []),
+          similarImages: const Gallery(images: []),
         ),
       );
     } on Object catch (_) {
       emit(errorState);
     }
+  }
+
+  void searchTag(String tag) {
+    _navigation.pushNamed(
+      Routes.search,
+      arguments: {RoutesArgs.tag: tag},
+    );
   }
 
   Future<void> onDownloadTap(String url) async {
