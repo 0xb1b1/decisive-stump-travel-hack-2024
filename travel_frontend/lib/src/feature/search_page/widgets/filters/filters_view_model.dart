@@ -6,10 +6,11 @@ import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/f
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filters_section.dart';
 
 import 'models/filter.dart';
+import 'models/search_type_state.dart';
 
-class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
+class FiltersViewModel extends BaseViewModel<SearchTypeState> {
   @override
-  FiltersContainerState get initState => FiltersContainerState(
+  SearchTypeState get initState => SearchTypeState.initial(
         filtersList: FiltersList(
           atmosphere: FiltersSection.atmosphere,
           persons: FiltersSection.persons,
