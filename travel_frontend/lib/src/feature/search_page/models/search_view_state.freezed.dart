@@ -22,6 +22,8 @@ SearchViewState _$SearchViewStateFromJson(Map<String, dynamic> json) {
       return SearchViewStateDataLoading.fromJson(json);
     case 'error':
       return SearchViewStateError.fromJson(json);
+    case 'empty':
+      return SearchViewStateEmpty.fromJson(json);
 
     default:
       throw CheckedFromJsonException(json, 'runtimeType', 'SearchViewState',
@@ -36,6 +38,7 @@ mixin _$SearchViewState {
     required TResult Function(List<GalleryImage> images) data,
     required TResult Function() loading,
     required TResult Function() error,
+    required TResult Function() empty,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -43,6 +46,7 @@ mixin _$SearchViewState {
     TResult? Function(List<GalleryImage> images)? data,
     TResult? Function()? loading,
     TResult? Function()? error,
+    TResult? Function()? empty,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -50,6 +54,7 @@ mixin _$SearchViewState {
     TResult Function(List<GalleryImage> images)? data,
     TResult Function()? loading,
     TResult Function()? error,
+    TResult Function()? empty,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -58,6 +63,7 @@ mixin _$SearchViewState {
     required TResult Function(SearchViewStateData value) data,
     required TResult Function(SearchViewStateDataLoading value) loading,
     required TResult Function(SearchViewStateError value) error,
+    required TResult Function(SearchViewStateEmpty value) empty,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -65,6 +71,7 @@ mixin _$SearchViewState {
     TResult? Function(SearchViewStateData value)? data,
     TResult? Function(SearchViewStateDataLoading value)? loading,
     TResult? Function(SearchViewStateError value)? error,
+    TResult? Function(SearchViewStateEmpty value)? empty,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -72,6 +79,7 @@ mixin _$SearchViewState {
     TResult Function(SearchViewStateData value)? data,
     TResult Function(SearchViewStateDataLoading value)? loading,
     TResult Function(SearchViewStateError value)? error,
+    TResult Function(SearchViewStateEmpty value)? empty,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -180,6 +188,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     required TResult Function(List<GalleryImage> images) data,
     required TResult Function() loading,
     required TResult Function() error,
+    required TResult Function() empty,
   }) {
     return data(images);
   }
@@ -190,6 +199,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     TResult? Function(List<GalleryImage> images)? data,
     TResult? Function()? loading,
     TResult? Function()? error,
+    TResult? Function()? empty,
   }) {
     return data?.call(images);
   }
@@ -200,6 +210,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     TResult Function(List<GalleryImage> images)? data,
     TResult Function()? loading,
     TResult Function()? error,
+    TResult Function()? empty,
     required TResult orElse(),
   }) {
     if (data != null) {
@@ -214,6 +225,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     required TResult Function(SearchViewStateData value) data,
     required TResult Function(SearchViewStateDataLoading value) loading,
     required TResult Function(SearchViewStateError value) error,
+    required TResult Function(SearchViewStateEmpty value) empty,
   }) {
     return data(this);
   }
@@ -224,6 +236,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     TResult? Function(SearchViewStateData value)? data,
     TResult? Function(SearchViewStateDataLoading value)? loading,
     TResult? Function(SearchViewStateError value)? error,
+    TResult? Function(SearchViewStateEmpty value)? empty,
   }) {
     return data?.call(this);
   }
@@ -234,6 +247,7 @@ class _$SearchViewStateDataImpl implements SearchViewStateData {
     TResult Function(SearchViewStateData value)? data,
     TResult Function(SearchViewStateDataLoading value)? loading,
     TResult Function(SearchViewStateError value)? error,
+    TResult Function(SearchViewStateEmpty value)? empty,
     required TResult orElse(),
   }) {
     if (data != null) {
@@ -317,6 +331,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     required TResult Function(List<GalleryImage> images) data,
     required TResult Function() loading,
     required TResult Function() error,
+    required TResult Function() empty,
   }) {
     return loading();
   }
@@ -327,6 +342,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     TResult? Function(List<GalleryImage> images)? data,
     TResult? Function()? loading,
     TResult? Function()? error,
+    TResult? Function()? empty,
   }) {
     return loading?.call();
   }
@@ -337,6 +353,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     TResult Function(List<GalleryImage> images)? data,
     TResult Function()? loading,
     TResult Function()? error,
+    TResult Function()? empty,
     required TResult orElse(),
   }) {
     if (loading != null) {
@@ -351,6 +368,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     required TResult Function(SearchViewStateData value) data,
     required TResult Function(SearchViewStateDataLoading value) loading,
     required TResult Function(SearchViewStateError value) error,
+    required TResult Function(SearchViewStateEmpty value) empty,
   }) {
     return loading(this);
   }
@@ -361,6 +379,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     TResult? Function(SearchViewStateData value)? data,
     TResult? Function(SearchViewStateDataLoading value)? loading,
     TResult? Function(SearchViewStateError value)? error,
+    TResult? Function(SearchViewStateEmpty value)? empty,
   }) {
     return loading?.call(this);
   }
@@ -371,6 +390,7 @@ class _$SearchViewStateDataLoadingImpl implements SearchViewStateDataLoading {
     TResult Function(SearchViewStateData value)? data,
     TResult Function(SearchViewStateDataLoading value)? loading,
     TResult Function(SearchViewStateError value)? error,
+    TResult Function(SearchViewStateEmpty value)? empty,
     required TResult orElse(),
   }) {
     if (loading != null) {
@@ -444,6 +464,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     required TResult Function(List<GalleryImage> images) data,
     required TResult Function() loading,
     required TResult Function() error,
+    required TResult Function() empty,
   }) {
     return error();
   }
@@ -454,6 +475,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     TResult? Function(List<GalleryImage> images)? data,
     TResult? Function()? loading,
     TResult? Function()? error,
+    TResult? Function()? empty,
   }) {
     return error?.call();
   }
@@ -464,6 +486,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     TResult Function(List<GalleryImage> images)? data,
     TResult Function()? loading,
     TResult Function()? error,
+    TResult Function()? empty,
     required TResult orElse(),
   }) {
     if (error != null) {
@@ -478,6 +501,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     required TResult Function(SearchViewStateData value) data,
     required TResult Function(SearchViewStateDataLoading value) loading,
     required TResult Function(SearchViewStateError value) error,
+    required TResult Function(SearchViewStateEmpty value) empty,
   }) {
     return error(this);
   }
@@ -488,6 +512,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     TResult? Function(SearchViewStateData value)? data,
     TResult? Function(SearchViewStateDataLoading value)? loading,
     TResult? Function(SearchViewStateError value)? error,
+    TResult? Function(SearchViewStateEmpty value)? empty,
   }) {
     return error?.call(this);
   }
@@ -498,6 +523,7 @@ class _$SearchViewStateErrorImpl implements SearchViewStateError {
     TResult Function(SearchViewStateData value)? data,
     TResult Function(SearchViewStateDataLoading value)? loading,
     TResult Function(SearchViewStateError value)? error,
+    TResult Function(SearchViewStateEmpty value)? empty,
     required TResult orElse(),
   }) {
     if (error != null) {
@@ -519,4 +545,137 @@ abstract class SearchViewStateError implements SearchViewState {
 
   factory SearchViewStateError.fromJson(Map<String, dynamic> json) =
       _$SearchViewStateErrorImpl.fromJson;
+}
+
+/// @nodoc
+abstract class _$$SearchViewStateEmptyImplCopyWith<$Res> {
+  factory _$$SearchViewStateEmptyImplCopyWith(_$SearchViewStateEmptyImpl value,
+          $Res Function(_$SearchViewStateEmptyImpl) then) =
+      __$$SearchViewStateEmptyImplCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$SearchViewStateEmptyImplCopyWithImpl<$Res>
+    extends _$SearchViewStateCopyWithImpl<$Res, _$SearchViewStateEmptyImpl>
+    implements _$$SearchViewStateEmptyImplCopyWith<$Res> {
+  __$$SearchViewStateEmptyImplCopyWithImpl(_$SearchViewStateEmptyImpl _value,
+      $Res Function(_$SearchViewStateEmptyImpl) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$SearchViewStateEmptyImpl implements SearchViewStateEmpty {
+  const _$SearchViewStateEmptyImpl({final String? $type})
+      : $type = $type ?? 'empty';
+
+  factory _$SearchViewStateEmptyImpl.fromJson(Map<String, dynamic> json) =>
+      _$$SearchViewStateEmptyImplFromJson(json);
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
+
+  @override
+  String toString() {
+    return 'SearchViewState.empty()';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$SearchViewStateEmptyImpl);
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(List<GalleryImage> images) data,
+    required TResult Function() loading,
+    required TResult Function() error,
+    required TResult Function() empty,
+  }) {
+    return empty();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(List<GalleryImage> images)? data,
+    TResult? Function()? loading,
+    TResult? Function()? error,
+    TResult? Function()? empty,
+  }) {
+    return empty?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(List<GalleryImage> images)? data,
+    TResult Function()? loading,
+    TResult Function()? error,
+    TResult Function()? empty,
+    required TResult orElse(),
+  }) {
+    if (empty != null) {
+      return empty();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(SearchViewStateData value) data,
+    required TResult Function(SearchViewStateDataLoading value) loading,
+    required TResult Function(SearchViewStateError value) error,
+    required TResult Function(SearchViewStateEmpty value) empty,
+  }) {
+    return empty(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(SearchViewStateData value)? data,
+    TResult? Function(SearchViewStateDataLoading value)? loading,
+    TResult? Function(SearchViewStateError value)? error,
+    TResult? Function(SearchViewStateEmpty value)? empty,
+  }) {
+    return empty?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(SearchViewStateData value)? data,
+    TResult Function(SearchViewStateDataLoading value)? loading,
+    TResult Function(SearchViewStateError value)? error,
+    TResult Function(SearchViewStateEmpty value)? empty,
+    required TResult orElse(),
+  }) {
+    if (empty != null) {
+      return empty(this);
+    }
+    return orElse();
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$SearchViewStateEmptyImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class SearchViewStateEmpty implements SearchViewState {
+  const factory SearchViewStateEmpty() = _$SearchViewStateEmptyImpl;
+
+  factory SearchViewStateEmpty.fromJson(Map<String, dynamic> json) =
+      _$SearchViewStateEmptyImpl.fromJson;
 }

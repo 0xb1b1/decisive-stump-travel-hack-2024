@@ -1,4 +1,5 @@
 import 'package:travel_frontend/src/api/models/full_image.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 
 import '../api/api.dart';
 import '../api/models/gallery.dart';
@@ -15,6 +16,11 @@ class SearchRepository {
     } on Object catch (_) {
       return const Gallery(images: []);
     }
+  }
+
+  Future<Gallery> search(ImageSearchQuery query) async {
+    final result = await _api.search(query);
+    return result;
   }
 
   Future<FullImage> getImage(String filename) async {

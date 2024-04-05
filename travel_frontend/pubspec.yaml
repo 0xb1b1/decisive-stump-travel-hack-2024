@@ -51,6 +51,7 @@ flutter:
     - assets/test.jpg
     - assets/stats/
     - assets/app_bar/
+    - assets/empty.png
 
   fonts:
     - family: SuisseIntl

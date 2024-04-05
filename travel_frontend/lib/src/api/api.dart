@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:travel_frontend/src/api/models/full_image.dart';
 import 'package:travel_frontend/src/api/models/gallery.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 
 abstract class ApiPath {
   static const uploadImage = 'http://127.0.0.1:8000/img/upload';
   static const getGallery = 'http://backend.0xb1b1.com:81/img/gallery';
   static const getImage = 'http://backend.0xb1b1.com:81/img/get/full/';
+  static const search = 'http://backend.0xb1b1.com:81/img/search';
 }
 
 class AppApi {
@@ -25,6 +27,23 @@ class AppApi {
     final response = await _dio.get(
       path,
       queryParameters: queryParams,
+    );
+    return Gallery.fromJson(response.data);
+  }
+
+  Future<Gallery> search(ImageSearchQuery query) async {
+    const path = ApiPath.search;
+    final queryParams = {
+      'images_limit': 100,
+      'tags_limit': 20,
+    };
+
+    final data = query.toJson();
+
+    final response = await _dio.post(
+      path,
+      queryParameters: queryParams,
+      data: data,
     );
     return Gallery.fromJson(response.data);
   }

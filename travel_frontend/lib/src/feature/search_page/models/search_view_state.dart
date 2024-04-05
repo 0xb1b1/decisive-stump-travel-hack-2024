@@ -15,6 +15,8 @@ class SearchViewState with _$SearchViewState {
 
   const factory SearchViewState.error() = SearchViewStateError;
 
+  const factory SearchViewState.empty() = SearchViewStateEmpty;
+
   factory SearchViewState.fromJson(Map<String, Object?> json) =>
       _$SearchViewStateFromJson(json);
 }

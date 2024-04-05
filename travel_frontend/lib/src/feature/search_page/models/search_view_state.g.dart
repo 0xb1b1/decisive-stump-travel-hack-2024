@@ -45,3 +45,15 @@ Map<String, dynamic> _$$SearchViewStateErrorImplToJson(
     <String, dynamic>{
       'runtimeType': instance.$type,
     };
+
+_$SearchViewStateEmptyImpl _$$SearchViewStateEmptyImplFromJson(
+        Map<String, dynamic> json) =>
+    _$SearchViewStateEmptyImpl(
+      $type: json['runtimeType'] as String?,
+    );
+
+Map<String, dynamic> _$$SearchViewStateEmptyImplToJson(
+        _$SearchViewStateEmptyImpl instance) =>
+    <String, dynamic>{
+      'runtimeType': instance.$type,
+    };

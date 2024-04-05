@@ -1,4 +1,5 @@
 import 'package:travel_frontend/core/base_view_model.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/color_filter.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filters_container_state.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filters_list.dart';
@@ -114,7 +115,6 @@ class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
         state.filtersList.copyWith(orientation: targetFiltersSection);
 
     emit(state.copyWith(search: currentSearch, filtersList: targetFilters));
-    getSelectedFilters();
   }
 
   void checkColor(String title) {
@@ -132,7 +132,8 @@ class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
     emit(state.copyWith(search: currentSearch, filtersList: targetFilters));
   }
 
-  Map<String, List<Object>> getSelectedFilters() {
+  ImageSearchQuery makeSearchQuery(String controllerText) {
+    _changeSearch(controllerText);
     final currentFiltersList = state.filtersList;
 
     final dayTime = currentFiltersList.dayTime.filters;
@@ -143,26 +144,24 @@ class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
     final atmosphere = currentFiltersList.atmosphere.filters;
     final colors = currentFiltersList.colors.filters;
 
-    final result = {
-      'time_of_day':
-          dayTime.where((el) => el.checked).map((e) => e.title).toList(),
-      'weather': weather.where((el) => el.checked).map((e) => e.title).toList(),
-      'season': season.where((el) => el.checked).map((e) => e.title).toList(),
-      'main_color':
-          colors.where((el) => el.checked).map((e) => e.title).toList(),
-      'atmosphere':
+    final result = ImageSearchQuery(
+      text: state.search,
+      dayTime: dayTime.where((el) => el.checked).map((e) => e.title).toList(),
+      weather: weather.where((el) => el.checked).map((e) => e.title).toList(),
+      season: season.where((el) => el.checked).map((e) => e.title).toList(),
+      atmosphere:
           atmosphere.where((el) => el.checked).map((e) => e.title).toList(),
-      //TODO: fix
-      'number_of_people': persons
+      colors: colors.where((el) => el.checked).map((e) => e.title).toList(),
+      persons: persons
           .where((el) => el.checked)
           .map(
             (e) => _mapNumber(e),
           )
           .toList(),
-      'orientation':
+      orientation:
           orientation.where((el) => el.checked).map((e) => e.title).toList(),
-      'tags': <String>[],
-    };
+      tags: [],
+    );
 
     return result;
   }
@@ -209,4 +208,8 @@ class FiltersViewModel extends BaseViewModel<FiltersContainerState> {
               ? filter.copyWith(checked: !filter.checked)
               : filter)
           .toList();
+
+  void _changeSearch(String text) {
+    emit(state.copyWith(search: text));
+  }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
 
 import '../../../../../widgets/painters/filters_icon.dart';
 import '../../../../../widgets/painters/photo_icon.dart';
@@ -9,14 +11,23 @@ import 'side_button.dart';
 class SearchBlock extends StatelessWidget {
   final VoidCallback onSearchPhoto;
   final VoidCallback onFiltersTap;
-  final bool isFiltersChosen;
+  final FiltersViewModel filtersViewModel;
+  final String filtersTitle;
+  final void Function(ImageSearchQuery) searchQuery;
 
   const SearchBlock({
     super.key,
     required this.onSearchPhoto,
     required this.onFiltersTap,
-    required this.isFiltersChosen,
+    required this.filtersTitle,
+    required this.filtersViewModel,
+    required this.searchQuery,
   });
+
+  void joinedSearch(String text) {
+    final query = filtersViewModel.makeSearchQuery(text);
+    searchQuery(query);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +35,15 @@ class SearchBlock extends StatelessWidget {
       children: [
         Expanded(
           child: SearchInput(
-            onSearchTap: () {},
-            isFiltersChosen: isFiltersChosen,
+            onSearchTap: joinedSearch,
+            isFiltersChosen: filtersViewModel.isFiltersChosen,
           ),
         ),
         const SizedBox(
           width: 10,
         ),
         SideButton(
-          title: 'Cкрыть фильтры',
+          title: filtersTitle,
           icon: CustomPaint(
             size: const Size(18, 14),
             painter: FiltersPainter(),

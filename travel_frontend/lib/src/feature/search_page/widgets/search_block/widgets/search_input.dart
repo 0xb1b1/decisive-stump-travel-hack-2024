@@ -3,7 +3,7 @@ import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
 
 class SearchInput extends StatefulWidget {
-  final VoidCallback onSearchTap;
+  final void Function(String) onSearchTap;
   final bool isFiltersChosen;
 
   const SearchInput({
@@ -53,7 +53,7 @@ class _SearchInputState extends State<SearchInput> {
                     Icons.search,
                     color: AppPalette.black,
                   ),
-                  onPressed: widget.onSearchTap,
+                  onPressed: () => widget.onSearchTap(_controller.text),
                 )
               : null,
           enabledBorder: OutlineInputBorder(
