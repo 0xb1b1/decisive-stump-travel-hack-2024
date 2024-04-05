@@ -12,7 +12,7 @@ abstract class AssetsPath {
   static const similar = 'assets/icons/similar.svg';
 
   static const appBar = 'assets/app_bar/app_bar.svg';
-  static const fullAppBar = 'assets/app_bar/full_app_bar.svg';
+  static const fullAppBar = 'assets/app_bar/full.png';
   static const bottomBar = 'assets/app_bar/bottom_bar.svg';
   static const empty = 'assets/empty.png';
 }
@@ -57,9 +57,9 @@ abstract class AssetsProvider {
         AssetsPath.appBar,
       );
 
-  static get fullAppBar => SvgPicture.asset(
+  static get fullAppBar => Image.asset(
         AssetsPath.fullAppBar,
-        color: Colors.white,
+    fit: BoxFit.cover,
       );
 
   static get bottomBar => SvgPicture.asset(

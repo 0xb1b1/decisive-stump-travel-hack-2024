@@ -5,7 +5,6 @@ import 'package:travel_frontend/core/base_view_model.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/models/search_view_state.dart';
 
-import '../../api/models/gallery.dart';
 import '../../domain/search_repository.dart';
 import '../../navigation/navigation_service.dart';
 import '../../navigation/routes.dart';
@@ -37,19 +36,22 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     super.init();
     try {
       final gallery = await _searchRepository.getGallery();
+      if (gallery.images.isEmpty) {
+        emit(emptyState);
+        return;
+      }
       emit(SearchViewState.data(images: gallery.images));
     } on Object catch (e, _) {
       emit(errorState);
     }
   }
 
-  Future<void> onImageTap(String filename) async {
-    final currentState = state;
-    emit(loadingState);
-    final image = await _searchRepository.getImage(filename);
-    _navigationService.pushNamed(Routes.imageStats, arguments: image);
-    emit(currentState);
-  }
+  void onImageTap(String filename) => _navigationService.pushNamed(
+        Routes.imageStats,
+        arguments: {
+          RoutesArgs.filename: filename,
+        },
+      );
 
   Future<void> pickImage() async {
     final image = await _imagePicker.pickImage(source: ImageSource.gallery);
@@ -73,8 +75,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
         ),
       );
     } on Object catch (e) {
-      print('error');
-      print(e);
       emit(errorState);
     }
   }

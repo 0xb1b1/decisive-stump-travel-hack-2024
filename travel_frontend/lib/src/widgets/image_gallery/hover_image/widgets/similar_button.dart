@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
 
-import '../../../../../common/app_palette.dart';
+import '../../../../common/app_palette.dart';
 
 class SimilarButton extends StatefulWidget {
   const SimilarButton({super.key});

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:travel_frontend/src/api/models/full_image.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page.dart';
 
-import '../feature/image_stats/image_stats.dart';
+import '../feature/image_stats/image_stats_page.dart';
 
 abstract class Routes {
   static const search = 'search';
@@ -15,7 +14,7 @@ abstract class Routes {
           builder: (_) => const SearchPage(),
         ),
     Routes.imageStats: (settings) => MaterialPageRoute<void>(
-          builder: (_) => ImageStats(image: settings.arguments as FullImage),
+          builder: (_) => const ImageStats(),
           settings: settings,
         ),
   };
@@ -32,7 +31,7 @@ abstract class Routes {
 }
 
 abstract class RoutesArgs {
-  static const imageUuid = 'imageUuid';
+  static const filename = 'filename';
 }
 
 T? componentArg0f<T>(BuildContext context, String key) =>

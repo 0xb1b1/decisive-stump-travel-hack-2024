@@ -21,13 +21,13 @@ FullImage _$FullImageFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$FullImage {
   String get filename => throw _privateConstructorUsedError;
-  @JsonKey(name: 's3_presigned_url')
-  String get s3PresignedUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 's3_presigned_urls')
+  S3Urls get url => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
-  @JsonKey(name: 'views_count')
+  @JsonKey(name: 'view_count')
   int? get viewsCount => throw _privateConstructorUsedError;
-  @JsonKey(name: 'downloads_count')
+  @JsonKey(name: 'download_count')
   int? get downloadsCount => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -43,11 +43,13 @@ abstract class $FullImageCopyWith<$Res> {
   @useResult
   $Res call(
       {String filename,
-      @JsonKey(name: 's3_presigned_url') String s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') S3Urls url,
       String label,
       List<String> tags,
-      @JsonKey(name: 'views_count') int? viewsCount,
-      @JsonKey(name: 'downloads_count') int? downloadsCount});
+      @JsonKey(name: 'view_count') int? viewsCount,
+      @JsonKey(name: 'download_count') int? downloadsCount});
+
+  $S3UrlsCopyWith<$Res> get url;
 }
 
 /// @nodoc
@@ -64,7 +66,7 @@ class _$FullImageCopyWithImpl<$Res, $Val extends FullImage>
   @override
   $Res call({
     Object? filename = null,
-    Object? s3PresignedUrl = null,
+    Object? url = null,
     Object? label = null,
     Object? tags = null,
     Object? viewsCount = freezed,
@@ -75,10 +77,10 @@ class _$FullImageCopyWithImpl<$Res, $Val extends FullImage>
           ? _value.filename
           : filename // ignore: cast_nullable_to_non_nullable
               as String,
-      s3PresignedUrl: null == s3PresignedUrl
-          ? _value.s3PresignedUrl
-          : s3PresignedUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as S3Urls,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -97,6 +99,14 @@ class _$FullImageCopyWithImpl<$Res, $Val extends FullImage>
               as int?,
     ) as $Val);
   }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $S3UrlsCopyWith<$Res> get url {
+    return $S3UrlsCopyWith<$Res>(_value.url, (value) {
+      return _then(_value.copyWith(url: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -109,11 +119,14 @@ abstract class _$$FullImageImplCopyWith<$Res>
   @useResult
   $Res call(
       {String filename,
-      @JsonKey(name: 's3_presigned_url') String s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') S3Urls url,
       String label,
       List<String> tags,
-      @JsonKey(name: 'views_count') int? viewsCount,
-      @JsonKey(name: 'downloads_count') int? downloadsCount});
+      @JsonKey(name: 'view_count') int? viewsCount,
+      @JsonKey(name: 'download_count') int? downloadsCount});
+
+  @override
+  $S3UrlsCopyWith<$Res> get url;
 }
 
 /// @nodoc
@@ -128,7 +141,7 @@ class __$$FullImageImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? filename = null,
-    Object? s3PresignedUrl = null,
+    Object? url = null,
     Object? label = null,
     Object? tags = null,
     Object? viewsCount = freezed,
@@ -139,10 +152,10 @@ class __$$FullImageImplCopyWithImpl<$Res>
           ? _value.filename
           : filename // ignore: cast_nullable_to_non_nullable
               as String,
-      s3PresignedUrl: null == s3PresignedUrl
-          ? _value.s3PresignedUrl
-          : s3PresignedUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as S3Urls,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -168,11 +181,11 @@ class __$$FullImageImplCopyWithImpl<$Res>
 class _$FullImageImpl implements _FullImage {
   const _$FullImageImpl(
       {required this.filename,
-      @JsonKey(name: 's3_presigned_url') required this.s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') required this.url,
       required this.label,
       required final List<String> tags,
-      @JsonKey(name: 'views_count') this.viewsCount,
-      @JsonKey(name: 'downloads_count') this.downloadsCount})
+      @JsonKey(name: 'view_count') this.viewsCount,
+      @JsonKey(name: 'download_count') this.downloadsCount})
       : _tags = tags;
 
   factory _$FullImageImpl.fromJson(Map<String, dynamic> json) =>
@@ -181,8 +194,8 @@ class _$FullImageImpl implements _FullImage {
   @override
   final String filename;
   @override
-  @JsonKey(name: 's3_presigned_url')
-  final String s3PresignedUrl;
+  @JsonKey(name: 's3_presigned_urls')
+  final S3Urls url;
   @override
   final String label;
   final List<String> _tags;
@@ -194,15 +207,15 @@ class _$FullImageImpl implements _FullImage {
   }
 
   @override
-  @JsonKey(name: 'views_count')
+  @JsonKey(name: 'view_count')
   final int? viewsCount;
   @override
-  @JsonKey(name: 'downloads_count')
+  @JsonKey(name: 'download_count')
   final int? downloadsCount;
 
   @override
   String toString() {
-    return 'FullImage(filename: $filename, s3PresignedUrl: $s3PresignedUrl, label: $label, tags: $tags, viewsCount: $viewsCount, downloadsCount: $downloadsCount)';
+    return 'FullImage(filename: $filename, url: $url, label: $label, tags: $tags, viewsCount: $viewsCount, downloadsCount: $downloadsCount)';
   }
 
   @override
@@ -212,8 +225,7 @@ class _$FullImageImpl implements _FullImage {
             other is _$FullImageImpl &&
             (identical(other.filename, filename) ||
                 other.filename == filename) &&
-            (identical(other.s3PresignedUrl, s3PresignedUrl) ||
-                other.s3PresignedUrl == s3PresignedUrl) &&
+            (identical(other.url, url) || other.url == url) &&
             (identical(other.label, label) || other.label == label) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.viewsCount, viewsCount) ||
@@ -224,7 +236,7 @@ class _$FullImageImpl implements _FullImage {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, filename, s3PresignedUrl, label,
+  int get hashCode => Object.hash(runtimeType, filename, url, label,
       const DeepCollectionEquality().hash(_tags), viewsCount, downloadsCount);
 
   @JsonKey(ignore: true)
@@ -243,13 +255,13 @@ class _$FullImageImpl implements _FullImage {
 
 abstract class _FullImage implements FullImage {
   const factory _FullImage(
-      {required final String filename,
-      @JsonKey(name: 's3_presigned_url') required final String s3PresignedUrl,
-      required final String label,
-      required final List<String> tags,
-      @JsonKey(name: 'views_count') final int? viewsCount,
-      @JsonKey(name: 'downloads_count')
-      final int? downloadsCount}) = _$FullImageImpl;
+          {required final String filename,
+          @JsonKey(name: 's3_presigned_urls') required final S3Urls url,
+          required final String label,
+          required final List<String> tags,
+          @JsonKey(name: 'view_count') final int? viewsCount,
+          @JsonKey(name: 'download_count') final int? downloadsCount}) =
+      _$FullImageImpl;
 
   factory _FullImage.fromJson(Map<String, dynamic> json) =
       _$FullImageImpl.fromJson;
@@ -257,17 +269,17 @@ abstract class _FullImage implements FullImage {
   @override
   String get filename;
   @override
-  @JsonKey(name: 's3_presigned_url')
-  String get s3PresignedUrl;
+  @JsonKey(name: 's3_presigned_urls')
+  S3Urls get url;
   @override
   String get label;
   @override
   List<String> get tags;
   @override
-  @JsonKey(name: 'views_count')
+  @JsonKey(name: 'view_count')
   int? get viewsCount;
   @override
-  @JsonKey(name: 'downloads_count')
+  @JsonKey(name: 'download_count')
   int? get downloadsCount;
   @override
   @JsonKey(ignore: true)

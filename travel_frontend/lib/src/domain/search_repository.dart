@@ -10,12 +10,8 @@ class SearchRepository {
   SearchRepository({required AppApi api}) : _api = api;
 
   Future<Gallery> getGallery() async {
-    try {
-      final result = await _api.getGallery();
-      return result;
-    } on Object catch (_) {
-      return const Gallery(images: []);
-    }
+    final result = await _api.getGallery();
+    return result;
   }
 
   Future<Gallery> search(ImageSearchQuery query) async {

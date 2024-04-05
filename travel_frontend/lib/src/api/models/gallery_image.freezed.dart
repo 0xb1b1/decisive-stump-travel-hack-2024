@@ -21,8 +21,8 @@ GalleryImage _$GalleryImageFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$GalleryImage {
   String get filename => throw _privateConstructorUsedError;
-  @JsonKey(name: 's3_presigned_url')
-  String get s3PresignedUrl => throw _privateConstructorUsedError;
+  @JsonKey(name: 's3_presigned_urls')
+  S3Urls get url => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
 
@@ -40,9 +40,11 @@ abstract class $GalleryImageCopyWith<$Res> {
   @useResult
   $Res call(
       {String filename,
-      @JsonKey(name: 's3_presigned_url') String s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') S3Urls url,
       String label,
       List<String> tags});
+
+  $S3UrlsCopyWith<$Res> get url;
 }
 
 /// @nodoc
@@ -59,7 +61,7 @@ class _$GalleryImageCopyWithImpl<$Res, $Val extends GalleryImage>
   @override
   $Res call({
     Object? filename = null,
-    Object? s3PresignedUrl = null,
+    Object? url = null,
     Object? label = null,
     Object? tags = null,
   }) {
@@ -68,10 +70,10 @@ class _$GalleryImageCopyWithImpl<$Res, $Val extends GalleryImage>
           ? _value.filename
           : filename // ignore: cast_nullable_to_non_nullable
               as String,
-      s3PresignedUrl: null == s3PresignedUrl
-          ? _value.s3PresignedUrl
-          : s3PresignedUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as S3Urls,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -81,6 +83,14 @@ class _$GalleryImageCopyWithImpl<$Res, $Val extends GalleryImage>
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $S3UrlsCopyWith<$Res> get url {
+    return $S3UrlsCopyWith<$Res>(_value.url, (value) {
+      return _then(_value.copyWith(url: value) as $Val);
+    });
   }
 }
 
@@ -94,9 +104,12 @@ abstract class _$$GalleryImageImplCopyWith<$Res>
   @useResult
   $Res call(
       {String filename,
-      @JsonKey(name: 's3_presigned_url') String s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') S3Urls url,
       String label,
       List<String> tags});
+
+  @override
+  $S3UrlsCopyWith<$Res> get url;
 }
 
 /// @nodoc
@@ -111,7 +124,7 @@ class __$$GalleryImageImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? filename = null,
-    Object? s3PresignedUrl = null,
+    Object? url = null,
     Object? label = null,
     Object? tags = null,
   }) {
@@ -120,10 +133,10 @@ class __$$GalleryImageImplCopyWithImpl<$Res>
           ? _value.filename
           : filename // ignore: cast_nullable_to_non_nullable
               as String,
-      s3PresignedUrl: null == s3PresignedUrl
-          ? _value.s3PresignedUrl
-          : s3PresignedUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as S3Urls,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -141,7 +154,7 @@ class __$$GalleryImageImplCopyWithImpl<$Res>
 class _$GalleryImageImpl implements _GalleryImage {
   const _$GalleryImageImpl(
       {required this.filename,
-      @JsonKey(name: 's3_presigned_url') required this.s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') required this.url,
       required this.label,
       required final List<String> tags})
       : _tags = tags;
@@ -152,8 +165,8 @@ class _$GalleryImageImpl implements _GalleryImage {
   @override
   final String filename;
   @override
-  @JsonKey(name: 's3_presigned_url')
-  final String s3PresignedUrl;
+  @JsonKey(name: 's3_presigned_urls')
+  final S3Urls url;
   @override
   final String label;
   final List<String> _tags;
@@ -166,7 +179,7 @@ class _$GalleryImageImpl implements _GalleryImage {
 
   @override
   String toString() {
-    return 'GalleryImage(filename: $filename, s3PresignedUrl: $s3PresignedUrl, label: $label, tags: $tags)';
+    return 'GalleryImage(filename: $filename, url: $url, label: $label, tags: $tags)';
   }
 
   @override
@@ -176,15 +189,14 @@ class _$GalleryImageImpl implements _GalleryImage {
             other is _$GalleryImageImpl &&
             (identical(other.filename, filename) ||
                 other.filename == filename) &&
-            (identical(other.s3PresignedUrl, s3PresignedUrl) ||
-                other.s3PresignedUrl == s3PresignedUrl) &&
+            (identical(other.url, url) || other.url == url) &&
             (identical(other.label, label) || other.label == label) &&
             const DeepCollectionEquality().equals(other._tags, _tags));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, filename, s3PresignedUrl, label,
+  int get hashCode => Object.hash(runtimeType, filename, url, label,
       const DeepCollectionEquality().hash(_tags));
 
   @JsonKey(ignore: true)
@@ -204,7 +216,7 @@ class _$GalleryImageImpl implements _GalleryImage {
 abstract class _GalleryImage implements GalleryImage {
   const factory _GalleryImage(
       {required final String filename,
-      @JsonKey(name: 's3_presigned_url') required final String s3PresignedUrl,
+      @JsonKey(name: 's3_presigned_urls') required final S3Urls url,
       required final String label,
       required final List<String> tags}) = _$GalleryImageImpl;
 
@@ -214,8 +226,8 @@ abstract class _GalleryImage implements GalleryImage {
   @override
   String get filename;
   @override
-  @JsonKey(name: 's3_presigned_url')
-  String get s3PresignedUrl;
+  @JsonKey(name: 's3_presigned_urls')
+  S3Urls get url;
   @override
   String get label;
   @override

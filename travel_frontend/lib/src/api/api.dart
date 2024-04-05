@@ -20,7 +20,7 @@ class AppApi {
   Future<Gallery> getGallery() async {
     const path = ApiPath.getGallery;
     final queryParams = {
-      'amount': 20,
+      'amount': 400,
       // if (token != null) 'token': token,
     };
 
@@ -28,6 +28,7 @@ class AppApi {
       path,
       queryParameters: queryParams,
     );
+
     return Gallery.fromJson(response.data);
   }
 
@@ -45,6 +46,7 @@ class AppApi {
       queryParameters: queryParams,
       data: data,
     );
+
     return Gallery.fromJson(response.data);
   }
 

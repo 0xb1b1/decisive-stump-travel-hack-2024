@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/api/models/gallery_image.dart';
 import 'package:travel_frontend/src/common/app_contants.dart';
 
-import '../feature/search_page/widgets/hover_image/hover_image.dart';
+import 'hover_image/hover_image.dart';
 
 class ImageGallery extends StatelessWidget {
   final List<GalleryImage> images;
@@ -42,8 +42,8 @@ class ImageGallery extends StatelessWidget {
           onTap: () => onImageTap(images[index].filename),
           child: HoverImage(
             title: images[index].label,
-            description: images[index].tags.join(', '),
-            url: images[index].s3PresignedUrl,
+            tags: images[index].tags,
+            url: images[index].url.thumb,
             isButtonsEnabled: isButtonsEnabled,
             onSimilarTap: () {},
           ),

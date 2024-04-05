@@ -10,7 +10,7 @@ import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dro
 
 import 'package:travel_frontend/src/feature/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
-import 'package:travel_frontend/src/widgets/image_gallery.dart';
+import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/search_block/widgets/search_block.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
@@ -86,7 +86,7 @@ class SearchPage extends ConsumerWidget {
                     error: () => SliverToBoxAdapter(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.red.shade200,
+                          color: AppPalette.yellow.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         height: 236,

@@ -29,16 +29,18 @@ class _ViewModelWidgetState<T extends BaseViewModel>
     model.init();
   }
 
+
+  //TODO fix
   @override
   void dispose() {
-    model.dispose();
-    super.dispose();
+    // model.dispose();
+    // super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<T>(
-      create: (context) => model,
+    return ChangeNotifierProvider<T>.value(
+      value: model,
       child: Consumer<T>(
         builder: widget.builder,
         child: widget.child,

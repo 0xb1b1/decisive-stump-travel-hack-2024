@@ -1,15 +1,15 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 
+import '../../../utils/utils.dart';
 import 'widgets/selected_checkbox_widget.dart';
 import 'widgets/similar_button.dart';
 
 class HoverImage extends StatefulWidget {
   final String title;
-  final String description;
+  final List<String> tags;
   final String url;
   final VoidCallback onSimilarTap;
   final bool isButtonsEnabled;
@@ -17,7 +17,7 @@ class HoverImage extends StatefulWidget {
   const HoverImage({
     super.key,
     required this.title,
-    required this.description,
+    required this.tags,
     required this.url,
     required this.onSimilarTap,
     required this.isButtonsEnabled,
@@ -86,7 +86,7 @@ class _HoverImageState extends State<HoverImage> {
                       height: 4,
                     ),
                     Text(
-                      widget.description,
+                      Utils.makeUpperStr(widget.tags),
                       style: AppTypography.hoverDescr.copyWith(
                         color: AppPalette.white.withOpacity(0.7),
                       ),
