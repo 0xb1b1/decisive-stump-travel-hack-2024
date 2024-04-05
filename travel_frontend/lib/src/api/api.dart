@@ -10,6 +10,7 @@ abstract class ApiPath {
   static const getGallery = 'http://backend.0xb1b1.com:81/img/gallery';
   static const getImage = 'http://backend.0xb1b1.com:81/img/get/full/';
   static const search = 'http://backend.0xb1b1.com:81/img/search';
+  static const similar = 'http://backend.0xb1b1.com:81/img/neighbors/';
 }
 
 class AppApi {
@@ -28,6 +29,21 @@ class AppApi {
       path,
       queryParameters: queryParams,
     );
+
+    return Gallery.fromJson(response.data);
+  }
+
+  Future<Gallery> getSimilar(String filename) async {
+    final path = '${ApiPath.similar}$filename';
+    final queryParams = {
+      'amount': 400,
+    };
+
+    final response = await _dio.get(
+      path,
+      queryParameters: queryParams,
+    );
+
 
     return Gallery.fromJson(response.data);
   }

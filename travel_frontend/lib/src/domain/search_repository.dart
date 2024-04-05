@@ -14,6 +14,11 @@ class SearchRepository {
     return result;
   }
 
+  Future<Gallery> getSimilar(String filename) async {
+    final result = await _api.getSimilar(filename);
+    return result;
+  }
+
   Future<Gallery> search(ImageSearchQuery query) async {
     final result = await _api.search(query);
     return result;

@@ -5,13 +5,13 @@ import 'package:travel_frontend/core/view_model_widget.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/app_bar_info_block.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dropdown_search_block.dart';
 
 import 'package:travel_frontend/src/feature/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
-import 'package:travel_frontend/src/feature/search_page/widgets/search_block/widgets/search_block.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
 import '../../widgets/painters/full_app_bar.dart';
@@ -32,17 +32,29 @@ class SearchPage extends ConsumerWidget {
         Widget? child,
       ) {
         return Scaffold(
+          backgroundColor: AppPalette.black,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(74),
+            child: Container(
+              color: AppPalette.black,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 108,
+              ),
+              child: AssetsProvider.appBar,
+            ),
+          ),
           body: NestedScrollView(
             headerSliverBuilder: (_, __) => [
-              SliverAppBar(
+              const SliverAppBar(
+                shadowColor: AppPalette.black,
+                surfaceTintColor: AppPalette.black,
+                backgroundColor: AppPalette.black,
+                toolbarHeight: 0,
+                collapsedHeight: 0.1,
                 pinned: false,
-                expandedHeight: 324.0,
+                expandedHeight: 250.0,
                 flexibleSpace: FlexibleSpaceBar(
-                  // background: AssetsProvider.fullAppBar,
-                  background: CustomPaint(
-                    size: const Size(double.infinity, 324),
-                    painter: Painter(),
-                  ),
+                  background: AppBarInfoBlock(),
                 ),
               ),
             ],

@@ -5,17 +5,20 @@ import 'package:travel_frontend/src/api/models/gallery.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_tags/image_tags.dart';
 
 import '../../../common/app_typography.dart';
+import '../../../widgets/image_gallery/image_gallery.dart';
 
 class ImageStatsData extends StatelessWidget {
   final FullImage image;
   final Gallery similarImages;
   final void Function(String) onDownloadTap;
+  final void Function(String) onImageTap;
 
   const ImageStatsData({
     super.key,
     required this.image,
     required this.onDownloadTap,
     required this.similarImages,
+    required this.onImageTap,
   });
 
   final _photoBlockHeight = 400.0;
@@ -109,12 +112,12 @@ class ImageStatsData extends StatelessWidget {
             ],
           ),
         ),
-        // //TODO похожие изображения
+        //TODO похожие изображения
         // ImageGallery(
         //   images: similarImages.images,
         //   crossAxisCount: 2,
         //   isButtonsEnabled: false,
-        //   onImageTap: (_) {},
+        //   onImageTap: onImageTap,
         // ),
         const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],

@@ -33,8 +33,8 @@ class _ViewModelWidgetState<T extends BaseViewModel>
   //TODO fix
   @override
   void dispose() {
-    // model.dispose();
-    // super.dispose();
+    model.dispose();
+    super.dispose();
   }
 
   @override

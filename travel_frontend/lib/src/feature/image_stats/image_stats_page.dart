@@ -34,8 +34,14 @@ class ImageStats extends ConsumerWidget {
       ) {
         return Scaffold(
           appBar: PreferredSize(
-            child: AssetsProvider.appBar,
             preferredSize: const Size.fromHeight(74),
+            child: Container(
+              color: AppPalette.black,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 108,
+              ),
+              child: AssetsProvider.appBar,
+            ),
           ),
           body: PageContainer(
             child: vm.state.when(
@@ -43,6 +49,7 @@ class ImageStats extends ConsumerWidget {
                 image: image,
                 similarImages: gallery,
                 onDownloadTap: (_) {},
+                onImageTap: vm.onImageTap,
               ),
               loading: () => const Center(
                 child: CircularProgressIndicator(

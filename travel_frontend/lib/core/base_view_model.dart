@@ -17,6 +17,12 @@ abstract class BaseViewModel<ViewState> extends ChangeNotifier
     notifyListeners();
   }
 
+  @override
+  @mustCallSuper
+  void dispose() {
+    super.dispose();
+  }
+
   void emit(ViewState newState) {
     _state = newState;
     notifyListeners();
