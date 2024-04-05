@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
@@ -13,8 +14,6 @@ import 'package:travel_frontend/src/feature/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
-
-import '../../widgets/painters/full_app_bar.dart';
 
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});

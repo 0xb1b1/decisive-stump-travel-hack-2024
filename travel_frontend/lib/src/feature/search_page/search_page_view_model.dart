@@ -46,6 +46,12 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     }
   }
 
+  @override
+  void dispose() {
+    print('dispose');
+    super.dispose();
+  }
+
   void onImageTap(String filename) => _navigationService.pushNamed(
         Routes.imageStats,
         arguments: {

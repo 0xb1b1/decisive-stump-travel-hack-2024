@@ -1,4 +1,5 @@
 import 'package:travel_frontend/core/base_view_model.dart';
+import 'package:travel_frontend/src/api/models/gallery.dart';
 import 'package:travel_frontend/src/domain/search_repository.dart';
 import 'package:travel_frontend/src/feature/image_stats/models/image_stats_view_state.dart';
 import 'dart:html' as html;
@@ -35,12 +36,12 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
     emit(loadingState);
     try {
       final image = await _searchRepository.getImage(filename);
-      final similar = await _searchRepository.getSimilar(filename);
+      // final similar = await _searchRepository.getSimilar(filename);
 
       emit(
         ImageStatsViewState.data(
           image: image,
-          similarImages: similar,
+          similarImages: Gallery(images: []),
         ),
       );
     } on Object catch (_) {
