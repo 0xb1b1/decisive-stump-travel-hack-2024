@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/gallery_image.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
@@ -8,17 +9,13 @@ import 'widgets/selected_checkbox_widget.dart';
 import 'widgets/similar_button.dart';
 
 class HoverImage extends StatefulWidget {
-  final String title;
-  final List<String> tags;
-  final String url;
-  final VoidCallback onSimilarTap;
+  final GalleryImage image;
+  final void Function(String fileName) onSimilarTap;
   final bool isButtonsEnabled;
 
   const HoverImage({
     super.key,
-    required this.title,
-    required this.tags,
-    required this.url,
+    required this.image,
     required this.onSimilarTap,
     required this.isButtonsEnabled,
   });
@@ -41,7 +38,7 @@ class _HoverImageState extends State<HoverImage> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage(widget.url),
+                image: NetworkImage(widget.image.url.thumb),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -66,7 +63,7 @@ class _HoverImageState extends State<HoverImage> {
               right: 8,
               top: 8,
               child: GestureDetector(
-                onTap: widget.onSimilarTap,
+                onTap: () => widget.onSimilarTap(widget.image.filename),
                 child: const SimilarButton(),
               ),
             ),
@@ -79,14 +76,14 @@ class _HoverImageState extends State<HoverImage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.title,
+                      widget.image.label,
                       style: AppTypography.hoverTitle,
                     ),
                     const SizedBox(
                       height: 4,
                     ),
                     Text(
-                      Utils.makeUpperStr(widget.tags),
+                      Utils.makeUpperStr(widget.image.tags),
                       style: AppTypography.hoverDescr.copyWith(
                         color: AppPalette.white.withOpacity(0.7),
                       ),

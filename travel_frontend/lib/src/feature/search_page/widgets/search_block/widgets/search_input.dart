@@ -1,15 +1,24 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
+import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
 class SearchInput extends StatefulWidget {
-  final void Function(String) onSearchTap;
+  final void Function(SearchTypeState) searchQuery;
+  final FiltersViewModel filtersViewModel;
   final bool isFiltersChosen;
+  final SearchTypeState searchState;
 
   const SearchInput({
     super.key,
-    required this.onSearchTap,
+    required this.searchQuery,
     required this.isFiltersChosen,
+    required this.filtersViewModel,
+    required this.searchState,
   });
 
   @override
@@ -28,6 +37,7 @@ class _SearchInputState extends State<SearchInput> {
         _isTyping = _controller.text.isNotEmpty;
       });
     });
+    if (widget.searchState is SearchTypeStateTag) {}
   }
 
   @override
@@ -40,20 +50,22 @@ class _SearchInputState extends State<SearchInput> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 48,
-      child: TextField(
+      child: TextFormField(
+        initialValue: widget.filtersViewModel.getInitialValue(),
         controller: _controller,
         decoration: InputDecoration(
           hintText: 'Введите запрос',
           filled: true,
           fillColor: Colors.white,
-          suffixIcon: _isTyping || widget.isFiltersChosen
+          suffixIcon: _isTyping || widget.filtersViewModel.isFiltersChosen
               ? IconButton(
                   color: AppPalette.yellow,
                   icon: const Icon(
                     Icons.search,
                     color: AppPalette.black,
                   ),
-                  onPressed: () => widget.onSearchTap(_controller.text),
+                  onPressed: () =>
+                      widget.filtersViewModel.searchQuery(),
                 )
               : null,
           enabledBorder: OutlineInputBorder(
@@ -65,6 +77,51 @@ class _SearchInputState extends State<SearchInput> {
             borderSide: const BorderSide(color: AppPalette.yellow, width: 2),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ImageContainerMode extends StatelessWidget {
+  final String title;
+
+  const ImageContainerMode({
+    super.key,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      margin: const EdgeInsets.all(6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(
+            height: 20,
+            width: 20,
+            child: Icon(
+              Icons.image,
+              color: AppPalette.black,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: AppTypography.boldText.copyWith(fontSize: 14),
+          ),
+          const SizedBox(width: 8),
+          const SizedBox(
+            height: 20,
+            width: 20,
+            child: Icon(
+              Icons.close,
+              color: AppPalette.black,
+            ),
+          ),
+        ],
       ),
     );
   }

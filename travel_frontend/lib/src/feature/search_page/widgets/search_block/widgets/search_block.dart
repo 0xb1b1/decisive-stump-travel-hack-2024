@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
 import '../../../../../widgets/painters/filters_icon.dart';
 import '../../../../../widgets/painters/photo_icon.dart';
@@ -9,7 +10,6 @@ import 'search_input.dart';
 import 'side_button.dart';
 
 class SearchBlock extends StatelessWidget {
-  final VoidCallback onSearchPhoto;
   final VoidCallback onFiltersTap;
   final FiltersViewModel filtersViewModel;
   final String filtersTitle;
@@ -17,17 +17,11 @@ class SearchBlock extends StatelessWidget {
 
   const SearchBlock({
     super.key,
-    required this.onSearchPhoto,
     required this.onFiltersTap,
     required this.filtersTitle,
     required this.filtersViewModel,
     required this.searchQuery,
   });
-
-  void joinedSearch(String text) {
-    final query = filtersViewModel.makeSearchQuery(text);
-    searchQuery(query);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +29,9 @@ class SearchBlock extends StatelessWidget {
       children: [
         Expanded(
           child: SearchInput(
-            onSearchTap: joinedSearch,
+            filtersViewModel: filtersViewModel,
+            searchState: filtersViewModel.state,
+            searchQuery: searchQuery,
             isFiltersChosen: filtersViewModel.isFiltersChosen,
           ),
         ),
@@ -52,7 +48,7 @@ class SearchBlock extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         SideButton(
-          onTap: onSearchPhoto,
+          onTap: (){},
           title: 'Поиск по изображению',
           icon: CustomPaint(
             size: const Size(20, 17),

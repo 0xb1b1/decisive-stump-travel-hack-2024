@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:image_picker/image_picker.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/models/search_view_state.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filter.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
 import '../../domain/search_repository.dart';
 import '../../navigation/navigation_service.dart';
@@ -64,11 +64,10 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     }
   }
 
-  @override
-  void dispose() {
-    print('dispose');
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  // }
 
   void onImageTap(String filename) {
     _navigationService.pushNamed(
@@ -77,23 +76,16 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
         RoutesArgs.filename: filename,
       },
     );
-    dispose();
+    // dispose();
   }
 
-  Future<void> pickImage() async {
-    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final file = File(image.path);
-    }
-  }
-
-  void search(ImageSearchQuery query) async {
-    emit(loadingState);
+  Future<void> _searchTagOrInitial(ImageSearchQuery query) async {
     try {
       final result = await _searchRepository.search(query);
 
       if (result.images.isEmpty) {
         emit(emptyState);
+        return;
       }
       emit(
         SearchViewState.data(
@@ -103,5 +95,109 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     } on Object catch (e) {
       emit(errorState);
     }
+  }
+
+  void search(SearchTypeState search) async {
+    emit(loadingState);
+
+    final currentState = search;
+
+    if (currentState is SearchTypeStateInitial) {
+      final query = _makeInitialQuery(currentState);
+      await _searchTagOrInitial(query);
+      return;
+    }
+
+    if (currentState is SearchTypeStateTag) {
+      final query = _makeTagQuery(currentState);
+      await _searchTagOrInitial(query);
+      return;
+    }
+
+    if (search is SearchTypeStateTagSimilar) {
+      //TODO ручка серча по похожим с фильтрами
+      return;
+    }
+  }
+
+//TODO: fix
+  int _mapNumber(Filter filter) {
+    if (filter.title == 'Без людей') {
+      return 0;
+    }
+    if (filter.title == 'От 1 до 5') {
+      return 1;
+    }
+    if (filter.title == 'От 5 до 15') {
+      return 2;
+    }
+    if (filter.title == 'От 15') {
+      return 3;
+    }
+    return 0;
+  }
+
+  ImageSearchQuery _makeInitialQuery(SearchTypeStateInitial state) {
+    final currentFiltersList = state.filtersList;
+
+    final dayTime = currentFiltersList.dayTime.filters;
+    final season = currentFiltersList.season.filters;
+    final orientation = currentFiltersList.orientation.filters;
+    final weather = currentFiltersList.weather.filters;
+    final persons = currentFiltersList.persons.filters;
+    final atmosphere = currentFiltersList.atmosphere.filters;
+    final colors = currentFiltersList.colors.filters;
+
+    final result = ImageSearchQuery(
+      text: state.search,
+      dayTime: dayTime.where((el) => el.checked).map((e) => e.title).toList(),
+      weather: weather.where((el) => el.checked).map((e) => e.title).toList(),
+      season: season.where((el) => el.checked).map((e) => e.title).toList(),
+      atmosphere:
+          atmosphere.where((el) => el.checked).map((e) => e.title).toList(),
+      colors: colors.where((el) => el.checked).map((e) => e.title).toList(),
+      persons: persons
+          .where((el) => el.checked)
+          .map(
+            (e) => _mapNumber(e),
+          )
+          .toList(),
+      orientation:
+          orientation.where((el) => el.checked).map((e) => e.title).toList(),
+    );
+
+    return result;
+  }
+
+  ImageSearchQuery _makeTagQuery(SearchTypeStateTag state) {
+    final currentFiltersList = state.filtersList;
+
+    final dayTime = currentFiltersList.dayTime.filters;
+    final season = currentFiltersList.season.filters;
+    final orientation = currentFiltersList.orientation.filters;
+    final weather = currentFiltersList.weather.filters;
+    final persons = currentFiltersList.persons.filters;
+    final atmosphere = currentFiltersList.atmosphere.filters;
+    final colors = currentFiltersList.colors.filters;
+
+    final result = ImageSearchQuery(
+      dayTime: dayTime.where((el) => el.checked).map((e) => e.title).toList(),
+      weather: weather.where((el) => el.checked).map((e) => e.title).toList(),
+      season: season.where((el) => el.checked).map((e) => e.title).toList(),
+      atmosphere:
+          atmosphere.where((el) => el.checked).map((e) => e.title).toList(),
+      colors: colors.where((el) => el.checked).map((e) => e.title).toList(),
+      persons: persons
+          .where((el) => el.checked)
+          .map(
+            (e) => _mapNumber(e),
+          )
+          .toList(),
+      orientation:
+          orientation.where((el) => el.checked).map((e) => e.title).toList(),
+      tags: [state.tag],
+    );
+
+    return result;
   }
 }

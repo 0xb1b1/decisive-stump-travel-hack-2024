@@ -27,6 +27,7 @@ class SearchPage extends ConsumerWidget {
       context,
       RoutesArgs.tag,
     );
+
     final query = tag == null ? null : ImageSearchQuery(tags: [tag]);
 
     final vm = ref.watch(searchViewModelProvider(query));
@@ -76,8 +77,6 @@ class SearchPage extends ConsumerWidget {
                     delegate: SliverChildListDelegate(
                       [
                         DropdownSearchBlock(
-                          onFiltersTap: () {},
-                          onSearchPhoto: vm.pickImage,
                           filtersViewModel: filtersVm,
                           search: vm.search,
                         ),
@@ -91,6 +90,7 @@ class SearchPage extends ConsumerWidget {
                       crossAxisCount: 4,
                       isButtonsEnabled: true,
                       onImageTap: vm.onImageTap,
+                      onSimilarTap: filtersVm.changeModeSimilar,
                     ),
                     loading: () => const SliverToBoxAdapter(
                       child: SizedBox(

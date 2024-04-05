@@ -9,6 +9,7 @@ class ImageGallery extends StatelessWidget {
   final int crossAxisCount;
   final bool isButtonsEnabled;
   final void Function(String fileName) onImageTap;
+  final void Function(String fileName) onSimilarTap;
 
   const ImageGallery({
     super.key,
@@ -16,6 +17,7 @@ class ImageGallery extends StatelessWidget {
     required this.crossAxisCount,
     required this.isButtonsEnabled,
     required this.onImageTap,
+    required this.onSimilarTap,
   });
 
   @override
@@ -41,11 +43,9 @@ class ImageGallery extends StatelessWidget {
         (BuildContext context, int index) => GestureDetector(
           onTap: () => onImageTap(images[index].filename),
           child: HoverImage(
-            title: images[index].label,
-            tags: images[index].tags,
-            url: images[index].url.thumb,
+            image: images[index],
             isButtonsEnabled: isButtonsEnabled,
-            onSimilarTap: () {},
+            onSimilarTap: onSimilarTap,
           ),
         ),
         childCount: images.length,
