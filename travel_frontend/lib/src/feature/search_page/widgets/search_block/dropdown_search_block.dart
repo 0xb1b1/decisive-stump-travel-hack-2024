@@ -25,7 +25,7 @@ class DropdownSearchBlock extends StatefulWidget {
 }
 
 class _DropdownSearchBlockState extends State<DropdownSearchBlock>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isFiltersToggled = false;
@@ -95,4 +95,7 @@ class _DropdownSearchBlockState extends State<DropdownSearchBlock>
       model: widget.filtersViewModel,
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

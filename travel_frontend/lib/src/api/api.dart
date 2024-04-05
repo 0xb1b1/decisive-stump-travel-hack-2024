@@ -44,7 +44,6 @@ class AppApi {
       queryParameters: queryParams,
     );
 
-
     return Gallery.fromJson(response.data);
   }
 

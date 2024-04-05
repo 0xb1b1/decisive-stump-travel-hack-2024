@@ -52,12 +52,15 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     super.dispose();
   }
 
-  void onImageTap(String filename) => _navigationService.pushNamed(
-        Routes.imageStats,
-        arguments: {
-          RoutesArgs.filename: filename,
-        },
-      );
+  void onImageTap(String filename) {
+    _navigationService.pushNamed(
+      Routes.imageStats,
+      arguments: {
+        RoutesArgs.filename: filename,
+      },
+    );
+    dispose();
+  }
 
   Future<void> pickImage() async {
     final image = await _imagePicker.pickImage(source: ImageSource.gallery);
@@ -70,7 +73,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     emit(loadingState);
     try {
       final result = await _searchRepository.search(query);
-      print(query);
 
       if (result.images.isEmpty) {
         emit(emptyState);
