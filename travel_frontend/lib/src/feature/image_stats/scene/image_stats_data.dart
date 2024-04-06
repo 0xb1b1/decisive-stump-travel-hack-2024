@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/api/models/full_image.dart';
 import 'package:travel_frontend/src/api/models/gallery.dart';
+import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_tags/image_tags.dart';
 
 import '../../../common/app_typography.dart';
@@ -78,7 +79,7 @@ class ImageStatsData extends StatelessWidget {
                                   vertical: 12, horizontal: 58),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
-                                color: Colors.yellow,
+                                color: AppPalette.yellow,
                               ),
                               child: const Text(
                                 'Cкачать',

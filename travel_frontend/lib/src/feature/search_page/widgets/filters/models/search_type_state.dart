@@ -21,7 +21,7 @@ class SearchTypeState with _$SearchTypeState {
   const factory SearchTypeState.similar({
     required FiltersList filtersList,
     required String filename,
-  }) = SearchTypeStateTagSimilar;
+  }) = SearchTypeStateSimilar;
 }
 
 enum SearchTypeMode {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:travel_frontend/src/api/models/gallery_image.dart';
 import 'package:travel_frontend/src/common/app_contants.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
 
+import '../../feature/search_page/widgets/filters/models/search_type_state.dart';
 import 'hover_image/hover_image.dart';
 
 class ImageGallery extends StatelessWidget {
@@ -9,7 +11,8 @@ class ImageGallery extends StatelessWidget {
   final int crossAxisCount;
   final bool isButtonsEnabled;
   final void Function(String fileName) onImageTap;
-  final void Function(String fileName) onSimilarTap;
+  final FiltersViewModel filtersVm;
+  final void Function(SearchTypeState state) searchQuery;
 
   const ImageGallery({
     super.key,
@@ -17,7 +20,8 @@ class ImageGallery extends StatelessWidget {
     required this.crossAxisCount,
     required this.isButtonsEnabled,
     required this.onImageTap,
-    required this.onSimilarTap,
+    required this.filtersVm,
+    required this.searchQuery,
   });
 
   @override
@@ -45,7 +49,10 @@ class ImageGallery extends StatelessWidget {
           child: HoverImage(
             image: images[index],
             isButtonsEnabled: isButtonsEnabled,
-            onSimilarTap: onSimilarTap,
+            onSimilarTap: () {
+              filtersVm.changeModeSimilar(images[index].filename);
+              searchQuery(filtersVm.state);
+            },
           ),
         ),
         childCount: images.length,

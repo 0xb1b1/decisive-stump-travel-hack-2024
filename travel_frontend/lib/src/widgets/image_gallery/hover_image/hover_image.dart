@@ -10,7 +10,7 @@ import 'widgets/similar_button.dart';
 
 class HoverImage extends StatefulWidget {
   final GalleryImage image;
-  final void Function(String fileName) onSimilarTap;
+  final VoidCallback onSimilarTap;
   final bool isButtonsEnabled;
 
   const HoverImage({
@@ -63,7 +63,7 @@ class _HoverImageState extends State<HoverImage> {
               right: 8,
               top: 8,
               child: GestureDetector(
-                onTap: () => widget.onSimilarTap(widget.image.filename),
+                onTap: widget.onSimilarTap,
                 child: const SimilarButton(),
               ),
             ),

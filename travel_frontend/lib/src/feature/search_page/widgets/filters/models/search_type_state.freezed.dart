@@ -43,21 +43,21 @@ mixin _$SearchTypeState {
   TResult map<TResult extends Object?>({
     required TResult Function(SearchTypeStateInitial value) initial,
     required TResult Function(SearchTypeStateTag value) tag,
-    required TResult Function(SearchTypeStateTagSimilar value) similar,
+    required TResult Function(SearchTypeStateSimilar value) similar,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(SearchTypeStateInitial value)? initial,
     TResult? Function(SearchTypeStateTag value)? tag,
-    TResult? Function(SearchTypeStateTagSimilar value)? similar,
+    TResult? Function(SearchTypeStateSimilar value)? similar,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(SearchTypeStateInitial value)? initial,
     TResult Function(SearchTypeStateTag value)? tag,
-    TResult Function(SearchTypeStateTagSimilar value)? similar,
+    TResult Function(SearchTypeStateSimilar value)? similar,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -228,7 +228,7 @@ class _$SearchTypeStateInitialImpl implements SearchTypeStateInitial {
   TResult map<TResult extends Object?>({
     required TResult Function(SearchTypeStateInitial value) initial,
     required TResult Function(SearchTypeStateTag value) tag,
-    required TResult Function(SearchTypeStateTagSimilar value) similar,
+    required TResult Function(SearchTypeStateSimilar value) similar,
   }) {
     return initial(this);
   }
@@ -238,7 +238,7 @@ class _$SearchTypeStateInitialImpl implements SearchTypeStateInitial {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(SearchTypeStateInitial value)? initial,
     TResult? Function(SearchTypeStateTag value)? tag,
-    TResult? Function(SearchTypeStateTagSimilar value)? similar,
+    TResult? Function(SearchTypeStateSimilar value)? similar,
   }) {
     return initial?.call(this);
   }
@@ -248,7 +248,7 @@ class _$SearchTypeStateInitialImpl implements SearchTypeStateInitial {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(SearchTypeStateInitial value)? initial,
     TResult Function(SearchTypeStateTag value)? tag,
-    TResult Function(SearchTypeStateTagSimilar value)? similar,
+    TResult Function(SearchTypeStateSimilar value)? similar,
     required TResult orElse(),
   }) {
     if (initial != null) {
@@ -388,7 +388,7 @@ class _$SearchTypeStateTagImpl implements SearchTypeStateTag {
   TResult map<TResult extends Object?>({
     required TResult Function(SearchTypeStateInitial value) initial,
     required TResult Function(SearchTypeStateTag value) tag,
-    required TResult Function(SearchTypeStateTagSimilar value) similar,
+    required TResult Function(SearchTypeStateSimilar value) similar,
   }) {
     return tag(this);
   }
@@ -398,7 +398,7 @@ class _$SearchTypeStateTagImpl implements SearchTypeStateTag {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(SearchTypeStateInitial value)? initial,
     TResult? Function(SearchTypeStateTag value)? tag,
-    TResult? Function(SearchTypeStateTagSimilar value)? similar,
+    TResult? Function(SearchTypeStateSimilar value)? similar,
   }) {
     return tag?.call(this);
   }
@@ -408,7 +408,7 @@ class _$SearchTypeStateTagImpl implements SearchTypeStateTag {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(SearchTypeStateInitial value)? initial,
     TResult Function(SearchTypeStateTag value)? tag,
-    TResult Function(SearchTypeStateTagSimilar value)? similar,
+    TResult Function(SearchTypeStateSimilar value)? similar,
     required TResult orElse(),
   }) {
     if (tag != null) {
@@ -433,12 +433,12 @@ abstract class SearchTypeStateTag implements SearchTypeState {
 }
 
 /// @nodoc
-abstract class _$$SearchTypeStateTagSimilarImplCopyWith<$Res>
+abstract class _$$SearchTypeStateSimilarImplCopyWith<$Res>
     implements $SearchTypeStateCopyWith<$Res> {
-  factory _$$SearchTypeStateTagSimilarImplCopyWith(
-          _$SearchTypeStateTagSimilarImpl value,
-          $Res Function(_$SearchTypeStateTagSimilarImpl) then) =
-      __$$SearchTypeStateTagSimilarImplCopyWithImpl<$Res>;
+  factory _$$SearchTypeStateSimilarImplCopyWith(
+          _$SearchTypeStateSimilarImpl value,
+          $Res Function(_$SearchTypeStateSimilarImpl) then) =
+      __$$SearchTypeStateSimilarImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({FiltersList filtersList, String filename});
@@ -448,12 +448,12 @@ abstract class _$$SearchTypeStateTagSimilarImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$SearchTypeStateTagSimilarImplCopyWithImpl<$Res>
-    extends _$SearchTypeStateCopyWithImpl<$Res, _$SearchTypeStateTagSimilarImpl>
-    implements _$$SearchTypeStateTagSimilarImplCopyWith<$Res> {
-  __$$SearchTypeStateTagSimilarImplCopyWithImpl(
-      _$SearchTypeStateTagSimilarImpl _value,
-      $Res Function(_$SearchTypeStateTagSimilarImpl) _then)
+class __$$SearchTypeStateSimilarImplCopyWithImpl<$Res>
+    extends _$SearchTypeStateCopyWithImpl<$Res, _$SearchTypeStateSimilarImpl>
+    implements _$$SearchTypeStateSimilarImplCopyWith<$Res> {
+  __$$SearchTypeStateSimilarImplCopyWithImpl(
+      _$SearchTypeStateSimilarImpl _value,
+      $Res Function(_$SearchTypeStateSimilarImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -462,7 +462,7 @@ class __$$SearchTypeStateTagSimilarImplCopyWithImpl<$Res>
     Object? filtersList = null,
     Object? filename = null,
   }) {
-    return _then(_$SearchTypeStateTagSimilarImpl(
+    return _then(_$SearchTypeStateSimilarImpl(
       filtersList: null == filtersList
           ? _value.filtersList
           : filtersList // ignore: cast_nullable_to_non_nullable
@@ -477,8 +477,8 @@ class __$$SearchTypeStateTagSimilarImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
-  const _$SearchTypeStateTagSimilarImpl(
+class _$SearchTypeStateSimilarImpl implements SearchTypeStateSimilar {
+  const _$SearchTypeStateSimilarImpl(
       {required this.filtersList, required this.filename});
 
   @override
@@ -495,7 +495,7 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$SearchTypeStateTagSimilarImpl &&
+            other is _$SearchTypeStateSimilarImpl &&
             (identical(other.filtersList, filtersList) ||
                 other.filtersList == filtersList) &&
             (identical(other.filename, filename) ||
@@ -508,9 +508,9 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$SearchTypeStateTagSimilarImplCopyWith<_$SearchTypeStateTagSimilarImpl>
-      get copyWith => __$$SearchTypeStateTagSimilarImplCopyWithImpl<
-          _$SearchTypeStateTagSimilarImpl>(this, _$identity);
+  _$$SearchTypeStateSimilarImplCopyWith<_$SearchTypeStateSimilarImpl>
+      get copyWith => __$$SearchTypeStateSimilarImplCopyWithImpl<
+          _$SearchTypeStateSimilarImpl>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -551,7 +551,7 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   TResult map<TResult extends Object?>({
     required TResult Function(SearchTypeStateInitial value) initial,
     required TResult Function(SearchTypeStateTag value) tag,
-    required TResult Function(SearchTypeStateTagSimilar value) similar,
+    required TResult Function(SearchTypeStateSimilar value) similar,
   }) {
     return similar(this);
   }
@@ -561,7 +561,7 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(SearchTypeStateInitial value)? initial,
     TResult? Function(SearchTypeStateTag value)? tag,
-    TResult? Function(SearchTypeStateTagSimilar value)? similar,
+    TResult? Function(SearchTypeStateSimilar value)? similar,
   }) {
     return similar?.call(this);
   }
@@ -571,7 +571,7 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(SearchTypeStateInitial value)? initial,
     TResult Function(SearchTypeStateTag value)? tag,
-    TResult Function(SearchTypeStateTagSimilar value)? similar,
+    TResult Function(SearchTypeStateSimilar value)? similar,
     required TResult orElse(),
   }) {
     if (similar != null) {
@@ -581,16 +581,16 @@ class _$SearchTypeStateTagSimilarImpl implements SearchTypeStateTagSimilar {
   }
 }
 
-abstract class SearchTypeStateTagSimilar implements SearchTypeState {
-  const factory SearchTypeStateTagSimilar(
+abstract class SearchTypeStateSimilar implements SearchTypeState {
+  const factory SearchTypeStateSimilar(
       {required final FiltersList filtersList,
-      required final String filename}) = _$SearchTypeStateTagSimilarImpl;
+      required final String filename}) = _$SearchTypeStateSimilarImpl;
 
   @override
   FiltersList get filtersList;
   String get filename;
   @override
   @JsonKey(ignore: true)
-  _$$SearchTypeStateTagSimilarImplCopyWith<_$SearchTypeStateTagSimilarImpl>
+  _$$SearchTypeStateSimilarImplCopyWith<_$SearchTypeStateSimilarImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

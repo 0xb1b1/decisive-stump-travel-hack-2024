@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -33,15 +34,22 @@ class AppApi {
     return Gallery.fromJson(response.data);
   }
 
-  Future<Gallery> getSimilar(String filename) async {
+  Future<Gallery> getNeighbors(
+    String filename,
+    ImageSearchQuery? query,
+    int imagesCount,
+  ) async {
     final path = '${ApiPath.similar}$filename';
     final queryParams = {
-      'amount': 400,
+      'amount': imagesCount,
     };
 
-    final response = await _dio.get(
+    final data = (query != null) ? query.toJson() : jsonEncode({'text': null});
+
+    final response = await _dio.post(
       path,
       queryParameters: queryParams,
+      data: data,
     );
 
     return Gallery.fromJson(response.data);
@@ -54,12 +62,10 @@ class AppApi {
       'tags_limit': 20,
     };
 
-    final data = query.toJson();
-
     final response = await _dio.post(
       path,
       queryParameters: queryParams,
-      data: data,
+      data: query.toJson(),
     );
 
     return Gallery.fromJson(response.data);

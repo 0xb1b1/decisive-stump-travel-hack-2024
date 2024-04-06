@@ -97,6 +97,29 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     }
   }
 
+  Future<void> _searchSimilar(
+    String filename,
+    ImageSearchQuery query,
+    int imagesCount,
+  ) async {
+    try {
+      final result =
+          await _searchRepository.getNeighbors(filename, query, imagesCount);
+
+      if (result.images.isEmpty) {
+        emit(emptyState);
+        return;
+      }
+      emit(
+        SearchViewState.data(
+          images: result.images,
+        ),
+      );
+    } on Object catch (e) {
+      emit(errorState);
+    }
+  }
+
   void search(SearchTypeState search) async {
     emit(loadingState);
 
@@ -114,8 +137,9 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
       return;
     }
 
-    if (search is SearchTypeStateTagSimilar) {
-      //TODO ручка серча по похожим с фильтрами
+    if (currentState is SearchTypeStateSimilar) {
+      final query = _makeQueryWithFilters(currentState);
+      await _searchSimilar(currentState.filename, query, 30);
       return;
     }
   }
@@ -137,7 +161,7 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     return 0;
   }
 
-  ImageSearchQuery _makeInitialQuery(SearchTypeStateInitial state) {
+  ImageSearchQuery _makeQueryWithFilters(SearchTypeState state) {
     final currentFiltersList = state.filtersList;
 
     final dayTime = currentFiltersList.dayTime.filters;
@@ -149,7 +173,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final colors = currentFiltersList.colors.filters;
 
     final result = ImageSearchQuery(
-      text: state.search,
       dayTime: dayTime.where((el) => el.checked).map((e) => e.title).toList(),
       weather: weather.where((el) => el.checked).map((e) => e.title).toList(),
       season: season.where((el) => el.checked).map((e) => e.title).toList(),
@@ -169,35 +192,15 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     return result;
   }
 
+  ImageSearchQuery _makeInitialQuery(SearchTypeStateInitial state) {
+    final filtersQuery = _makeQueryWithFilters(state);
+
+    return filtersQuery.copyWith(text: state.search);
+  }
+
   ImageSearchQuery _makeTagQuery(SearchTypeStateTag state) {
-    final currentFiltersList = state.filtersList;
+    final filtersQuery = _makeQueryWithFilters(state);
 
-    final dayTime = currentFiltersList.dayTime.filters;
-    final season = currentFiltersList.season.filters;
-    final orientation = currentFiltersList.orientation.filters;
-    final weather = currentFiltersList.weather.filters;
-    final persons = currentFiltersList.persons.filters;
-    final atmosphere = currentFiltersList.atmosphere.filters;
-    final colors = currentFiltersList.colors.filters;
-
-    final result = ImageSearchQuery(
-      dayTime: dayTime.where((el) => el.checked).map((e) => e.title).toList(),
-      weather: weather.where((el) => el.checked).map((e) => e.title).toList(),
-      season: season.where((el) => el.checked).map((e) => e.title).toList(),
-      atmosphere:
-          atmosphere.where((el) => el.checked).map((e) => e.title).toList(),
-      colors: colors.where((el) => el.checked).map((e) => e.title).toList(),
-      persons: persons
-          .where((el) => el.checked)
-          .map(
-            (e) => _mapNumber(e),
-          )
-          .toList(),
-      orientation:
-          orientation.where((el) => el.checked).map((e) => e.title).toList(),
-      tags: [state.tag],
-    );
-
-    return result;
+    return filtersQuery.copyWith(tags: [state.tag]);
   }
 }

@@ -13,6 +13,7 @@ import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dro
 
 import 'package:travel_frontend/src/feature/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
+import 'package:travel_frontend/src/widgets/error_scene.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
@@ -90,7 +91,8 @@ class SearchPage extends ConsumerWidget {
                       crossAxisCount: 4,
                       isButtonsEnabled: true,
                       onImageTap: vm.onImageTap,
-                      onSimilarTap: filtersVm.changeModeSimilar,
+                      filtersVm: filtersVm,
+                      searchQuery: vm.search,
                     ),
                     loading: () => const SliverToBoxAdapter(
                       child: SizedBox(
@@ -103,23 +105,8 @@ class SearchPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    error: () => SliverToBoxAdapter(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppPalette.yellow.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        height: 236,
-                        width: 200,
-                        child: Center(
-                          child: Text(
-                            textAlign: TextAlign.center,
-                            'Произошла ошибка, \nпроверьте ваше интернет-соединение и повторите попытку',
-                            style:
-                                AppTypography.boldText.copyWith(fontSize: 24),
-                          ),
-                        ),
-                      ),
+                    error: () => const SliverToBoxAdapter(
+                      child: ErrorScene(),
                     ),
                     empty: () => SliverToBoxAdapter(
                       child: Container(

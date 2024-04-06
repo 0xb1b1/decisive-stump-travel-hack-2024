@@ -14,8 +14,12 @@ class SearchRepository {
     return result;
   }
 
-  Future<Gallery> getSimilar(String filename) async {
-    final result = await _api.getSimilar(filename);
+  Future<Gallery> getNeighbors(
+    String filename,
+    ImageSearchQuery? query,
+    int imagesCount,
+  ) async {
+    final result = await _api.getNeighbors(filename, query, imagesCount);
     return result;
   }
 

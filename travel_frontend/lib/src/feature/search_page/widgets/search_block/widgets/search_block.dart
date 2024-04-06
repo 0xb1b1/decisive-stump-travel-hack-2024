@@ -13,7 +13,7 @@ class SearchBlock extends StatelessWidget {
   final VoidCallback onFiltersTap;
   final FiltersViewModel filtersViewModel;
   final String filtersTitle;
-  final void Function(ImageSearchQuery) searchQuery;
+  final void Function(SearchTypeState) searchQuery;
 
   const SearchBlock({
     super.key,
@@ -32,7 +32,6 @@ class SearchBlock extends StatelessWidget {
             filtersViewModel: filtersViewModel,
             searchState: filtersViewModel.state,
             searchQuery: searchQuery,
-            isFiltersChosen: filtersViewModel.isFiltersChosen,
           ),
         ),
         const SizedBox(
@@ -48,7 +47,7 @@ class SearchBlock extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         SideButton(
-          onTap: (){},
+          onTap: () {},
           title: 'Поиск по изображению',
           icon: CustomPaint(
             size: const Size(20, 17),
