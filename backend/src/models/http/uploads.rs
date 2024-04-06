@@ -88,6 +88,45 @@ impl UploadImageResponse {
     }
 }
 
+#[derive(FromForm)]
+pub struct PublishImage {
+    pub filename: String,
+    pub label: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub time_of_day: Option<String>,
+    pub weather: Option<String>,
+    pub atmosphere: Option<String>,
+    pub season: Option<String>,
+    pub number_of_people: Option<u8>,
+    pub main_color: Option<String>,
+    pub orientation: Option<String>,
+    pub landmark: Option<String>,
+    pub grayscale: Option<bool>,
+    pub error: Option<String>,
+}
+impl PublishImage {
+    pub fn to_image_info(&self) -> ImageInfo {
+        ImageInfo {
+            filename: self.filename.clone(),
+            s3_presigned_urls: None,
+            tags: self.tags.clone(),
+            label: self.label.clone(),
+            time_of_day: self.time_of_day.clone(),
+            weather: self.weather.clone(),
+            atmosphere: self.atmosphere.clone(),
+            season: self.season.clone(),
+            number_of_people: self.number_of_people,
+            main_color: self.main_color.clone(),
+            orientation: self.orientation.clone(),
+            landmark: self.landmark.clone(),
+            grayscale: self.grayscale,
+            view_count: None,
+            download_count: None,
+            error: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ImageStatusResponse {
     pub filename: String,

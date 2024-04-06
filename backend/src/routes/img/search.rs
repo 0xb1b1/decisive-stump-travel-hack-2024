@@ -106,7 +106,6 @@ pub async fn search_images(
     // Ignore some params until ML implements them
     // TODO: Revisit the following after ML is complete
     let mut filtered_data = data.into_inner().clone();
-    filtered_data.orientation = None;
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(40))
@@ -127,6 +126,8 @@ pub async fn search_images(
 
     let text_set: bool =
         filtered_data.text.is_some() && filtered_data.text.as_ref().unwrap().len() > 0;
+
+    log::debug!("Filters set: {}; Text set: {}", filters_set, text_set);
 
     let endpoint: &str;
 

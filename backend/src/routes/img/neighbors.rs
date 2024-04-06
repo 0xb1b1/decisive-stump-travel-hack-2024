@@ -14,7 +14,8 @@ use log;
 
 // use crate::enums::rsmq::RsmqDsQueue;
 // use crate::enums::worker::TaskType;
-use ds_travel_hack_2024::models::http::main_page::RedisGalleryStore;
+use ds_travel_hack_2024::{models::http::main_page::RedisGalleryStore, utils::rsmq::presigned_urls::get_s3_presigned_urls_direct};
+use rsmq_async::PooledRsmq;
 // use crate::utils::s3::images::get_img;
 // use ds_travel_hack_2024::utils;
 
@@ -28,6 +29,8 @@ pub fn routes() -> Vec<rocket::Route> {
 pub async fn get_photo_neighbors(
     filename: &str,
     amount: Option<u16>,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
     config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<RedisGalleryStore>> {
     log::info!("Processing GetPhotoNeighbors task for file: {}", filename);
@@ -56,7 +59,7 @@ pub async fn get_photo_neighbors(
         }
     };
 
-    let response: RedisGalleryStore = match client.get(url).send().await {
+    let mut response: RedisGalleryStore = match client.get(url).send().await {
         Ok(res) => match res.text().await {
             Ok(json) => match serde_json::from_str(&json) {
                 Ok(response) => response,
@@ -94,6 +97,27 @@ pub async fn get_photo_neighbors(
             );
         }
     };
+
+    for img in response.images.iter_mut() {
+        let s3_urls = match get_s3_presigned_urls_direct(
+            filename,
+            None,
+            redis_pool,
+            rsmq_pool,
+            config.s3_get_presigned_urls_timeout_secs,
+        ).await {
+            Ok(urls) => {
+                log::debug!("Successfully received S3PresignedUrls for filename: {}", filename);
+                Some(urls)
+            },
+            Err(err) => {
+                log::error!("An error occurred when generating S3PresignedUrl: {}", err);
+                None
+            }
+        };
+
+        img.s3_presigned_urls = s3_urls;
+    }
 
     status::Custom(Status::Ok, Json(response))
 }

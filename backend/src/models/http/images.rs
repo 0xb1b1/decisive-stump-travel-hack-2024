@@ -6,6 +6,15 @@ pub struct S3PresignedUrls {
     pub comp: Option<String>,
     pub thumb: Option<String>,
 }
+impl S3PresignedUrls {
+    pub fn new() -> Self {
+        S3PresignedUrls {
+            normal: None,
+            comp: None,
+            thumb: None,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ImageInfo {

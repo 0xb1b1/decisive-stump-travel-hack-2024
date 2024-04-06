@@ -260,7 +260,7 @@ async fn main() {
             } else {
                 log::debug!("Main gallery not found in Redis.");
                 log::warn!("Asking ML to repopulate the main gallery.");
-                match reqwest::get(format!("{}/main/{}", config.svc_ml_fast, 100)).await {
+                match reqwest::get(format!("{}/main/{}", config.svc_ml_fast, 999)).await {
                     Ok(_) => {
                         log::info!("Request to ML successful. Re-running this task in 3 seconds.");
                         task::sleep(Duration::from_secs(3)).await;
@@ -414,6 +414,74 @@ async fn main() {
 
                 // Process task
                 match task {
+                    TaskType::GenS3PresignedUrls { ref filename, expiry_secs } => {
+                        log::info!(
+                            "Received GenS3PresignedUrls task: {} with expiry_secs: {}",
+                            filename,
+                            expiry_secs
+                        );
+                        let presigned_url =
+                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            &filename,
+                            &bucket_images,
+                            expiry_secs,
+                        ).await;
+                        let presigned_url_comp =
+                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            &filename,
+                            &bucket_images_compressed,
+                            expiry_secs,
+                        ).await;
+                        let presigned_url_thumb =
+                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            &filename,
+                            &bucket_images_thumbs,
+                            expiry_secs,
+                        ).await;
+
+                        let s3_presigned_urls = S3PresignedUrls {
+                            normal: presigned_url,
+                            comp: presigned_url_comp,
+                            thumb: presigned_url_thumb,
+                        };
+
+                        // Send to Redis
+                        let _ = match redis::cmd("SET")
+                            .arg(format!("images:presigned_urls:{}", filename))
+                            .arg(serde_json::to_string(&s3_presigned_urls).unwrap())
+                            .arg("EX")
+                            .arg(expiry_secs - 5)  // To prevent expired presigned URLs being sent to clients
+                            .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
+                            .await
+                        {
+                            Ok(_) => {
+                                log::info!("Sent presigned URLs to Redis.");
+                            }
+                            Err(err) => {
+                                log::error!("Failed to send presigned URLs to Redis: {}", err);
+                                // Send to failed queue
+                                match rsmq_pool
+                                    .send_message(
+                                        RsmqDsQueue::BackendWorkerFailed.as_str(),
+                                        serde_json::to_string(&task).unwrap(),
+                                        None,
+                                    )
+                                    .await
+                                {
+                                    Ok(_) => {
+                                        log::info!("Sent task to failed queue.");
+                                    }
+                                    Err(err) => {
+                                        log::error!("Failed to send task to failed queue: {}", err);
+                                        worker_queue_counter += 1;
+                                        continue;
+                                    }
+                                }
+                                worker_queue_counter += 1;
+                                continue;
+                            }
+                        };
+                    },
                     TaskType::DeleteImage { filename } => {
                         log::info!("Received DeleteImage task: {}", filename);
                         match ds_travel_hack_2024::tasks::task_types::delete_image::delete_from_all_buckets(
@@ -459,9 +527,9 @@ async fn main() {
                     }
                 }
                 // Remove task key from Redis
-                match redis::cmd("DEL")
+               match redis::cmd("DEL")
                     .arg(&task_key)
-                    .query_async::<_, Option<String>>(&mut *redis_pool.get().await.unwrap())
+                    .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
                     .await
                 {
                     Ok(_) => {

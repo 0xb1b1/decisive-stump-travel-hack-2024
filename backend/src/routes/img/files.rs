@@ -13,7 +13,7 @@ use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
 use ds_travel_hack_2024::models::http::images::{ImageInfo, S3PresignedUrls};
 use ds_travel_hack_2024::models::http::uploads::{
-    DeleteImageResponse, ImageStatusResponse, UploadImage, UploadImageResponse,
+    DeleteImageResponse, ImageStatusResponse, PublishImage, UploadImage, UploadImageResponse
 };
 use ds_travel_hack_2024::utils;
 use ds_travel_hack_2024::utils::s3::images::{get_img, get_presigned_url};
@@ -410,6 +410,19 @@ async fn check_image_upload(
         task::sleep(Duration::from_secs(config.upload_check_interval_secs)).await;
     }
 }
+
+// #[post("/publish", format = "multipart/form-data", data = "<form>")]  // TODO!
+// async fn publish_image(
+//     form: Form<PublishImage>,
+//     bucket: &rocket::State<Bucket>,
+//     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+//     rsmq_pool: &rocket::State<PooledRsmq>,
+// ) {
+//     let new_image_info = form.to_image_info();
+
+//     // Send the new image info to publish queue
+
+// }
 
 #[get("/publish/check?<filename>")]
 async fn check_image_publish(

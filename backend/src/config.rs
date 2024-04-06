@@ -8,6 +8,7 @@ pub struct DsConfig {
     pub upload_check_interval_secs: u64,
     pub publish_check_retries: u64,
     pub publish_check_interval_secs: u64,
+    pub s3_get_presigned_urls_timeout_secs: u32,
 }
 
 pub fn get_config() -> Result<DsConfig, std::env::VarError> {
@@ -22,5 +23,6 @@ pub fn get_config() -> Result<DsConfig, std::env::VarError> {
         publish_check_interval_secs: env::var("DS_PUBLISH_CHECK_INTERVAL_SECS")?
             .parse()
             .unwrap_or(1),
+        s3_get_presigned_urls_timeout_secs: env::var("DS_S3_GET_PRESIGNED_URLS_TIMEOUT_SECS")?.parse().unwrap_or(30),
     })
 }

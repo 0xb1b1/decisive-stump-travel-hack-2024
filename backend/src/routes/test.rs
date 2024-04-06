@@ -1,3 +1,6 @@
+use ds_travel_hack_2024::models::http::images::S3PresignedUrls;
+use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
+use ds_travel_hack_2024::utils::rsmq::presigned_urls::get_s3_presigned_urls_direct;
 use log;
 use rocket::http::{ContentType, MediaType};
 use rocket::{
@@ -20,6 +23,8 @@ use s3::Bucket;
 // use crate::enums::rsmq::RsmqDsQueue;
 use ds_travel_hack_2024::utils;
 
+use crate::config::DsConfig;
+
 // use crate::models::uploads;
 
 pub fn routes() -> Vec<rocket::Route> {
@@ -28,7 +33,8 @@ pub fn routes() -> Vec<rocket::Route> {
         test_s3,
         test_rsmq_send,
         test_rsmq_receive,
-        test_list_s3_files
+        test_list_s3_files,
+        test_get_presigned_urls,
     ]
 }
 
@@ -382,4 +388,35 @@ async fn test_list_s3_files(
             count: Some(filenames.len()),
         }),
     )
+}
+
+#[get("/img/presigned_urls?<filename>")]
+async fn test_get_presigned_urls(
+    filename: &str,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
+    config: &rocket::State<DsConfig>,
+) -> status::Custom<Json<S3PresignedUrls>> {
+    match get_s3_presigned_urls_direct(
+        filename,
+        None,
+        redis_pool,
+        rsmq_pool,
+        config.s3_get_presigned_urls_timeout_secs,
+    ).await {
+        Ok(urls) => {
+            log::debug!("Successfully received S3PresignedUrls for filename: {}", filename);
+            status::Custom(
+                Status::Ok,
+                Json(urls)
+            )
+        },
+        Err(err) => {
+            log::error!("An error occurred when generating S3PresignedUrl: {}", err);
+            status::Custom(
+                Status::InternalServerError,
+                Json(S3PresignedUrls::new())
+            )
+        }
+    }
 }
