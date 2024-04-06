@@ -17,7 +17,7 @@ class AppBarInfoBlock extends StatelessWidget {
         children: [
           const SizedBox(height: 24),
           Text(
-            'Главная - Проекты и мероприятия - Фотографии',
+            'Главная · Проекты и мероприятия · Фотографии',
             style: AppTypography.boldText.copyWith(
               color: const Color(0xFF747474),
               fontSize: 14,

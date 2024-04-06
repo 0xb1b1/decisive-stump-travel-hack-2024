@@ -12,6 +12,7 @@ import 'package:travel_frontend/src/widgets/image_gallery/image_tags/image_tags.
 
 import '../../../common/app_typography.dart';
 import '../../../widgets/image_gallery/image_gallery.dart';
+import '../../../widgets/image_gallery/image_gallery_without_buttons.dart';
 
 class ImageStatsData extends StatelessWidget {
   final FullImage image;
@@ -50,14 +51,12 @@ class ImageStatsData extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    height: _photoBlockHeight,
-                    image.url.thumb,
-                    fit: BoxFit.fill,
-                  ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  height: _photoBlockHeight,
+                  image.url.thumb,
+                  fit: BoxFit.fill,
                 ),
               ),
               const SizedBox(width: 32),
@@ -109,12 +108,11 @@ class ImageStatsData extends StatelessWidget {
             ],
           ),
         ),
-        // ImageGallery(
-        //   images: similarImages.images,
-        //   crossAxisCount: 2,
-        //   isButtonsEnabled: false,
-        //   onImageTap: onImageTap,
-        // ),
+        ImageGalleryWithoutButtons(
+          images: similarImages.images,
+          crossAxisCount: 4,
+          onImageTap: onImageTap,
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],
     );

@@ -22,6 +22,7 @@ class _DownloadRowState extends State<DownloadRow> {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
@@ -44,6 +45,7 @@ class _DownloadRowState extends State<DownloadRow> {
         const SizedBox(width: 16),
         Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AutoSizeText(
                 'Обратите внимание на ограничения использования, установленные Лицензионным соглашением.',
@@ -58,6 +60,7 @@ class _DownloadRowState extends State<DownloadRow> {
                     height: 14,
                     width: 14,
                     child: Checkbox(
+                      activeColor: AppPalette.yellow,
                       value: isChecked,
                       onChanged: (bool? value) {
                         setState(
@@ -69,7 +72,7 @@ class _DownloadRowState extends State<DownloadRow> {
                     ),
                   ),
                   const SizedBox(
-                    width: 2,
+                    width: 4,
                   ),
                   Text(
                     'Cоглашаюсь с условиями лицензионного соглашения',

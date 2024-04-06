@@ -5,6 +5,7 @@ import 'package:travel_frontend/src/feature/search_page/models/search_view_state
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filter.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
+import '../../api/models/gallery.dart';
 import '../../domain/search_repository.dart';
 import '../../navigation/navigation_service.dart';
 import '../../navigation/routes.dart';
@@ -79,9 +80,27 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     // dispose();
   }
 
-  Future<void> _searchTagOrInitial(ImageSearchQuery query) async {
+  Future<void> _searchTag(ImageSearchQuery query) async {
     try {
       final result = await _searchRepository.search(query, 20);
+
+      if (result.images.isEmpty) {
+        emit(emptyState);
+        return;
+      }
+      emit(
+        SearchViewState.data(
+          images: result.images,
+        ),
+      );
+    } on Object catch (e) {
+      emit(errorState);
+    }
+  }
+
+  Future<void> _searchInitial(ImageSearchQuery query) async {
+    try {
+      final result = await _searchRepository.getGallery();
 
       if (result.images.isEmpty) {
         emit(emptyState);
@@ -126,14 +145,15 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final currentState = search;
 
     if (currentState is SearchTypeStateInitial) {
+      print('search');
       final query = _makeInitialQuery(currentState);
-      await _searchTagOrInitial(query);
+      await _searchInitial(query);
       return;
     }
 
     if (currentState is SearchTypeStateTag) {
       final query = _makeTagQuery(currentState);
-      await _searchTagOrInitial(query);
+      await _searchTag(query);
       return;
     }
 

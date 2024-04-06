@@ -158,6 +158,7 @@ class FiltersViewModel extends BaseViewModel<SearchTypeState> {
   }
 
   void onCrossTap() {
+    print('onCrossTap');
     emit(
       SearchTypeState.initial(
         filtersList: FiltersList.initial(),

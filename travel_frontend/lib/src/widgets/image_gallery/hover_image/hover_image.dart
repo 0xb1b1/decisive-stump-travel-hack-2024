@@ -27,8 +27,21 @@ class HoverImage extends StatefulWidget {
 class _HoverImageState extends State<HoverImage> {
   bool isHovering = false;
 
+  // @override
+  // void didChangeDependencies() {
+  //   print('precache');
+  //   _precacheNetworkImage(context, widget.image.url.thumb);
+  //   super.didChangeDependencies();
+  // }
+  //
+  void _precacheNetworkImage(BuildContext context, String url) {
+    precacheImage(CachedNetworkImageProvider(url), context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    _precacheNetworkImage(context, widget.image.url.thumb);
+
     return MouseRegion(
       onEnter: (event) => setState(() => isHovering = true),
       onExit: (event) => setState(() => isHovering = false),

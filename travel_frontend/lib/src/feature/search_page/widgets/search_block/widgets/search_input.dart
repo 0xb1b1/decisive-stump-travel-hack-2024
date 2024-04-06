@@ -51,52 +51,69 @@ class _SearchInputState extends State<SearchInput> {
     return SizedBox(
       height: 48,
       child: widget.filtersViewModel.state.when(
-        tag: (__, tag) => TextFormField(
-          initialValue: tag,
-          controller: _controller,
-          decoration: InputDecoration(
-            hintText: 'Введите запрос',
-            filled: true,
-            fillColor: Colors.white,
-            suffixIcon: _isTyping || widget.filtersViewModel.isFiltersChosen
-                ? IconButton(
-                    color: AppPalette.yellow,
-                    icon: const Icon(
-                      Icons.search,
-                      color: AppPalette.black,
-                    ),
-                    onPressed: () =>
-                        widget.searchQuery(widget.filtersViewModel.state),
-                  )
-                : null,
-            enabledBorder: border,
-            focusedBorder: border,
-          ),
-        ),
-        similar: (__, _) => TextFormField(
-          controller: _controller,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            prefixIcon: _ImageContainerMode(
-              title: 'Выбранное изображение',
-              onCrossTap: widget.filtersViewModel.onCrossTap,
-            ),
-            suffixIcon: IconButton(
+        tag: (__, tag) => Container(
+          decoration: BoxDecoration(
+            color: AppPalette.white,
+            border: Border.all(
               color: AppPalette.yellow,
-              icon: const Icon(
-                Icons.search,
-                color: AppPalette.black,
-              ),
-              onPressed: () =>
-                  widget.searchQuery(widget.filtersViewModel.state),
+              width: 2,
             ),
-            enabledBorder: border,
-            focusedBorder: border,
-            disabledBorder: border,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _ImageContainerMode(
+                title: 'Поиск по тегу: $tag',
+                onCrossTap: () {
+                  widget.filtersViewModel.onCrossTap();
+                  widget.searchQuery(widget.filtersViewModel.state);
+                },
+              ),
+              IconButton(
+                color: AppPalette.yellow,
+                icon: const Icon(
+                  Icons.search,
+                  color: AppPalette.black,
+                ),
+                onPressed: () =>
+                    widget.searchQuery(widget.filtersViewModel.state),
+              ),
+            ],
           ),
         ),
-        initial: (_, search) => TextFormField(
+        similar: (__, _) => Container(
+          decoration: BoxDecoration(
+            color: AppPalette.white,
+            border: Border.all(
+              color: AppPalette.yellow,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _ImageContainerMode(
+                title: 'Выбранное изображение',
+                onCrossTap: () {
+                  widget.filtersViewModel.onCrossTap();
+                  widget.searchQuery(widget.filtersViewModel.state);
+                },
+              ),
+              IconButton(
+                color: AppPalette.yellow,
+                icon: const Icon(
+                  Icons.search,
+                  color: AppPalette.black,
+                ),
+                onPressed: () =>
+                    widget.searchQuery(widget.filtersViewModel.state),
+              ),
+            ],
+          ),
+        ),
+        initial: (_, search) => TextField(
           controller: _controller,
           decoration: InputDecoration(
             hintText: 'Введите запрос',
@@ -141,7 +158,7 @@ class _ImageContainerMode extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         color: AppPalette.grey,
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       margin: const EdgeInsets.all(6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
