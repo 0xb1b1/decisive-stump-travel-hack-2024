@@ -1,0 +1,78 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Show help.
+    cmds:
+      - task --list
+
+  kube-deploy:
+    desc: Deploy the frontend to Kubernetes.
+    cmds:
+      - "read -p 'This will create a new namespace in your current context and deploy frontend. Continue? [y/N]: ' REPLY && [ $REPLY == 'y' ] || exit 1"
+      - echo "Deploying the application to Kubernetes..."
+      - "echo 'NOTE: ./kube/02-secrets.yaml does not exist in the repository. Please create it manually from the template.'"
+      - "echo 'NOTE: You must have an ingress controller installed in your cluster.'"
+      - "echo 'NOTE: Please review ./kube/05-ingress.yaml before proceeding. You might want to change the hostname.'"
+      - "read -p 'Continue? [y/N]: ' REPLY && [ $REPLY == 'y' ] || exit 1"
+      - kubectl apply -f ./kube/01-ns.yaml
+      - kubectl apply -f ./kube/02-secrets.yaml
+      - kubectl apply -f ./kube/03-deploy.yaml
+      - kubectl apply -f ./kube/04-svc.yaml
+      - kubectl apply -f ./kube/05-ingress.yaml
+      - echo "Done. The application is deployed."
+  build:
+    desc: Build all backend binaries.
+    cmds:
+      - echo "Building backend binaries..."
+      - cargo build --release
+      - echo "Done. Build artifacts are in target/release/."
+
+  docker-build:
+    desc: Build Docker images.
+    cmds:
+      - "echo 'Building Docker images...'"
+      - "docker build -t 0xb1b1/ds-backend-travel-hack-2024:latest -f ./docker/Dockerfile.backend ."
+      - "docker build -t 0xb1b1/ds-worker-travel-hack-2024:latest -f ./docker/Dockerfile.worker ."
+      - "echo 'Done. Images are ready.'"
+
+  docker-buildx:
+    desc: Build Docker images with BuildX (for arm64, amd64).
+    cmds:
+      - "read -p 'This will push the built images to the registry. Continue? [y/N]: ' REPLY && [ $REPLY == 'y' ] || exit 1"
+      - "echo 'Building backend Docker image...'"
+      - "docker buildx build --platform linux/amd64,linux/arm64 -t 0xb1b1/ds-backend-travel-hack-2024:latest -f ./docker/Dockerfile.backend --push ."
+      - "echo 'Building worker Docker image...'"
+      - "docker buildx build --platform linux/amd64,linux/arm64 -t 0xb1b1/ds-worker-travel-hack-2024:latest -f ./docker/Dockerfile.worker --push ."
+
+  docker-push:
+    desc: Push Docker images to the registry.
+    cmds:
+      - echo "Pushing Docker images..."
+      - docker push 0xb1b1/ds-backend-travel-hack-2024:latest
+      - docker push 0xb1b1/ds-worker-travel-hack-2024:latest
+      - echo "Done. Images are pushed."
+
+  run-backend:
+    desc: Run the backend service.
+    cmds:
+      - echo "Running the backend service..."
+      - RUST_LOG=debug ROCKET_ADDRESS=0.0.0.0 ROCKET_PORT=8000 cargo run --bin backend
+
+  run-worker:
+    desc: Run the worker service.
+    cmds:
+      - echo "Running the worker service..."
+      - RUST_LOG=debug cargo run --bin worker
+
+  run-backend-release:
+    desc: Run the backend service in release mode.
+    cmds:
+      - echo "Running the backend service in release mode..."
+      - RUST_LOG=debug ROCKET_ADDRESS=0.0.0.0 ROCKET_PORT=8000 cargo run --release --bin backend
+
+  run-worker-release:
+    desc: Run the worker service in release mode.
+    cmds:
+      - echo "Running the worker service in release mode..."
+      - RUST_LOG=debug cargo run --release --bin worker
