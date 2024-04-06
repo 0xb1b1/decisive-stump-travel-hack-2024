@@ -88,7 +88,7 @@ impl UploadImageResponse {
     }
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Clone)]
 pub struct PublishImage {
     pub filename: String,
     pub label: Option<String>,

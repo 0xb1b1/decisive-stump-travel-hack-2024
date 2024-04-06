@@ -1,5 +1,5 @@
 use ds_travel_hack_2024::models::http::images::S3PresignedUrls;
-use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
+// use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
 use ds_travel_hack_2024::utils::rsmq::presigned_urls::get_s3_presigned_urls_direct;
 use log;
 use rocket::http::{ContentType, MediaType};

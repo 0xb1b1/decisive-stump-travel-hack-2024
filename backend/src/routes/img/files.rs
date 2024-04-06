@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use async_std::task;
+use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
 use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
 use log;
 use rocket::http::{ContentType, MediaType};
@@ -23,11 +24,11 @@ use crate::config::DsConfig;
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         upload_image,
-        delete_image,
-        // get_image_list,
-        get_image_full,
         check_image_upload,
+        publish_image,
         check_image_publish,
+        delete_image,
+        get_image_full,
     ]
 }
 
@@ -411,18 +412,41 @@ async fn check_image_upload(
     }
 }
 
-// #[post("/publish", format = "multipart/form-data", data = "<form>")]  // TODO!
-// async fn publish_image(
-//     form: Form<PublishImage>,
-//     bucket: &rocket::State<Bucket>,
-//     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-//     rsmq_pool: &rocket::State<PooledRsmq>,
-// ) {
-//     let new_image_info = form.to_image_info();
+#[post("/publish", format = "multipart/form-data", data = "<form>")]  // TODO!
+async fn publish_image(
+    form: Form<PublishImage>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
+) -> status::Custom<Json<ImageInfo>> {
+    let image_info: ImageInfo = form.clone().to_image_info();
 
-//     // Send the new image info to publish queue
+    let ml_task = MlTaskType::new(&form.clone().filename.as_str());
 
-// }
+    let serialized_ml_task = serde_json::to_string(&ml_task).unwrap();
+    log::debug!("Serialized ML task: {}", &serialized_ml_task);
+
+    // Send to RSMQ
+    let queue_id = match rsmq_pool.inner().clone().send_message(
+        RsmqDsQueue::AnalyzeBackendMl.as_str(),
+        serialized_ml_task,
+        None,
+    ).await {
+        Ok(id) => id,
+        Err(e) => {
+            log::error!("Failed to send message to RSMQ: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageInfo {
+                    error: Some(format!("Failed to send message to RSMQ: {}", e)),
+                    ..image_info
+                }),
+            );
+        }
+    };
+
+    log::info!("Sent message to RSMQ; queue id: {:?}", queue_id);
+
+    status::Custom(Status::Ok, Json(image_info))
+}
 
 #[get("/publish/check?<filename>")]
 async fn check_image_publish(

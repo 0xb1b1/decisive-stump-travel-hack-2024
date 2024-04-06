@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::utils::redis::images::get_s3_presigned_urls;
+// use crate::utils::redis::images::get_s3_presigned_urls;
 
 use super::images::ImageInfoGallery;
 

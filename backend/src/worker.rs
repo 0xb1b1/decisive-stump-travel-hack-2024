@@ -527,7 +527,7 @@ async fn main() {
                     }
                 }
                 // Remove task key from Redis
-               match redis::cmd("DEL")
+                match redis::cmd("DEL")
                     .arg(&task_key)
                     .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
                     .await
