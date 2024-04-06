@@ -403,20 +403,19 @@ async fn test_get_presigned_urls(
         redis_pool,
         rsmq_pool,
         config.s3_get_presigned_urls_timeout_secs,
-    ).await {
+    )
+    .await
+    {
         Ok(urls) => {
-            log::debug!("Successfully received S3PresignedUrls for filename: {}", filename);
-            status::Custom(
-                Status::Ok,
-                Json(urls)
-            )
-        },
+            log::debug!(
+                "Successfully received S3PresignedUrls for filename: {}",
+                filename
+            );
+            status::Custom(Status::Ok, Json(urls))
+        }
         Err(err) => {
             log::error!("An error occurred when generating S3PresignedUrl: {}", err);
-            status::Custom(
-                Status::InternalServerError,
-                Json(S3PresignedUrls::new())
-            )
+            status::Custom(Status::InternalServerError, Json(S3PresignedUrls::new()))
         }
     }
 }

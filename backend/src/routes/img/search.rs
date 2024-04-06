@@ -4,7 +4,9 @@ use log;
 use rocket::{http::Status, response::status, serde::json::Json};
 
 use ds_travel_hack_2024::{
-    models::http::search::{ImageSearchQuery, SearchImageResponse}, tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty}, utils::redis::galleries::get_main_gallery
+    models::http::search::{ImageSearchQuery, SearchImageResponse},
+    tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty},
+    utils::redis::galleries::get_main_gallery,
 };
 
 use crate::config::DsConfig;

@@ -1,7 +1,9 @@
 use rsmq_async::{PooledRsmq, RsmqConnection};
 
-use crate::{enums::{rsmq::RsmqDsQueue, worker::TaskType}, models::http::images::S3PresignedUrls};
-
+use crate::{
+    enums::{rsmq::RsmqDsQueue, worker::TaskType},
+    models::http::images::S3PresignedUrls,
+};
 
 async fn get_s3_presigned_urls_redis(
     filename: &str,
@@ -20,15 +22,13 @@ async fn get_s3_presigned_urls_redis(
         .query_async::<_, Option<String>>(&mut *redis_conn)
         .await
     {
-        Ok(url) => {
-            match url {
-                Some(url) => {
-                    log::info!("Presigned URLs found in Redis: {}", url);
-                    serde_json::from_str(&url).unwrap()
-                }
-                None => None,
+        Ok(url) => match url {
+            Some(url) => {
+                log::info!("Presigned URLs found in Redis: {}", url);
+                serde_json::from_str(&url).unwrap()
             }
-        }
+            None => None,
+        },
         Err(e) => {
             log::error!("Failed to get presigned URLs from Redis: {}", e);
             return None;
@@ -65,14 +65,16 @@ pub async fn get_s3_presigned_urls_direct(
             .clone()
             .send_message(
                 RsmqDsQueue::BackendWorker.as_str(),
-                serde_json::to_string(
-                    &TaskType::GenS3PresignedUrls {
-                        filename: filename.to_string(),
-                        expiry_secs: final_expiry_secs,
-                    }
-                ).unwrap().as_str(),
+                serde_json::to_string(&TaskType::GenS3PresignedUrls {
+                    filename: filename.to_string(),
+                    expiry_secs: final_expiry_secs,
+                })
+                .unwrap()
+                .as_str(),
                 None,
-        ).await {
+            )
+            .await
+        {
             Ok(_) => {
                 log::info!("Sent message to worker to get presigned URLs");
             }
@@ -91,7 +93,10 @@ pub async fn get_s3_presigned_urls_direct(
                 return Ok(urls);
             }
 
-            log::debug!("Waiting for the worker to finish the task (attempts remaining: {})", timeout_counter);
+            log::debug!(
+                "Waiting for the worker to finish the task (attempts remaining: {})",
+                timeout_counter
+            );
 
             if timeout_counter == 0 {
                 return Err("Timeout while waiting for the worker to finish the task".into());

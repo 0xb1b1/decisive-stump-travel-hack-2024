@@ -19,7 +19,7 @@ pub enum MlTaskType {
         landmark: Option<String>,
         grayscale: Option<bool>,
         error: Option<String>,
-    }
+    },
 }
 impl MlTaskType {
     pub fn new(filename: &str) -> Self {
@@ -43,12 +43,18 @@ impl MlTaskType {
     pub fn as_str(&self) -> &str {
         match self {
             MlTaskType::AddImage {
-                filename: _, label: _,
-                tags: _, time_of_day: _,
-                weather: _, atmosphere: _,
-                season: _, number_of_people: _,
-                main_color: _, orientation: _,
-                landmark: _, grayscale: _,
+                filename: _,
+                label: _,
+                tags: _,
+                time_of_day: _,
+                weather: _,
+                atmosphere: _,
+                season: _,
+                number_of_people: _,
+                main_color: _,
+                orientation: _,
+                landmark: _,
+                grayscale: _,
                 error: _,
             } => "AddImage",
         }
@@ -57,12 +63,18 @@ impl MlTaskType {
     pub fn from_image_info(&self, image_info: ImageInfo) -> Self {
         match self {
             MlTaskType::AddImage {
-                filename: _, label: _,
-                tags: _, time_of_day: _,
-                weather: _, atmosphere: _,
-                season: _, number_of_people: _,
-                main_color: _, orientation: _,
-                landmark: _, grayscale: _,
+                filename: _,
+                label: _,
+                tags: _,
+                time_of_day: _,
+                weather: _,
+                atmosphere: _,
+                season: _,
+                number_of_people: _,
+                main_color: _,
+                orientation: _,
+                landmark: _,
+                grayscale: _,
                 error: _,
             } => MlTaskType::AddImage {
                 filename: image_info.filename.clone(),

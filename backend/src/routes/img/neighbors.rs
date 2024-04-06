@@ -15,7 +15,11 @@ use log;
 
 // use crate::enums::rsmq::RsmqDsQueue;
 // use crate::enums::worker::TaskType;
-use ds_travel_hack_2024::{models::http::{main_page::RedisGalleryStore, search::ImageSearchQuery}, tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty}, utils::rsmq::presigned_urls::get_s3_presigned_urls_direct};
+use ds_travel_hack_2024::{
+    models::http::{main_page::RedisGalleryStore, search::ImageSearchQuery},
+    tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty},
+    utils::rsmq::presigned_urls::get_s3_presigned_urls_direct,
+};
 use rsmq_async::PooledRsmq;
 // use crate::utils::s3::images::get_img;
 // use ds_travel_hack_2024::utils;
@@ -126,11 +130,16 @@ pub async fn get_photo_neighbors(
             redis_pool,
             rsmq_pool,
             config.s3_get_presigned_urls_timeout_secs,
-        ).await {
+        )
+        .await
+        {
             Ok(urls) => {
-                log::debug!("Successfully received S3PresignedUrls for filename: {}", filename);
+                log::debug!(
+                    "Successfully received S3PresignedUrls for filename: {}",
+                    filename
+                );
                 Some(urls)
-            },
+            }
             Err(err) => {
                 log::error!("An error occurred when generating S3PresignedUrl: {}", err);
                 None

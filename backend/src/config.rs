@@ -23,6 +23,8 @@ pub fn get_config() -> Result<DsConfig, std::env::VarError> {
         publish_check_interval_secs: env::var("DS_PUBLISH_CHECK_INTERVAL_SECS")?
             .parse()
             .unwrap_or(1),
-        s3_get_presigned_urls_timeout_secs: env::var("DS_S3_GET_PRESIGNED_URLS_TIMEOUT_SECS")?.parse().unwrap_or(30),
+        s3_get_presigned_urls_timeout_secs: env::var("DS_S3_GET_PRESIGNED_URLS_TIMEOUT_SECS")?
+            .parse()
+            .unwrap_or(30),
     })
 }

@@ -7,6 +7,7 @@ use super::images::ImageInfo;
 #[derive(FromForm)]
 pub struct UploadImage<'f> {
     pub file: TempFile<'f>,
+    pub force: Option<bool>,
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
     pub time_of_day: Option<String>,
@@ -133,6 +134,7 @@ pub struct ImageStatusResponse {
     pub image_info: Option<ImageInfo>,
     pub is_ml_uploaded: Option<bool>,
     pub is_ml_published: Option<bool>,
+    pub duplicate_filename: Option<String>,
     pub error: Option<String>,
 }
 impl ImageStatusResponse {
@@ -142,6 +144,7 @@ impl ImageStatusResponse {
             is_ml_uploaded: None,
             is_ml_published: None,
             image_info: None,
+            duplicate_filename: None,
             error: None,
         }
     }

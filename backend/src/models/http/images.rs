@@ -59,6 +59,13 @@ impl ImageInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ImageUploadFailInfo {
+    pub dublicate_filename: String, // I know it's a typo, but it's from upstream
+    // and it's kinda late to change stuff in ML code
+    pub error: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageInfoGallery {
     pub filename: String,
     pub s3_presigned_urls: Option<S3PresignedUrls>,

@@ -14,7 +14,14 @@ pub async fn delete_image(
     config: &DsConfig,
 ) {
     log::debug!("Deleting image from all buckets... ({})", filename);
-    let del_buckets = delete_from_all_buckets(filename, bucket_images, bucket_images_compressed, bucket_images_thumbs, rsmq_pool).await;
+    let del_buckets = delete_from_all_buckets(
+        filename,
+        bucket_images,
+        bucket_images_compressed,
+        bucket_images_thumbs,
+        rsmq_pool,
+    )
+    .await;
     log::debug!("Is image deleted from all buckets: {}", del_buckets.is_ok());
 
     log::debug!("Deleting image from ML service...");
@@ -23,7 +30,10 @@ pub async fn delete_image(
         .send()
         .await;
     log::debug!("Is image deleted from ML service: {}", del_ml.is_ok());
-    log::debug!("Deletion request status code: {}", del_ml.as_ref().unwrap().status());
+    log::debug!(
+        "Deletion request status code: {}",
+        del_ml.as_ref().unwrap().status()
+    );
 }
 
 async fn delete_from_all_buckets(

@@ -5,9 +5,9 @@ use rsmq_async::{PooledRsmq, RsmqConnection};
 use s3::Bucket;
 use serde::Serialize;
 
-use crate::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+use crate::enums::rsmq::RsmqDsQueue; // worker::TaskType
 
-use crate::tasks::task_types::utils::queues::send_to_error_queue;
+// use crate::tasks::task_types::utils::queues::send_to_error_queue;
 
 mod job;
 
@@ -15,15 +15,21 @@ mod job;
 #[derive(Serialize, Debug)]
 pub struct MlUploadAnalyzeMessage {
     pub filename: String,
+    pub force: bool,
 }
 
-async fn send_ml_upload_task(filename: &str, rsmq_pool: &mut PooledRsmq) -> Result<(), String> {
+async fn send_ml_upload_task(
+    filename: &str,
+    rsmq_pool: &mut PooledRsmq,
+    force: bool,
+) -> Result<(), String> {
     // This task is meant for ML to recognize possible tags and shove then into a redis key with format
     // images:upload:ready-{filename}. After that the frontend eventually gets the tags and proceeds with
     // finalizing the upload.
 
     let message = MlUploadAnalyzeMessage {
         filename: filename.to_string(),
+        force: force,
     };
 
     // Send task to ML neighbors using queue
@@ -53,6 +59,7 @@ pub async fn compress_normal(
     bucket_images_compressed: &Bucket,
     bucket_images_thumbs: &Bucket,
     rsmq_pool: &mut PooledRsmq,
+    force: bool,
 ) -> Result<(), String> {
     log::info!("Downloading image: {}", filename);
     let original_file =
@@ -63,13 +70,14 @@ pub async fn compress_normal(
             }
             Err(err) => {
                 log::error!("Failed to download image from S3: {}", err);
-                let _ = send_to_error_queue(
-                    &TaskType::CompressImage {
-                        filename: filename.to_string(),
-                    },
-                    rsmq_pool,
-                )
-                .await;
+                // let _ = send_to_error_queue(
+                //     &TaskType::CompressImage {
+                //         filename: filename.to_string(),
+                //     },
+                //     rsmq_pool,
+                // )
+                // .await;
+                // TODO! Implement failure key setting
                 return Err("Failed to download image from S3.".into());
             }
         };
@@ -145,13 +153,14 @@ pub async fn compress_normal(
                 }
                 Err(err) => {
                     log::error!("Failed to compress image (comp bucket), failing: {}", err);
-                    let _ = send_to_error_queue(
-                        &TaskType::CompressImage {
-                            filename: filename.to_string(),
-                        },
-                        rsmq_pool,
-                    )
-                    .await;
+                    // let _ = send_to_error_queue(
+                    //     &TaskType::CompressImage {
+                    //         filename: filename.to_string(),
+                    //     },
+                    //     rsmq_pool,
+                    // )
+                    // .await;
+                    // TODO! Implement failure key setting
                     Err(())
                 }
             }
@@ -167,13 +176,14 @@ pub async fn compress_normal(
             }
             Err(err) => {
                 log::error!("Failed to copy image to comp bucket: {}", err);
-                let _ = send_to_error_queue(
-                    &TaskType::CompressImage {
-                        filename: filename.to_string(),
-                    },
-                    rsmq_pool,
-                )
-                .await;
+                // let _ = send_to_error_queue(
+                //     &TaskType::CompressImage {
+                //         filename: filename.to_string(),
+                //     },
+                //     rsmq_pool,
+                // )
+                // .await;
+                // TODO! Implement failure key setting
                 Err(())
             }
         }
@@ -194,7 +204,7 @@ pub async fn compress_normal(
     }
 
     // Send upload task for ML here since it only uses the comp bucket
-    match send_ml_upload_task(&filename, rsmq_pool).await {
+    match send_ml_upload_task(&filename, rsmq_pool, force).await {
         Ok(_) => {
             log::info!("Sent ML Upload task for file {}", &comp_filename);
         }
@@ -203,13 +213,14 @@ pub async fn compress_normal(
                 "Failed to send upload task to ML; sending to error queue: {}",
                 err
             );
-            let _ = send_to_error_queue(
-                &TaskType::CompressImage {
-                    filename: comp_filename,
-                },
-                rsmq_pool,
-            )
-            .await;
+            // let _ = send_to_error_queue(
+            //     &TaskType::CompressImage {
+            //         filename: comp_filename,
+            //     },
+            //     rsmq_pool,
+            // )
+            // .await;
+            // TODO! Implement failure key setting
         }
     }
 
@@ -222,13 +233,14 @@ pub async fn compress_normal(
                 }
                 Err(err) => {
                     log::error!("Failed to compress image (thumb bucket), failing: {}", err);
-                    let _ = send_to_error_queue(
-                        &TaskType::CompressImage {
-                            filename: filename.to_string(),
-                        },
-                        rsmq_pool,
-                    )
-                    .await;
+                    // let _ = send_to_error_queue(
+                    //     &TaskType::CompressImage {
+                    //         filename: filename.to_string(),
+                    //     },
+                    //     rsmq_pool,
+                    // )
+                    // .await;
+                    // TODO! Implement failure key setting
                     Err(())
                 }
             }
@@ -243,8 +255,11 @@ pub async fn compress_normal(
                 Ok(())
             }
             Err(err) => {
-                log::error!("Failed to copy image to thumb bucket: {}, setting failure key...", err);
-// TODO!: Implement failure key setting
+                log::error!(
+                    "Failed to copy image to thumb bucket: {}, setting failure key...",
+                    err
+                );
+                // TODO!: Implement failure key setting
                 Err(())
             }
         }
