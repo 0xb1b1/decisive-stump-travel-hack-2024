@@ -25,8 +25,8 @@ class SearchRepository {
 
   Future<void> searchFromUploaded() async {}
 
-  Future<Gallery> search(ImageSearchQuery query) async {
-    final result = await _api.search(query);
+  Future<Gallery> search(ImageSearchQuery query, int imagesCount) async {
+    final result = await _api.search(query, imagesCount);
     return result;
   }
 

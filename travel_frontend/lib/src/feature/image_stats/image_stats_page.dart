@@ -49,7 +49,7 @@ class ImageStats extends ConsumerWidget {
               data: (image, gallery) => ImageStatsData(
                 image: image,
                 similarImages: gallery,
-                onDownloadTap: (_) {},
+                onDownloadTap: vm.onDownloadTap,
                 onImageTap: vm.onImageTap,
                 onTagTap: vm.searchTag,
               ),

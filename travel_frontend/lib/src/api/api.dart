@@ -7,7 +7,7 @@ import 'package:travel_frontend/src/api/models/gallery.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
 
 abstract class ApiPath {
-  static const uploadImage = 'http://127.0.0.1:8000/img/upload';
+  static const uploadImage = 'http://backend.0xb1b1.com:81/img/upload';
   static const getGallery = 'http://backend.0xb1b1.com:81/img/gallery';
   static const getImage = 'http://backend.0xb1b1.com:81/img/get/full/';
   static const search = 'http://backend.0xb1b1.com:81/img/search';
@@ -55,10 +55,10 @@ class AppApi {
     return Gallery.fromJson(response.data);
   }
 
-  Future<Gallery> search(ImageSearchQuery query) async {
+  Future<Gallery> search(ImageSearchQuery query, int imagesCount) async {
     const path = ApiPath.search;
     final queryParams = {
-      'images_limit': 100,
+      'images_limit': imagesCount,
       'tags_limit': 20,
     };
 

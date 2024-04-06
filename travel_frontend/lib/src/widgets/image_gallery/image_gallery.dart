@@ -26,16 +26,6 @@ class ImageGallery extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final image = [
-    //   GalleryImage(
-    //     filename: 'кастом',
-    //     s3PresignedUrl:
-    //         'https://ir.ozone.ru/s3/multimedia-z/c1000/6744654071.jpg',
-    //     label: 'что-то',
-    //     tags: ['кто-то'],
-    //   ),
-    // ];
-
     return SliverGrid(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,

@@ -66,20 +66,16 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
     );
   }
 
-  Future<void> onDownloadTap(String url) async {
+  Future<void> onDownloadTap(String url, String filename) async {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        // Create a blob from the image data
         final blob = html.Blob([response.bodyBytes]);
-        // Create a URL for the blob
+
         final url = html.Url.createObjectUrlFromBlob(blob);
-        // Create an anchor element (<a>) and set its href to the blob URL
         final anchor = html.AnchorElement(href: url)
-          ..setAttribute(
-              "download", "downloadedImage.png") // Set the download filename
-          ..click(); // Programmatically click the anchor to trigger the download
-        // Cleanup the blob URL
+          ..setAttribute("download", filename)
+          ..click();
         html.Url.revokeObjectUrl(url);
       } else {
         emit(errorState);

@@ -3,7 +3,7 @@ import 'package:travel_frontend/src/api/models/gallery_image.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../utils/utils.dart';
 import 'widgets/selected_checkbox_widget.dart';
 import 'widgets/similar_button.dart';
@@ -35,14 +35,21 @@ class _HoverImageState extends State<HoverImage> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.image.url.thumb),
-                fit: BoxFit.cover,
+          CachedNetworkImage(
+            imageUrl: widget.image.url.thumb,
+            imageBuilder: (context, imageProvider) => Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: imageProvider,
+                  fit: BoxFit.cover,
+                ),
               ),
-              borderRadius: BorderRadius.circular(8),
             ),
+            placeholder: (context, url) => const CircularProgressIndicator(
+              color: AppPalette.lightGrey,
+            ),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
           ),
           AnimatedContainer(
             decoration: BoxDecoration(

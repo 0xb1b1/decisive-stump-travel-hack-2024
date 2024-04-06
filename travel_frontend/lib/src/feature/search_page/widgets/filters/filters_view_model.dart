@@ -166,20 +166,18 @@ class FiltersViewModel extends BaseViewModel<SearchTypeState> {
     );
   }
 
-  String? getInitialValue() {
-    if (state is SearchTypeStateTag) {
-      final currentState = state as SearchTypeStateTag;
-      return currentState.tag;
+  void changeSearch(String controllerText) {
+    final currentState = state;
+    if (currentState is SearchTypeStateInitial) {
+      emit(currentState.copyWith(search: controllerText));
     }
-
-    return null;
   }
 
-  // Future<void> pickImage() async {
-  //   final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-  //   if (image != null) {
-  //     final file = File(image.path);
-  //     _changeModeUploaded(file);
-  //   }
-  // }
+// Future<void> pickImage() async {
+//   final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+//   if (image != null) {
+//     final file = File(image.path);
+//     _changeModeUploaded(file);
+//   }
+// }
 }

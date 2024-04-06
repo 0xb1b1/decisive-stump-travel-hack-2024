@@ -40,7 +40,7 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
 
     if (_initialSearch != null) {
       try {
-        final gallery = await _searchRepository.search(_initialSearch);
+        final gallery = await _searchRepository.search(_initialSearch, 20);
         if (gallery.images.isEmpty) {
           emit(emptyState);
           return;
@@ -81,7 +81,7 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
 
   Future<void> _searchTagOrInitial(ImageSearchQuery query) async {
     try {
-      final result = await _searchRepository.search(query);
+      final result = await _searchRepository.search(query, 20);
 
       if (result.images.isEmpty) {
         emit(emptyState);
