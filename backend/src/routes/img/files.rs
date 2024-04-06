@@ -419,7 +419,8 @@ async fn publish_image(
 ) -> status::Custom<Json<ImageInfo>> {
     let image_info: ImageInfo = form.clone().to_image_info();
 
-    let ml_task = MlTaskType::new(&form.clone().filename.as_str());
+    let ml_task = MlTaskType::new(&form.clone().filename.as_str())
+        .from_image_info(image_info.clone());
 
     let serialized_ml_task = serde_json::to_string(&ml_task).unwrap();
     log::debug!("Serialized ML task: {}", &serialized_ml_task);
@@ -596,16 +597,16 @@ async fn check_image_publish(
     }
 }
 
-#[delete("/delete?<file_name>")]
+#[delete("/delete?<filename>")]
 async fn delete_image(
-    file_name: &str,
+    filename: &str,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
     rsmq: &rocket::State<PooledRsmq>,
 ) -> status::Custom<Json<DeleteImageResponse>> {
-    log::debug!("Deleting image: {}", file_name);
+    log::debug!("Deleting image: {}", filename);
 
-    let file_path = file_name.to_string();
+    let file_path = filename.to_string();
     let s3_image_exists = match get_img(&file_path, &bucket).await {
         Some(_) => true,
         None => false,
@@ -674,7 +675,7 @@ async fn delete_image(
         .send_message(
             RsmqDsQueue::BackendWorker.as_str(),
             serde_json::to_string(&TaskType::DeleteImage {
-                filename: file_name.to_string(),
+                filename: filename.to_string(),
             })
             .unwrap()
             .as_str(),

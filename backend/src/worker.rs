@@ -5,8 +5,7 @@ use redis::RedisError;
 use rsmq_async::RsmqConnection;
 use std::time::Duration;
 
-mod config;
-
+use ds_travel_hack_2024::config;
 use ds_travel_hack_2024::connections;
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
@@ -484,24 +483,15 @@ async fn main() {
                     },
                     TaskType::DeleteImage { filename } => {
                         log::info!("Received DeleteImage task: {}", filename);
-                        match ds_travel_hack_2024::tasks::task_types::delete_image::delete_from_all_buckets(
+                        ds_travel_hack_2024::tasks::task_types::delete_image::delete_image(
                             &filename,
                             &bucket_images,
                             &bucket_images_compressed,
                             &bucket_images_thumbs,
                             &mut rsmq_pool,
+                            &config,
                         )
-                        .await
-                        {
-                            Ok(_) => {
-                                log::info!("Deleted image from all buckets.");
-                            }
-                            Err(err) => {
-                                log::error!("Failed to delete image from all buckets: {}", err);
-                                worker_queue_counter += 1;
-                                continue;
-                            }
-                        }
+                        .await;
                     }
                     TaskType::CompressImage { filename } => {
                         log::info!("Received CompressImage task: {}", filename);

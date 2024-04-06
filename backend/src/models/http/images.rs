@@ -16,7 +16,7 @@ impl S3PresignedUrls {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageInfo {
     pub filename: String,
     pub s3_presigned_urls: Option<S3PresignedUrls>,

@@ -243,14 +243,8 @@ pub async fn compress_normal(
                 Ok(())
             }
             Err(err) => {
-                log::error!("Failed to copy image to thumb bucket: {}", err);
-                let _ = send_to_error_queue(
-                    &TaskType::CompressImage {
-                        filename: filename.to_string(),
-                    },
-                    rsmq_pool,
-                )
-                .await;
+                log::error!("Failed to copy image to thumb bucket: {}, setting failure key...", err);
+// TODO!: Implement failure key setting
                 Err(())
             }
         }

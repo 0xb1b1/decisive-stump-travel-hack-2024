@@ -1,10 +1,32 @@
 use rsmq_async::PooledRsmq;
 use s3::Bucket;
 
+use crate::config::DsConfig;
 use crate::enums::worker::TaskType;
 use crate::tasks::task_types::utils::queues::send_to_error_queue;
 
-pub async fn delete_from_all_buckets(
+pub async fn delete_image(
+    filename: &str,
+    bucket_images: &Bucket,
+    bucket_images_compressed: &Bucket,
+    bucket_images_thumbs: &Bucket,
+    rsmq_pool: &mut PooledRsmq,
+    config: &DsConfig,
+) {
+    log::debug!("Deleting image from all buckets... ({})", filename);
+    let del_buckets = delete_from_all_buckets(filename, bucket_images, bucket_images_compressed, bucket_images_thumbs, rsmq_pool).await;
+    log::debug!("Is image deleted from all buckets: {}", del_buckets.is_ok());
+
+    log::debug!("Deleting image from ML service...");
+    let del_ml = reqwest::Client::new()
+        .delete(&format!("{}/images/del/{}", config.svc_ml_fast, filename))
+        .send()
+        .await;
+    log::debug!("Is image deleted from ML service: {}", del_ml.is_ok());
+    log::debug!("Deletion request status code: {}", del_ml.as_ref().unwrap().status());
+}
+
+async fn delete_from_all_buckets(
     filename: &str,
     bucket_images: &Bucket,
     bucket_images_compressed: &Bucket,
