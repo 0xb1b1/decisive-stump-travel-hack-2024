@@ -1,6 +1,7 @@
 mod files;
 mod main_page;
 mod ml;
+mod neighbors;
 mod search;
 
 pub fn routes() -> Vec<rocket::Route> {
@@ -8,6 +9,7 @@ pub fn routes() -> Vec<rocket::Route> {
     rocket_routes.append(&mut ml::routes());
     rocket_routes.append(&mut search::routes());
     rocket_routes.append(&mut main_page::routes());
+    rocket_routes.append(&mut neighbors::routes());
 
     rocket_routes
 }

@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use async_std::task;
+use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
 use log;
 use rocket::http::{ContentType, MediaType};
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
@@ -10,12 +11,12 @@ use tokio::io::AsyncReadExt; // Required for reading file contents (e.g. .read_t
 
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
-use ds_travel_hack_2024::models::http::images::ImageInfo;
+use ds_travel_hack_2024::models::http::images::{ImageInfo, S3PresignedUrls};
 use ds_travel_hack_2024::models::http::uploads::{
     DeleteImageResponse, ImageStatusResponse, UploadImage, UploadImageResponse,
 };
 use ds_travel_hack_2024::utils;
-use ds_travel_hack_2024::utils::s3::images::get_img;
+use ds_travel_hack_2024::utils::s3::images::{get_img, get_presigned_url};
 
 use crate::config::DsConfig;
 
@@ -26,6 +27,7 @@ pub fn routes() -> Vec<rocket::Route> {
         // get_image_list,
         get_image_full,
         check_image_upload,
+        check_image_publish,
     ]
 }
 
@@ -270,12 +272,14 @@ async fn upload_image(
     )
 }
 
-#[get("/upload/check?<file_name>")]
+#[get("/upload/check?<filename>")]
 async fn check_image_upload(
-    file_name: &str,
+    filename: &str,
+    bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<ImageStatusResponse>> {
-    log::debug!("Checking image upload status: {}", file_name);
+    log::debug!("Checking image upload status: {}", filename);
 
     let mut conn = match redis_pool.get().await {
         Ok(conn) => conn,
@@ -285,7 +289,7 @@ async fn check_image_upload(
                 Status::InternalServerError,
                 Json(ImageStatusResponse {
                     is_ml_uploaded: None,
-                    ..ImageStatusResponse::new(file_name)
+                    ..ImageStatusResponse::new(filename)
                 }),
             );
         }
@@ -293,70 +297,265 @@ async fn check_image_upload(
 
     let mut timeout_counter = 0;
     loop {
-        if timeout_counter >= 10 {
-            log::error!("Image upload check timed out: {}", file_name);
+        if timeout_counter >= config.upload_check_retries {
+            log::error!("Image upload check timed out: {}", filename);
             return status::Custom(
                 Status::RequestTimeout,
                 Json(ImageStatusResponse {
                     is_ml_uploaded: None,
                     error: Some("Image upload check timed out.".into()),
-                    ..ImageStatusResponse::new(file_name)
+                    ..ImageStatusResponse::new(filename)
                 }),
             );
         }
 
         let image_exists: bool = redis::cmd("EXISTS")
-            .arg(format!("images:info:{}", file_name))
+            .arg(format!("image-info:upload:{}", filename))
             .query_async(&mut *conn)
             .await
             .unwrap();
 
         if !image_exists {
-            log::error!("Image does not exist: {}", file_name);
+            log::error!("Image does not exist: {}", filename);
             return status::Custom(
                 Status::NotFound,
                 Json(ImageStatusResponse {
                     is_ml_uploaded: None,
                     error: Some("Image does not exist (it probably timed out.)".into()),
-                    ..ImageStatusResponse::new(file_name)
+                    ..ImageStatusResponse::new(filename)
                 }),
             );
         } else {
-            log::debug!("Image exists: {}", file_name);
+            log::debug!("Image exists: {}", filename);
         }
 
-        let is_ml_uploaded: Option<bool> = match redis::cmd("EXISTS")
-            .arg(format!("images:upload:ready:{}", file_name))
-            .query_async(&mut *conn)
-            .await
-        {
-            Ok(data) => match data {
-                redis::Value::Data(_) => Some(true),
-                _ => Some(false),
-            },
-            Err(e) => {
-                log::error!("Failed to get image status: {}", e);
-                None
-            }
-        };
+        let is_ml_uploaded: bool = redis::cmd("EXISTS")
+        .arg(format!("images:upload:ready:{}", filename))
+        .query_async(&mut *conn)
+        .await
+        .unwrap();
 
-        if is_ml_uploaded.is_some() && is_ml_uploaded.unwrap() {
-            log::debug!("Image is ready: {}", file_name);
+        if is_ml_uploaded {
+            log::debug!("Image is ready: {}", filename);
+            log::debug!("Getting presigned URLs from Redis: {}", filename);
+            let presigned_urls = S3PresignedUrls {
+                normal: get_presigned_url(&filename, &bucket, 360).await,
+                comp: None,
+                thumb: None,
+            };
+
+            log::debug!("Getting image info as generated by ML from Redis...");
+            let mut image_info: ImageInfo = match redis::cmd("GET")
+                .arg(format!("images:upload:ready:{}", filename))
+                .query_async(&mut *redis_pool.get().await.unwrap())
+                .await
+            {
+                Ok(data) => match data {
+                    redis::Value::Data(data) => match serde_json::from_slice(&data) {
+                        Ok(info) => info,
+                        Err(e) => {
+                            log::error!("Failed to parse image info: {}", e);
+                            return status::Custom(
+                                Status::InternalServerError,
+                                Json(ImageStatusResponse {
+                                    is_ml_uploaded: None,
+                                    error: Some(format!("Failed to parse image info: {}", e)),
+                                    ..ImageStatusResponse::new(filename)
+                                }),
+                            );
+                        }
+                    },
+                    _ => {
+                        log::error!("Failed to get image info: {:?}", data);
+                        return status::Custom(
+                            Status::InternalServerError,
+                            Json(ImageStatusResponse {
+                                is_ml_uploaded: None,
+                                error: Some("Failed to get image info.".into()),
+                                ..ImageStatusResponse::new(filename)
+                            }),
+                        );
+                    }
+                },
+                Err(e) => {
+                    log::error!("Failed to get image info: {}", e);
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(ImageStatusResponse {
+                            is_ml_uploaded: None,
+                            error: Some(format!("Failed to get image info: {}", e)),
+                            ..ImageStatusResponse::new(filename)
+                        }),
+                    );
+                }
+            };
+
+            image_info.s3_presigned_urls = Some(presigned_urls);
+
             return status::Custom(
                 Status::Ok,
                 Json(ImageStatusResponse {
-                    is_ml_uploaded: is_ml_uploaded,
-                    ..ImageStatusResponse::new(file_name)
+                    is_ml_uploaded: Some(is_ml_uploaded),
+                    image_info: Some(image_info),
+                    ..ImageStatusResponse::new(filename)
                 }),
             );
         }
 
         log::debug!(
             "Image is not ready, waiting before trying again: {}",
-            file_name
+            filename
         );
         timeout_counter += 1;
-        task::sleep(Duration::from_secs(1)).await;
+        task::sleep(Duration::from_secs(config.upload_check_interval_secs)).await;
+    }
+}
+
+#[get("/publish/check?<filename>")]
+async fn check_image_publish(
+    filename: &str,
+    bucket: &rocket::State<Bucket>,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    config: &rocket::State<DsConfig>,
+) -> status::Custom<Json<ImageStatusResponse>> {
+    log::debug!("Checking image upload status: {}", filename);
+
+    let mut conn = match redis_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get connection from Redis pool: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    ..ImageStatusResponse::new(filename)
+                }),
+            );
+        }
+    };
+
+    let mut timeout_counter = 0;
+    loop {
+        if timeout_counter >= config.publish_check_retries {
+            log::error!("Image upload check timed out: {}", filename);
+            return status::Custom(
+                Status::RequestTimeout,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    error: Some("Image upload check timed out.".into()),
+                    ..ImageStatusResponse::new(filename)
+                }),
+            );
+        }
+
+        let image_exists: bool = redis::cmd("EXISTS")
+            .arg(format!("image-info:upload:{}", filename))
+            .query_async(&mut *conn)
+            .await
+            .unwrap();
+
+        if !image_exists {
+            log::error!("Image does not exist: {}", filename);
+            return status::Custom(
+                Status::NotFound,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: None,
+                    error: Some("Image does not exist (it probably timed out.)".into()),
+                    ..ImageStatusResponse::new(filename)
+                }),
+            );
+        } else {
+            log::debug!("Image exists: {}", filename);
+        }
+
+        let is_ml_uploaded: bool = redis::cmd("EXISTS")
+        .arg(format!("images:publish:ready:{}", filename))
+        .query_async(&mut *conn)
+        .await
+        .unwrap();
+
+        if is_ml_uploaded {
+            log::debug!("Image is ready: {}", filename);
+            log::debug!("Getting presigned URLs from Redis: {}", filename);
+            let presigned_urls = S3PresignedUrls {
+                normal: get_presigned_url(&filename, &bucket, 360).await,
+                comp: None,
+                thumb: None,
+            };
+
+            log::debug!("Getting image info as generated by ML from Redis...");
+            let mut image_info: ImageInfo = match redis::cmd("GET")
+                .arg(format!("images:publish:ready:{}", filename))
+                .query_async(&mut *redis_pool.get().await.unwrap())
+                .await
+            {
+                Ok(data) => match data {
+                    redis::Value::Data(data) => match serde_json::from_slice(&data) {
+                        Ok(info) => info,
+                        Err(e) => {
+                            log::error!("Failed to parse image info: {}", e);
+                            return status::Custom(
+                                Status::InternalServerError,
+                                Json(ImageStatusResponse {
+                                    is_ml_uploaded: None,
+                                    error: Some(format!("Failed to parse image info: {}", e)),
+                                    ..ImageStatusResponse::new(filename)
+                                }),
+                            );
+                        }
+                    },
+                    _ => {
+                        log::error!("Failed to get image info: {:?}", data);
+                        return status::Custom(
+                            Status::InternalServerError,
+                            Json(ImageStatusResponse {
+                                is_ml_uploaded: None,
+                                error: Some("Failed to get image info.".into()),
+                                ..ImageStatusResponse::new(filename)
+                            }),
+                        );
+                    }
+                },
+                Err(e) => {
+                    log::error!("Failed to get image info: {}", e);
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(ImageStatusResponse {
+                            is_ml_uploaded: None,
+                            error: Some(format!("Failed to get image info: {}", e)),
+                            ..ImageStatusResponse::new(filename)
+                        }),
+                    );
+                }
+            };
+            log::debug!(
+                "Removing upload image info from Redis: image-info:upload:{}",
+                filename
+            );
+            let _: () = redis::cmd("DEL")
+                .arg(format!("image-info:upload:{}", filename))
+                .query_async(&mut *conn)
+                .await
+                .unwrap();
+
+            image_info.s3_presigned_urls = Some(presigned_urls);
+
+            return status::Custom(
+                Status::Ok,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: Some(is_ml_uploaded),
+                    image_info: Some(image_info),
+                    ..ImageStatusResponse::new(filename)
+                }),
+            );
+        }
+
+        log::debug!(
+            "Image is not ready, waiting before trying again: {}",
+            filename
+        );
+        timeout_counter += 1;
+        task::sleep(Duration::from_secs(config.publish_check_interval_secs)).await;
     }
 }
 
@@ -502,8 +701,7 @@ async fn delete_image(
 #[get("/get/full/<file_name>")]
 async fn get_image_full(
     file_name: &str,
-    // pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    bucket: &rocket::State<Bucket>,
+    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
     config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<ImageInfo>> {
     log::debug!("Getting image info from ML: {}", file_name);
@@ -563,21 +761,17 @@ async fn get_image_full(
         }
     };
 
-    log::debug!("Creating presigned URL: {}", file_name);
-    // Get presigned URL
-    let s3_presigned_url = match utils::s3::images::get_presigned_url(
-        &file_name, &bucket, 900, // 15 minutes
-    )
-    .await
-    {
-        Some(url) => url,
-        None => {
-            log::error!("Failed to get presigned URL.");
+    log::debug!("Getting presigned URLs from Redis: {}", file_name);
+    let s3_presigned_urls = match get_s3_presigned_urls(&file_name, &redis_pool).await {
+        Ok(urls) => urls,
+        Err(e) => {
+            log::error!("Failed to get S3 presigned URLs: {}", e);
             return status::Custom(
+                // TODO: Should I error here or proceed?
                 Status::InternalServerError,
                 Json(ImageInfo {
-                    error: Some("Failed to get presigned URL.".into()),
-                    ..ImageInfo::new(file_name)
+                    error: Some(format!("Failed to get S3 presigned URLs: {}", e)),
+                    ..image_info
                 }),
             );
         }
@@ -586,7 +780,7 @@ async fn get_image_full(
     status::Custom(
         Status::Ok,
         Json(ImageInfo {
-            s3_presigned_url: Some(s3_presigned_url),
+            s3_presigned_urls: s3_presigned_urls,
             ..image_info
         }),
     )

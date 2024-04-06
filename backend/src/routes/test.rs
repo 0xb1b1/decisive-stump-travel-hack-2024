@@ -8,6 +8,7 @@ use rocket::{
     response::status,
     serde::json::Json,
 };
+// use s3::serde_types::ListBucketResult;
 use tokio::io::AsyncReadExt;
 // use std::{path, time::Duration};
 // use std::fs;
@@ -22,7 +23,13 @@ use ds_travel_hack_2024::utils;
 // use crate::models::uploads;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![test_redis, test_s3, test_rsmq_send, test_rsmq_receive]
+    routes![
+        test_redis,
+        test_s3,
+        test_rsmq_send,
+        test_rsmq_receive,
+        test_list_s3_files
+    ]
 }
 
 #[derive(serde::Deserialize, Debug)]
@@ -72,6 +79,12 @@ struct TestRsmqReceiveResponse {
     success: bool,
     message: Option<String>,
     detail: Option<String>,
+}
+
+#[derive(serde::Serialize, Debug)]
+struct TestListS3FilesResponse {
+    files: Option<Vec<String>>,
+    count: Option<usize>,
 }
 
 #[post("/redis", format = "application/json", data = "<data>")]
@@ -343,6 +356,30 @@ async fn test_rsmq_receive(
             success: true,
             message: Some(message.message),
             detail: None,
+        }),
+    )
+}
+
+#[get("/s3/list")]
+async fn test_list_s3_files(
+    bucket: &rocket::State<Bucket>,
+) -> status::Custom<Json<TestListS3FilesResponse>> {
+    let mut filenames = Vec::new();
+    let list = bucket
+        .list(String::default(), Some("/".to_string()))
+        .await
+        .unwrap();
+    for bucket in list {
+        for object in bucket.contents {
+            filenames.push(object.key);
+        }
+    }
+
+    status::Custom(
+        Status::Ok,
+        Json(TestListS3FilesResponse {
+            files: Some(filenames.clone()),
+            count: Some(filenames.len()),
         }),
     )
 }

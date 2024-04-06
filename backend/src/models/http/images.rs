@@ -1,9 +1,16 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct S3PresignedUrls {
+    pub normal: Option<String>,
+    pub comp: Option<String>,
+    pub thumb: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ImageInfo {
     pub filename: String,
-    pub s3_presigned_url: Option<String>,
+    pub s3_presigned_urls: Option<S3PresignedUrls>,
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
     pub time_of_day: Option<String>,
@@ -12,6 +19,7 @@ pub struct ImageInfo {
     pub season: Option<String>,
     pub number_of_people: Option<u8>,
     pub main_color: Option<String>,
+    pub orientation: Option<String>,
     pub landmark: Option<String>,
     pub grayscale: Option<bool>,
     pub view_count: Option<u32>,
@@ -22,7 +30,7 @@ impl ImageInfo {
     pub fn new(filename: &str) -> Self {
         ImageInfo {
             filename: String::from(filename),
-            s3_presigned_url: None,
+            s3_presigned_urls: None,
             label: None,
             tags: None,
             time_of_day: None,
@@ -31,6 +39,7 @@ impl ImageInfo {
             season: None,
             number_of_people: None,
             main_color: None,
+            orientation: None,
             landmark: None,
             grayscale: None,
             view_count: None,
@@ -43,7 +52,7 @@ impl ImageInfo {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageInfoGallery {
     pub filename: String,
-    pub s3_presigned_url: Option<String>,
+    pub s3_presigned_urls: Option<S3PresignedUrls>,
     pub label: Option<String>,
     pub tags: Option<Vec<String>>,
     pub error: Option<String>,

@@ -1,4 +1,6 @@
 use async_std::task;
+use ds_travel_hack_2024::models::http::images::S3PresignedUrls;
+use ds_travel_hack_2024::utils::redis::galleries;
 use redis::RedisError;
 use rsmq_async::RsmqConnection;
 use std::time::Duration;
@@ -52,7 +54,7 @@ async fn main() {
                                        // ^ These are set as Redis keys before the worker starts processing a message.
                                        // ^ If the worker is killed, the keys remain set for them to be processed by another worker.
                                        // ^ These differ from failed jobs in that they are not requeued since the worker is killed.
-        let check_main_gallery: bool; // Skips queue processing
+        let check_main_gallery: bool; // Skips queue processing; mutates if ML generated gallery is not old enough.
 
         log::debug!("Worker queue counter: {}", worker_queue_counter);
         if worker_queue_counter % 11 == 0 {
@@ -106,7 +108,7 @@ async fn main() {
             // TODO: Test this block
             log::debug!("Processing keys set by failed workers...");
             let keys: Vec<String> = match redis::cmd("KEYS")
-                .arg("worker:failed:*")
+                .arg("worker:running-task:*")
                 .query_async(&mut *redis_pool.get().await.unwrap())
                 .await
             {
@@ -192,6 +194,39 @@ async fn main() {
             }
         }
 
+        let gallery_ttl: Option<u64>;
+        if check_main_gallery {
+            log::debug!("Checking if main gallery exists...");
+            let gallery_exists: bool = galleries::ml_gallery_exists(&redis_pool).await;
+
+            if gallery_exists {
+                log::debug!("Gallery exists, checking main gallery TTL...");
+                // Get TTL of ML generated gallery
+                gallery_ttl = match redis::cmd("TTL")
+                    .arg("images:collections:main")
+                    .query_async(&mut *redis_pool.get().await.unwrap())
+                    .await
+                {
+                    Ok(ttl) => ttl,
+                    Err(err) => {
+                        log::error!("Failed to get TTL of main gallery: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
+                    }
+                };
+            } else {
+                gallery_ttl = None;
+            }
+
+            log::debug!("Main gallery TTL: {:?}", gallery_ttl);
+
+            if gallery_ttl > Some(750) {
+                log::info!("Main gallery is not old enough, skipping.");
+                worker_queue_counter += 1;
+                continue;
+            }
+        }
+
         if check_main_gallery {
             log::debug!("Checking main gallery cache...");
 
@@ -225,11 +260,7 @@ async fn main() {
             } else {
                 log::debug!("Main gallery not found in Redis.");
                 log::warn!("Asking ML to repopulate the main gallery.");
-                match reqwest::get(
-                    format!("{}/main/{}", config.svc_ml_fast, 100), // TODO: Set via ENV
-                )
-                .await
-                {
+                match reqwest::get(format!("{}/main/{}", config.svc_ml_fast, 100)).await {
                     Ok(_) => {
                         log::info!("Request to ML successful. Re-running this task in 3 seconds.");
                         task::sleep(Duration::from_secs(3)).await;
@@ -259,14 +290,31 @@ async fn main() {
                                     let presigned_url =
                                         ds_travel_hack_2024::utils::s3::images::get_presigned_url(
                                             &image.filename,
-                                            &bucket_images_thumbs,
-                                            21_600, // 6 hours
+                                            &bucket_images,
+                                            10_800, // 3 hours
                                         )
-                                        .await
-                                        .unwrap();
+                                        .await;
+                                    let presigned_url_comp =
+                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                            &image.filename,
+                                            &bucket_images_compressed,
+                                            10_800, // 3 hours
+                                        )
+                                        .await;
+                                    let presigned_url_thumb =
+                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                            &image.filename,
+                                            &bucket_images_thumbs,
+                                            10_800, // 3 hours
+                                        )
+                                        .await;
                                     gallery_full.push(ImageInfoGallery {
                                         filename: image.filename,
-                                        s3_presigned_url: Some(presigned_url),
+                                        s3_presigned_urls: Some(S3PresignedUrls {
+                                            normal: presigned_url,
+                                            comp: presigned_url_comp,
+                                            thumb: presigned_url_thumb,
+                                        }),
                                         label: image.label,
                                         tags: image.tags,
                                         error: None,
@@ -274,6 +322,7 @@ async fn main() {
                                 }
                                 RedisGalleryStore {
                                     images: gallery_full,
+                                    ..RedisGalleryStore::new()
                                 }
                             }
                             Err(e) => {
@@ -407,6 +456,21 @@ async fn main() {
                                 continue;
                             }
                         }
+                    }
+                }
+                // Remove task key from Redis
+                match redis::cmd("DEL")
+                    .arg(&task_key)
+                    .query_async::<_, Option<String>>(&mut *redis_pool.get().await.unwrap())
+                    .await
+                {
+                    Ok(_) => {
+                        log::info!("Deleted task key from Redis.");
+                    }
+                    Err(err) => {
+                        log::error!("Failed to delete task key from Redis: {}", err);
+                        worker_queue_counter += 1;
+                        continue;
                     }
                 }
             }

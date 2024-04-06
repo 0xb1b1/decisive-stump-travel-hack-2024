@@ -123,37 +123,47 @@ pub async fn compress_normal(
         log::info!("File is already small enough, copying to comp bucket (lt 2MB).");
         compression_params_comp = None;
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 60.,
-            size_ratio: 0.7,
+            quality: 50.,
+            size_ratio: 0.6,
         })
     } else if original_file_size < 5_000_000 {
         log::info!("File is not small enough for comp bucket, compressing it (lt 5MB).");
         compression_params_comp = Some(job::CompressionParams {
-            quality: 90.,
-            size_ratio: 0.9,
+            quality: 60.,
+            size_ratio: 0.6,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 50.,
-            size_ratio: 0.5,
+            quality: 40.,
+            size_ratio: 0.4,
+        });
+    } else if original_file_size < 10_000_000 {
+        log::info!("File is not small enough for comp bucket, compressing it (lt 15MB).");
+        compression_params_comp = Some(job::CompressionParams {
+            quality: 55.,
+            size_ratio: 0.4,
+        });
+        compression_params_thumb = Some(job::CompressionParams {
+            quality: 35.,
+            size_ratio: 0.4,
         });
     } else if original_file_size < 15_000_000 {
         log::info!("File is not small enough for comp bucket, compressing it (lt 15MB).");
         compression_params_comp = Some(job::CompressionParams {
-            quality: 85.,
-            size_ratio: 0.85,
+            quality: 52.,
+            size_ratio: 0.4,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 50.,
-            size_ratio: 0.4,
+            quality: 30.,
+            size_ratio: 0.3,
         });
     } else {
         log::info!("File is not small enough for comp bucket, compressing it (gt 15MB).");
         compression_params_comp = Some(job::CompressionParams {
-            quality: 80.,
-            size_ratio: 0.8,
+            quality: 50.,
+            size_ratio: 0.3,
         });
         compression_params_thumb = Some(job::CompressionParams {
-            quality: 50.,
+            quality: 27.,
             size_ratio: 0.3,
         });
     }
@@ -205,10 +215,24 @@ pub async fn compress_normal(
         }
     };
 
+    // comp_filename should always end in .jpg (since we're compressing to jpg)
+    // Remove the previous extension if it's not .jpg
+    let comp_filename: String;
+    let filename_parts = filename.split('.').collect::<Vec<&str>>();
+    if filename_parts.len() == 2 {
+        comp_filename = format!("{}.jpg", filename_parts[0]);
+    } else {
+        // Panicking here to draw more attention to the issue
+        panic!(
+            "Filename should only contain two sections divided by a dot! ({}).",
+            filename
+        );
+    }
+
     // Send upload task for ML here since it only uses the comp bucket
     match send_ml_upload_task(&filename, rsmq_pool).await {
         Ok(_) => {
-            log::info!("Sent ML Upload task for file {}", &filename);
+            log::info!("Sent ML Upload task for file {}", &comp_filename);
         }
         Err(err) => {
             log::error!(
@@ -217,7 +241,7 @@ pub async fn compress_normal(
             );
             let _ = send_to_error_queue(
                 &TaskType::CompressImage {
-                    filename: filename.to_string(),
+                    filename: comp_filename,
                 },
                 rsmq_pool,
             )

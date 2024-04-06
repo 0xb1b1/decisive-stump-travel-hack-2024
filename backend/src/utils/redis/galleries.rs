@@ -4,7 +4,7 @@ use redis;
 use crate::models::http::main_page::RedisGalleryStore;
 
 pub async fn get_main_gallery(
-    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    redis_pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
 ) -> Result<RedisGalleryStore, String> {
     let mut conn = match redis_pool.get().await {
         Ok(conn) => conn,
@@ -32,7 +32,10 @@ pub async fn get_main_gallery(
         }
         Ok(None) => {
             log::info!("Gallery not found: images:collections:main:full");
-            RedisGalleryStore { images: vec![] }
+            RedisGalleryStore {
+                error: Some("Gallery not found".into()),
+                images: vec![],
+            }
         }
         Err(e) => {
             log::error!("Failed to get gallery: {}", e);
@@ -45,7 +48,7 @@ pub async fn get_main_gallery(
 
 pub async fn get_gallery_by_token(
     token: &str,
-    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    redis_pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
 ) -> Option<RedisGalleryStore> {
     let mut conn = match redis_pool.get().await {
         Ok(conn) => conn,
@@ -79,7 +82,10 @@ pub async fn get_gallery_by_token(
                 "Gallery not found: images:collections:main:full:by_token:{}",
                 token
             );
-            RedisGalleryStore { images: vec![] }
+            RedisGalleryStore {
+                error: Some("Gallery not found".into()),
+                images: vec![],
+            }
         }
         Err(e) => {
             log::error!("Failed to get gallery: {}", e);
@@ -93,7 +99,7 @@ pub async fn get_gallery_by_token(
 pub async fn set_gallery_by_token(
     token: &str,
     gallery: &RedisGalleryStore,
-    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    redis_pool: &bb8::Pool<bb8_redis::RedisConnectionManager>,
 ) -> Result<(), String> {
     let mut conn = match redis_pool.get().await {
         Ok(conn) => conn,
@@ -106,6 +112,7 @@ pub async fn set_gallery_by_token(
     // Convert GalleryResponse to RedisGalleryStore
     let gallery = RedisGalleryStore {
         images: gallery.images.clone(),
+        error: None,
     };
 
     // Set key
@@ -129,4 +136,38 @@ pub async fn set_gallery_by_token(
             return Err(format!("Failed to set gallery: {}", e).into());
         }
     };
+}
+
+pub async fn ml_gallery_exists(redis_pool: &bb8::Pool<bb8_redis::RedisConnectionManager>) -> bool {
+    let mut conn = match redis_pool.get().await {
+        Ok(conn) => conn,
+        Err(e) => {
+            log::error!("Failed to get connection from Redis pool: {}", e);
+            return false;
+        }
+    };
+
+    // Get key
+    let gallery: RedisGalleryStore = match redis::cmd("EXISTS")
+        .arg("images:collections:main")
+        .query_async::<_, i32>(&mut *conn)
+        .await
+    {
+        Ok(1) => {
+            log::info!("Gallery found: images:collections:main");
+            match get_main_gallery(redis_pool).await {
+                Ok(gallery) => gallery,
+                Err(_) => RedisGalleryStore {
+                    images: vec![],
+                    error: Some("Gallery not found".into()),
+                },
+            }
+        }
+        _ => RedisGalleryStore {
+            images: vec![],
+            error: Some("Gallery not found".into()),
+        }
+    };
+
+    gallery.images.len() > 0
 }

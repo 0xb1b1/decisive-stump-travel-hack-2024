@@ -97,7 +97,8 @@ pub async fn compress_image(
                 Err(_) => {
                     log::error!("Failed to remove tmp file: {:?}", &tmp_path_dest);
                     remove_tmp_file(&tmp_path_src).unwrap();
-                    return Err(format!("Failed to compress image: {}", err));
+                    // return Err(format!("Failed to compress image: {}", err));
+                    // Do not return error here, just don't delete the file
                 }
             }
         }
@@ -133,21 +134,8 @@ pub async fn compress_image(
             remove_tmp_file(&tmp_path_src).unwrap();
             remove_tmp_file(&tmp_path_dest).unwrap();
             return Ok(ImageInfo {
-                filename: format!("{}.{}", &file_name_no_ext, "jpg"),
-                s3_presigned_url: None, // TODO: Generate?
-                label: None,
-                tags: None,
-                time_of_day: None,
-                weather: None,
-                atmosphere: None,
-                season: None,
-                number_of_people: None,
-                main_color: None,
-                landmark: None,
-                grayscale: None,
-                view_count: None,
-                download_count: None,
-                error: None,
+                s3_presigned_urls: None, // TODO: Generate?
+                ..ImageInfo::new(&format!("{}.{}", &file_name_no_ext, "jpg"))
             });
         }
         Err(err) => {

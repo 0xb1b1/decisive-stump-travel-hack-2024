@@ -14,16 +14,18 @@ pub struct UploadImage<'f> {
     pub atmosphere: Option<String>,
     pub season: Option<String>,
     pub number_of_people: Option<u8>,
-    pub color: Option<String>,
+    pub main_color: Option<String>,
+    pub orientation: Option<String>,
     pub landmark: Option<String>,
     pub grayscale: Option<bool>,
     pub error: Option<String>,
 }
 impl UploadImage<'_> {
+    // TODO: Optimize this?
     pub fn to_image_info(&self, filename: &str) -> ImageInfo {
         ImageInfo {
             filename: filename.to_string(),
-            s3_presigned_url: None,
+            s3_presigned_urls: None,
             tags: self.tags.clone(),
             label: self.label.clone(),
             time_of_day: self.time_of_day.clone(),
@@ -31,7 +33,8 @@ impl UploadImage<'_> {
             atmosphere: self.atmosphere.clone(),
             season: self.season.clone(),
             number_of_people: self.number_of_people,
-            main_color: self.color.clone(),
+            main_color: self.main_color.clone(),
+            orientation: self.orientation.clone(),
             landmark: self.landmark.clone(),
             grayscale: self.grayscale,
             view_count: None,
@@ -53,7 +56,8 @@ pub struct UploadImageResponse {
     pub atmosphere: Option<String>,
     pub season: Option<String>,
     pub number_of_people: Option<u8>,
-    pub color: Option<String>,
+    pub main_color: Option<String>,
+    pub orientation: Option<String>,
     pub landmark: Option<String>,
     pub grayscale: Option<bool>,
     pub error: Option<String>,
@@ -75,7 +79,8 @@ impl UploadImageResponse {
             atmosphere: form.atmosphere.clone(),
             season: form.season.clone(),
             number_of_people: form.number_of_people,
-            color: form.color.clone(),
+            main_color: form.main_color.clone(),
+            orientation: form.orientation.clone(),
             landmark: form.landmark.clone(),
             grayscale: form.grayscale,
             error: form.error.clone(),
@@ -86,6 +91,7 @@ impl UploadImageResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ImageStatusResponse {
     pub filename: String,
+    pub image_info: Option<ImageInfo>,
     pub is_ml_uploaded: Option<bool>,
     pub is_ml_published: Option<bool>,
     pub error: Option<String>,
@@ -96,6 +102,7 @@ impl ImageStatusResponse {
             filename: filename.to_string(),
             is_ml_uploaded: None,
             is_ml_published: None,
+            image_info: None,
             error: None,
         }
     }

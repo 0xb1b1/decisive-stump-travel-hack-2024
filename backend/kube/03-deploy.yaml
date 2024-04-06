@@ -7,7 +7,7 @@ metadata:
   labels:
     app: backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: backend
@@ -16,6 +16,10 @@ spec:
       labels:
         app: backend
     spec:
+      hostAliases:
+      - ip: "77.37.209.29"
+        hostnames:
+        - "minio-travel.0xb1b1.com"
       containers:
       - name: backend
         image: "0xb1b1/ds-backend-travel-hack-2024:latest"
@@ -47,7 +51,7 @@ metadata:
   labels:
     app: worker
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: worker
@@ -56,6 +60,10 @@ spec:
       labels:
         app: worker
     spec:
+      hostAliases:
+      - ip: "77.37.209.29"
+        hostnames:
+        - "minio-travel.0xb1b1.com"
       containers:
       - name: worker
         image: "0xb1b1/ds-worker-travel-hack-2024:latest"

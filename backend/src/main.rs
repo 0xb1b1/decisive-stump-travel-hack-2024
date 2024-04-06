@@ -3,7 +3,7 @@ extern crate rocket;
 
 use env_logger;
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
+use rocket::http::{Header, Method, Status};
 use rocket::serde::json::Json;
 use rocket::{Request, Response};
 
@@ -14,6 +14,7 @@ use ds_travel_hack_2024::connections;
 
 pub struct CORS;
 
+// Credit for Fairing implementation: https://github.com/rwf2/Rocket/issues/2142#issuecomment-1086660848
 #[rocket::async_trait]
 impl Fairing for CORS {
     fn info(&self) -> Info {
@@ -23,14 +24,21 @@ impl Fairing for CORS {
         }
     }
 
-    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+    async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut Response<'r>) {
+        if request.method() == Method::Options {
+            response.set_status(Status::NoContent);
+            response.set_header(Header::new(
+                "Access-Control-Allow-Methods",
+                "POST, PATCH, GET, DELETE",
+            ));
+            response.set_header(Header::new(
+                "Access-Control-Allow-Headers",
+                "content-type, authorization",
+            ));
+        }
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, GET, PATCH, OPTIONS",
-        ));
-        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+        response.set_header(Header::new("Vary", "Origin"));
     }
 }
 

@@ -55,3 +55,10 @@ pub async fn get_presigned_url(
         }
     }
 }
+
+// pub async fn get_presigned_urls(  # TODO!
+//     filename: Vec<String>,
+//     expiry_secs: u32,
+// ) -> Vec<String> {
+
+// }
