@@ -33,6 +33,7 @@ abstract class Routes {
 abstract class RoutesArgs {
   static const filename = 'filename';
   static const tag = 'tag';
+  static const uploadedFile = 'uploadedFile';
 }
 
 T? componentArg0f<T>(BuildContext context, String key) =>

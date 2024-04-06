@@ -6,6 +6,7 @@ import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
 import 'package:travel_frontend/src/feature/image_stats/image_stats_provider.dart';
 import 'package:travel_frontend/src/feature/image_stats/scene/image_stats_data.dart';
+import 'package:travel_frontend/src/widgets/error_scene.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
 import '../../navigation/routes.dart';
@@ -58,9 +59,7 @@ class ImageStats extends ConsumerWidget {
                 ),
               ),
               error: () => const Center(
-                child: CircularProgressIndicator(
-                  color: AppPalette.yellow,
-                ),
+                child: ErrorScene(),
               ),
             ),
           ),
