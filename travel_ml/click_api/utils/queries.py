@@ -3,7 +3,7 @@ neighbors_query = '''
             {fields},
             cosineDistance({embedding}, {column}) as score
         FROM {table}
-        # Where score>0
+        Where score>0
         ORDER BY score ASC
         LIMIT {knn_k}
         '''

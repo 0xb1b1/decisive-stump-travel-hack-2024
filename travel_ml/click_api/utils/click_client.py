@@ -8,8 +8,6 @@ tables = ['images', 'tags', 'labels', 'metas']
 def get_filter_string(filters):
     filter_list = []
 
-    if 'orientation' in filters:  # TODO
-        filters.pop('orientation')
     for filter in filters:
         if filters[filter] is not None:
             if isinstance(filters[filter], list) and len(filters[filter]) == 0:
@@ -31,6 +29,15 @@ def get_filter_string(filters):
                         cur_filter = f'({cur_filter})'
                     numbers.append(cur_filter)
                 cur_filter = ' or '.join(numbers)
+            elif filter == 'tags':
+                if isinstance(filters[filter], list):
+                    multiple_filters = ", ".join([f"\'{value.lower()}\'" for value in filters[filter]])
+                    if len(filters[filter]) > 1:
+                        cur_filter += f'arrayExists(i -> (i in ({multiple_filters})), {filter})'
+                    else:
+                        cur_filter += f'arrayExists(i -> (i = {multiple_filters}), {filter})'
+                else:
+                    cur_filter += f'arrayExists(i -> (i = {filters[filter]}), {filter})'
             else:
                 if isinstance(filters[filter], list):
                     multiple_filters = ", ".join([f"\'{value.lower()}\'" for value in filters[filter]])
@@ -60,11 +67,13 @@ class NeighborFinder:
                                                                  knn_k=k,
                                                                  column=column,
                                                                  table=table))
+
         neighbors = neighbors.drop_duplicates(subset=['filename'])
         if return_scores:
             return neighbors['filename'].apply(str).tolist(), neighbors['score'].tolist()
-        else:
-            return neighbors.drop(columns=['score']).to_dict('records')
+        if 'score' in neighbors:
+            neighbors = neighbors.drop(columns=['score'])
+        return neighbors.to_dict('records')
 
     def get_filtered_data(self, filters, n, fields, table):
         filter_string = get_filter_string(filters.dict())
@@ -73,7 +82,9 @@ class NeighborFinder:
         return samples.to_dict('records')
 
     def get_sampled_images(self, n, fields, table):
-        samples = self._client.query_df(f'select {fields} from {table}').sample(n)
+        samples = self._client.query_df(f'select {fields} from {table}')
+        if len(samples) >= n:
+            samples = samples.sample(n)
         return samples.to_dict('records')
 
     def is_similar_image(self, embedding, alpha=0.05):
@@ -83,19 +94,26 @@ class NeighborFinder:
         Where score<{alpha}
         ORDER BY score ASC'''.format(embedding=embedding, alpha=alpha)).result_set
 
-    def get_uploaded_neighbors(self, filename, k=5, embedding_column='embedding', target_column='embedding',
+    def get_uploaded_neighbors(self, filename, k=5, filters=None, embedding_column='embedding',
+                               target_column='embedding',
                                table='images'):
         if k == 0:
             return []
         emb_query = embedding_query.format(filename=filename, column=embedding_column)
+        if filters is not None:
+            filter_string = get_filter_string(filters.dict())
+            table = '(select * from {table} where {filters})'.format(table=table, filters=filter_string)
         neighbors = self._client.query_df(neighbors_query.format(embedding=emb_query,
                                                                  knn_k=k,
                                                                  column=target_column,
                                                                  table=table,
                                                                  fields='filename, label, tags'))
+        if len(neighbors) == 0:
+            return []
         neighbors = neighbors.drop_duplicates(subset=['filename'])
-
-        return neighbors.drop(columns=['score']).to_dict('records')
+        if 'score' in neighbors:
+            neighbors = neighbors.drop(columns=['score'])
+        return neighbors.to_dict('records')
 
     def get_tags(self, image_emb, k=5, sort='asc'):
         if k > 0:

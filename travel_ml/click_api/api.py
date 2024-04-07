@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from rsmq import RedisSMQ
 from starlette.responses import JSONResponse
 
-from typing import List
+from typing import List, Union
 
 from loguru import logger
 
@@ -17,6 +17,8 @@ import clickhouse_connect
 from click_api.utils.click_client import NeighborFinder
 
 from dotenv import load_dotenv  # for python-dotenv method
+
+from click_api.utils.models import Filters
 
 load_dotenv()
 
@@ -41,7 +43,6 @@ info_table = '''(with tag_label as
                 left join metas 
                 on tag_label.filename=metas.filename)'''
 
-
 client = clickhouse_connect.get_client(host=os.environ.get('DB_HOST'),
                                        port=int(os.environ.get('DB_PORT')),
                                        user=os.environ.get('DB_USER'),
@@ -57,9 +58,9 @@ rsmq = RedisSMQ(client=redis_client)
 logger.debug('Redis loaded')
 
 
-@app.get('/images/neighbors/{filename}')
-async def get_neighbors(filename: str, neighbors_limit: int = 30):
-    return JSONResponse({'images': finder.get_uploaded_neighbors(filename, k=neighbors_limit, table=info_table)})
+@app.post('/images/neighbors/{filename}')
+async def get_neighbors(filename: str, neighbors_limit: int = 30, filters: Union[Filters, None] = None):
+    return JSONResponse({'images': finder.get_uploaded_neighbors(filename, k=neighbors_limit, table=info_table, filters=filters)})
 
 
 @app.post('/images/info/{filename}')
@@ -69,10 +70,12 @@ async def get_image_info(filename: str, fields: List['str'] = None):
     info = finder.get_fields(filename, fields=', '.join(fields), table=info_table)
     return JSONResponse(jsonable_encoder(info), status_code=200)
 
-@app.get('/images/del/{filename}')
+
+@app.delete('/images/del/{filename}')
 async def get_image_info(filename: str):
     info = finder.delete_image(filename)
     return JSONResponse(jsonable_encoder({'message': f'Deleted {filename}'}), status_code=200)
+
 
 @app.get('/main/{im_num}')
 async def get_main(im_num: int):

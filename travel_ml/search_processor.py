@@ -1,5 +1,6 @@
 import json
 import os
+import clip
 import time
 from typing import Union, List
 import torch
@@ -8,15 +9,17 @@ import boto3
 import clickhouse_connect
 import redis
 import ruclip
+import transformers
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
+from multilingual_clip import pt_multilingual_clip
 from rsmq import RedisSMQ
 
 from PIL import Image as Im
 from starlette.responses import JSONResponse
 
-from models.models import RuClipEmbedder
+from models.models import RuClipEmbedder, RobertaClipEmbedder
 from click_api.utils.models import Filters
 from queue_processor import get_bytes_image
 
@@ -62,9 +65,16 @@ s3 = session.client(service_name='s3',
 
 logger.debug('S3 loaded')
 
-clip_model, clip_preprocessor = ruclip.load('ruclip-vit-base-patch16-384', device='cpu')
-clip_model.load_state_dict(torch.load('moscow_finetune.pth'))
-embedder = RuClipEmbedder(clip_model, clip_preprocessor, 'cpu')
+text_model = pt_multilingual_clip.MultilingualCLIP.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+text_model.to('cpu')
+tokenizer = transformers.AutoTokenizer.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+
+clip_model, clip_preprocess = clip.load("ViT-L/14", device='cpu')
+embedder = RobertaClipEmbedder(clip_model=clip_model,
+                               image_preprocessor=clip_preprocess,
+                               text_model=text_model,
+                               text_preprocessor=tokenizer,
+                               device='cpu')
 logger.debug('Clip loaded')
 
 client = clickhouse_connect.get_client(host=os.environ.get('DB_HOST'),

@@ -1,5 +1,7 @@
 import os
-
+import clip
+import transformers
+from multilingual_clip import pt_multilingual_clip
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
 import torch
@@ -21,7 +23,7 @@ import boto3
 from click_api.utils.click_client import NeighborFinder
 from queue_processor import get_bytes_image, pop_from_queue
 
-from models.models import RuClipEmbedder, LLAVA
+from models.models import RuClipEmbedder, LLAVA, RobertaClipEmbedder
 
 from dotenv import load_dotenv
 
@@ -42,7 +44,7 @@ def main(s3, embedder: RuClipEmbedder, finder: NeighborFinder, llava: LLAVA, rsm
                 pil_image = Im.open(bytes_image)
                 image_embedding = embedder.get_image_embeddings([pil_image]).squeeze()
                 similar_set = finder.is_similar_image(image_embedding.tolist(), 0.0)
-                if len(similar_set) > 0:
+                if len(similar_set) > 0 and not queue_request['force']:
                     similar_filename = similar_set[0][0]
                     rsmq.client.set(f"images:upload:error:{queue_request['filename']}",
                                     json.dumps(obj={'error': 'dublicate',
@@ -106,9 +108,16 @@ if __name__ == "__main__":
 
     logger.debug('S3 loaded')
 
-    clip_model, clip_preprocessor = ruclip.load('ruclip-vit-base-patch16-384', device='cuda')
-    clip_model.load_state_dict(torch.load('moscow_finetune.pth'))
-    embedder = RuClipEmbedder(clip_model, clip_preprocessor, 'cuda')
+    text_model = pt_multilingual_clip.MultilingualCLIP.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+    text_model.to('cuda')
+    tokenizer = transformers.AutoTokenizer.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+
+    clip_model, clip_preprocess = clip.load("ViT-L/14", device='cuda')
+    embedder = RobertaClipEmbedder(clip_model=clip_model,
+                                   image_preprocessor=clip_preprocess,
+                                   text_model=text_model,
+                                   text_preprocessor=tokenizer,
+                                   device='cuda')
     logger.debug('Clip loaded')
 
     llava_processor = LlavaNextProcessor.from_pretrained("llava-hf/llava-v1.6-mistral-7b-hf")

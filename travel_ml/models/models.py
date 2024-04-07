@@ -39,6 +39,23 @@ class BaseClipEmbedder:
         pass
 
 
+class RobertaClipEmbedder:
+    def __init__(self, clip_model, image_preprocessor, text_model, text_preprocessor, device):
+        self._clip = clip_model
+        self._image_preprocessor = image_preprocessor
+        self._text_model = text_model
+        self._text_preprocessor = text_preprocessor
+        self._device = device
+
+    @torch.no_grad()
+    def get_image_embeddings(self, images):
+        images = self._image_preprocessor(images[0]).unsqueeze(0).to(self._device)
+        return self._clip.encode_image(images)
+
+    def get_text_embeddings(self, texts):
+        return self._text_model.forward(texts, self._text_preprocessor)
+
+
 class HFClipEmbedder(BaseClipEmbedder):
     def __init__(self, clip_model, preprocessor, device):
         super().__init__(clip_model, preprocessor, device)

@@ -1,14 +1,17 @@
 import io
 import json
 import os
+import clip
 
 import clickhouse_connect
 import redis
+import transformers
 from loguru import logger
 
 from PIL import Image as Im
 
 import ruclip
+from multilingual_clip import pt_multilingual_clip
 
 from rsmq.rsmq import RedisSMQ
 
@@ -18,7 +21,7 @@ from click_api.utils.click_client import NeighborFinder
 from click_api.utils.models import Image
 import torch
 
-from models.models import RuClipEmbedder
+from models.models import RuClipEmbedder, RobertaClipEmbedder
 
 from dotenv import load_dotenv
 
@@ -83,7 +86,7 @@ def main(s3, embedder, finder, rsmq):
 
             logger.debug(f"Task type {task_type}")
 
-            if task_type == 'add_image':
+            if task_type == 'AddImage':
                 try:
                     logger.debug('getting image embedding')
                     bytes_image = get_bytes_image(image.filename, s3)
@@ -112,9 +115,9 @@ def main(s3, embedder, finder, rsmq):
                                      ex=60 * 5)
                     logger.exception(e)
 
-            elif task_type in ['update_label', 'update_tags', 'update_meta']:
+            elif task_type in ['UpdateLabel', 'UpdateTags', 'UpdateMeta']:
                 image_embedding = torch.tensor(finder.get_fields(image.filename, 'embedding', 'images')['embedding'])
-                if task_type == 'update_tags':
+                if task_type == 'UpdateTags':
                     try:
                         lower_tags = []
                         for tag in image.tags:
@@ -128,7 +131,7 @@ def main(s3, embedder, finder, rsmq):
                                          json.dumps({'error': 'error'}),
                                          ex=60 * 5)
                         logger.exception(e)
-                elif task_type == 'update_meta':
+                elif task_type == 'UpdateMeta':
                     try:
                         update_meta(image, finder)
                         redis_client.set(f'images:info:update:meta:ready:{image.filename}',
@@ -161,9 +164,16 @@ if __name__ == "__main__":
 
     logger.debug('S3 loaded')
 
-    clip_model, clip_preprocessor = ruclip.load('ruclip-vit-base-patch16-384', device='cpu')
-    clip_model.load_state_dict(torch.load('moscow_finetune.pth'))
-    embedder = RuClipEmbedder(clip_model, clip_preprocessor, 'cpu')
+    text_model = pt_multilingual_clip.MultilingualCLIP.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+    text_model.to('cpu')
+    tokenizer = transformers.AutoTokenizer.from_pretrained('M-CLIP/XLM-Roberta-Large-Vit-L-14')
+
+    clip_model, clip_preprocess = clip.load("ViT-L/14", device='cpu')
+    embedder = RobertaClipEmbedder(clip_model=clip_model,
+                                   image_preprocessor=clip_preprocess,
+                                   text_model=text_model,
+                                   text_preprocessor=tokenizer,
+                                   device='cpu')
     logger.debug('Clip loaded')
 
     client = clickhouse_connect.get_client(host=os.environ.get('DB_HOST'),
