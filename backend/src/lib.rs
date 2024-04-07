@@ -1,3 +1,4 @@
+pub mod config;
 pub mod connections;
 pub mod enums;
 pub mod locks;

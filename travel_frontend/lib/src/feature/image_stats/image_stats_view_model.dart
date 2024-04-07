@@ -1,10 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
-import 'package:travel_frontend/src/api/models/gallery.dart';
-import 'package:travel_frontend/src/api/models/image_search_query.dart';
+
 import 'package:travel_frontend/src/domain/search_repository.dart';
 import 'package:travel_frontend/src/feature/image_stats/models/image_stats_view_state.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_providers.dart';
+import 'package:travel_frontend/src/feature/search_page_providers.dart';
 
 import '../../navigation/navigation_service.dart';
 import '../../navigation/routes.dart';
@@ -13,14 +16,17 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
   final String _filename;
   final SearchRepository _searchRepository;
   final NavigationService _navigation;
+  final Ref _ref;
 
   ImageStatsViewModel({
     required String filename,
     required SearchRepository searchRepository,
     required NavigationService navigation,
+    required Ref ref,
   })  : _filename = filename,
         _searchRepository = searchRepository,
-        _navigation = navigation;
+        _navigation = navigation,
+        _ref = ref;
 
   @override
   ImageStatsViewState get initState => const ImageStatsViewState.loading();
@@ -43,12 +49,16 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
     emit(loadingState);
     try {
       final image = await _searchRepository.getImage(filename);
-      // final similar = await _searchRepository.getSimilar(filename);
+      final similar = await _searchRepository.getNeighbors(
+        filename,
+        null,
+        16,
+      );
 
       emit(
         ImageStatsViewState.data(
           image: image,
-          similarImages: const Gallery(images: []),
+          similarImages: similar,
         ),
       );
     } on Object catch (_) {
@@ -57,26 +67,31 @@ class ImageStatsViewModel extends BaseViewModel<ImageStatsViewState> {
   }
 
   void searchTag(String tag) {
+    final filtersVm = _ref.watch(filtersViewModelProvider);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      filtersVm.changeModeTag(tag);
+    });
+
     _navigation.pushNamed(
       Routes.search,
-      arguments: {RoutesArgs.tag: tag},
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ref.watch(searchViewModelProvider).search(filtersVm.state);
+    });
   }
 
-  Future<void> onDownloadTap(String url) async {
+  Future<void> onDownloadTap(String url, String filename) async {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        // Create a blob from the image data
         final blob = html.Blob([response.bodyBytes]);
-        // Create a URL for the blob
+
         final url = html.Url.createObjectUrlFromBlob(blob);
-        // Create an anchor element (<a>) and set its href to the blob URL
         final anchor = html.AnchorElement(href: url)
-          ..setAttribute(
-              "download", "downloadedImage.png") // Set the download filename
-          ..click(); // Programmatically click the anchor to trigger the download
-        // Cleanup the blob URL
+          ..setAttribute("download", filename)
+          ..click();
         html.Url.revokeObjectUrl(url);
       } else {
         emit(errorState);

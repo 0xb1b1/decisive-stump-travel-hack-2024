@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use async_std::task;
+use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
 use ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls;
 use log;
 use rocket::http::{ContentType, MediaType};
@@ -11,9 +12,9 @@ use tokio::io::AsyncReadExt; // Required for reading file contents (e.g. .read_t
 
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
-use ds_travel_hack_2024::models::http::images::{ImageInfo, S3PresignedUrls};
+use ds_travel_hack_2024::models::http::images::{ImageInfo, ImageUploadFailInfo, S3PresignedUrls};
 use ds_travel_hack_2024::models::http::uploads::{
-    DeleteImageResponse, ImageStatusResponse, UploadImage, UploadImageResponse,
+    DeleteImageResponse, ImageStatusResponse, PublishImage, UploadImage, UploadImageResponse,
 };
 use ds_travel_hack_2024::utils;
 use ds_travel_hack_2024::utils::s3::images::{get_img, get_presigned_url};
@@ -23,11 +24,11 @@ use crate::config::DsConfig;
 pub fn routes() -> Vec<rocket::Route> {
     routes![
         upload_image,
-        delete_image,
-        // get_image_list,
-        get_image_full,
         check_image_upload,
+        publish_image,
         check_image_publish,
+        delete_image,
+        get_image_full,
     ]
 }
 
@@ -131,29 +132,31 @@ async fn upload_image(
     }
 
     // Check for image lock
-    let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
-        Ok(locked) => locked,
-        Err(e) => {
-            log::error!("Failed to check image lock: {}", e);
+    if !form.force.unwrap_or(false) {
+        let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
+            Ok(locked) => locked,
+            Err(e) => {
+                log::error!("Failed to check image lock: {}", e);
+                return status::Custom(
+                    Status::InternalServerError,
+                    Json(UploadImageResponse {
+                        error: Some(format!("Failed to check image lock: {}", e)),
+                        ..UploadImageResponse::from_form(&form, false, false)
+                    }),
+                );
+            }
+        };
+
+        if is_locked {
+            log::error!("Image is locked: {}", &file_path);
             return status::Custom(
-                Status::InternalServerError,
+                Status::Locked,
                 Json(UploadImageResponse {
-                    error: Some(format!("Failed to check image lock: {}", e)),
+                    error: Some("Image is locked.".into()),
                     ..UploadImageResponse::from_form(&form, false, false)
                 }),
             );
         }
-    };
-
-    if is_locked {
-        log::error!("Image is locked: {}", &file_path);
-        return status::Custom(
-            Status::Locked,
-            Json(UploadImageResponse {
-                error: Some("Image is locked.".into()),
-                ..UploadImageResponse::from_form(&form, false, false)
-            }),
-        );
     }
 
     // Lock the image
@@ -231,6 +234,7 @@ async fn upload_image(
             RsmqDsQueue::BackendWorker.as_str(),
             serde_json::to_string(&TaskType::CompressImage {
                 filename: file_name.clone(),
+                force: form.force.unwrap_or(false),
             })
             .unwrap()
             .as_str(),
@@ -330,10 +334,10 @@ async fn check_image_upload(
         }
 
         let is_ml_uploaded: bool = redis::cmd("EXISTS")
-        .arg(format!("images:upload:ready:{}", filename))
-        .query_async(&mut *conn)
-        .await
-        .unwrap();
+            .arg(format!("images:upload:ready:{}", filename))
+            .query_async(&mut *conn)
+            .await
+            .unwrap();
 
         if is_ml_uploaded {
             log::debug!("Image is ready: {}", filename);
@@ -402,6 +406,73 @@ async fn check_image_upload(
             );
         }
 
+        let is_ml_error: bool = redis::cmd("EXISTS")
+            .arg(format!("images:upload:error:{}", filename))
+            .query_async(&mut *conn)
+            .await
+            .unwrap();
+
+        if is_ml_error {
+            let fail_info: ImageUploadFailInfo = match redis::cmd("GET")
+                .arg(format!("images:upload:error:{}", filename))
+                .query_async(&mut *redis_pool.get().await.unwrap())
+                .await
+            {
+                Ok(data) => match data {
+                    redis::Value::Data(data) => match serde_json::from_slice(&data) {
+                        Ok(info) => info,
+                        Err(e) => {
+                            log::error!("Failed to parse image upload fail info: {}", e);
+                            return status::Custom(
+                                Status::InternalServerError,
+                                Json(ImageStatusResponse {
+                                    is_ml_uploaded: None,
+                                    error: Some(format!(
+                                        "Failed to parse image upload fail info: {}",
+                                        e
+                                    )),
+                                    ..ImageStatusResponse::new(filename)
+                                }),
+                            );
+                        }
+                    },
+                    _ => {
+                        log::error!("Failed to get image upload fail info: {:?}", data);
+                        return status::Custom(
+                            Status::InternalServerError,
+                            Json(ImageStatusResponse {
+                                is_ml_uploaded: None,
+                                error: Some("Failed to get image upload fail info.".into()),
+                                ..ImageStatusResponse::new(filename)
+                            }),
+                        );
+                    }
+                },
+                Err(e) => {
+                    log::error!("Failed to get image upload fail info: {}", e);
+                    return status::Custom(
+                        Status::InternalServerError,
+                        Json(ImageStatusResponse {
+                            is_ml_uploaded: None,
+                            error: Some(format!("Failed to get image upload fail info: {}", e)),
+                            ..ImageStatusResponse::new(filename)
+                        }),
+                    );
+                }
+            };
+
+            log::error!("Image upload failed: {}", filename);
+            return status::Custom(
+                Status::Conflict,
+                Json(ImageStatusResponse {
+                    is_ml_uploaded: Some(false),
+                    error: Some("Image upload failed.".into()),
+                    duplicate_filename: Some(fail_info.dublicate_filename),
+                    ..ImageStatusResponse::new(filename)
+                }),
+            );
+        }
+
         log::debug!(
             "Image is not ready, waiting before trying again: {}",
             filename
@@ -409,6 +480,48 @@ async fn check_image_upload(
         timeout_counter += 1;
         task::sleep(Duration::from_secs(config.upload_check_interval_secs)).await;
     }
+}
+
+#[post("/publish", format = "multipart/form-data", data = "<form>")] // TODO!
+async fn publish_image(
+    form: Form<PublishImage>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
+) -> status::Custom<Json<ImageInfo>> {
+    let image_info: ImageInfo = form.clone().to_image_info();
+
+    let ml_task =
+        MlTaskType::new(&form.clone().filename.as_str()).from_image_info(image_info.clone());
+
+    let serialized_ml_task = serde_json::to_string(&ml_task).unwrap();
+    log::debug!("Serialized ML task: {}", &serialized_ml_task);
+
+    // Send to RSMQ
+    let queue_id = match rsmq_pool
+        .inner()
+        .clone()
+        .send_message(
+            RsmqDsQueue::AnalyzeBackendMl.as_str(),
+            serialized_ml_task,
+            None,
+        )
+        .await
+    {
+        Ok(id) => id,
+        Err(e) => {
+            log::error!("Failed to send message to RSMQ: {}", e);
+            return status::Custom(
+                Status::InternalServerError,
+                Json(ImageInfo {
+                    error: Some(format!("Failed to send message to RSMQ: {}", e)),
+                    ..image_info
+                }),
+            );
+        }
+    };
+
+    log::info!("Sent message to RSMQ; queue id: {:?}", queue_id);
+
+    status::Custom(Status::Ok, Json(image_info))
 }
 
 #[get("/publish/check?<filename>")]
@@ -469,10 +582,10 @@ async fn check_image_publish(
         }
 
         let is_ml_uploaded: bool = redis::cmd("EXISTS")
-        .arg(format!("images:publish:ready:{}", filename))
-        .query_async(&mut *conn)
-        .await
-        .unwrap();
+            .arg(format!("images:publish:ready:{}", filename))
+            .query_async(&mut *conn)
+            .await
+            .unwrap();
 
         if is_ml_uploaded {
             log::debug!("Image is ready: {}", filename);
@@ -559,35 +672,35 @@ async fn check_image_publish(
     }
 }
 
-#[delete("/delete?<file_name>")]
+#[delete("/delete?<filename>")]
 async fn delete_image(
-    file_name: &str,
+    filename: &str,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
     rsmq: &rocket::State<PooledRsmq>,
 ) -> status::Custom<Json<DeleteImageResponse>> {
-    log::debug!("Deleting image: {}", file_name);
+    log::debug!("Deleting image: {}", filename);
 
-    let file_path = file_name.to_string();
+    let file_path = filename.to_string();
     let s3_image_exists = match get_img(&file_path, &bucket).await {
         Some(_) => true,
         None => false,
     };
 
-    // Check if the file exists
-    match s3_image_exists {
-        true => (),
-        false => {
-            log::error!("File does not exist: {}", &file_path);
-            return status::Custom(
-                Status::NotFound,
-                Json(DeleteImageResponse {
-                    is_deletion_pending: false,
-                    error: Some("File does not exist.".into()),
-                }),
-            );
-        }
-    }
+    // // Check if the file exists
+    // match s3_image_exists {
+    //     true => (),
+    //     false => {
+    //         log::error!("File does not exist: {}", &file_path);
+    //         return status::Custom(
+    //             Status::NotFound,
+    //             Json(DeleteImageResponse {
+    //                 is_deletion_pending: false,
+    //                 error: Some("File does not exist.".into()),
+    //             }),
+    //         );
+    //     }
+    // }
 
     // Check for image lock
     let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
@@ -637,7 +750,7 @@ async fn delete_image(
         .send_message(
             RsmqDsQueue::BackendWorker.as_str(),
             serde_json::to_string(&TaskType::DeleteImage {
-                filename: file_name.to_string(),
+                filename: filename.to_string(),
             })
             .unwrap()
             .as_str(),

@@ -6,8 +6,17 @@ pub struct S3PresignedUrls {
     pub comp: Option<String>,
     pub thumb: Option<String>,
 }
+impl S3PresignedUrls {
+    pub fn new() -> Self {
+        S3PresignedUrls {
+            normal: None,
+            comp: None,
+            thumb: None,
+        }
+    }
+}
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ImageInfo {
     pub filename: String,
     pub s3_presigned_urls: Option<S3PresignedUrls>,
@@ -47,6 +56,13 @@ impl ImageInfo {
             error: None,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ImageUploadFailInfo {
+    pub dublicate_filename: String, // I know it's a typo, but it's from upstream
+    // and it's kinda late to change stuff in ML code
+    pub error: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

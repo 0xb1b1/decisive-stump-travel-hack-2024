@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/api/models/gallery_image.dart';
 
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../utils/utils.dart';
 import 'widgets/selected_checkbox_widget.dart';
 import 'widgets/similar_button.dart';
 
 class HoverImage extends StatefulWidget {
-  final String title;
-  final List<String> tags;
-  final String url;
+  final GalleryImage image;
   final VoidCallback onSimilarTap;
   final bool isButtonsEnabled;
 
   const HoverImage({
     super.key,
-    required this.title,
-    required this.tags,
-    required this.url,
+    required this.image,
     required this.onSimilarTap,
     required this.isButtonsEnabled,
   });
@@ -30,22 +27,42 @@ class HoverImage extends StatefulWidget {
 class _HoverImageState extends State<HoverImage> {
   bool isHovering = false;
 
+  // @override
+  // void didChangeDependencies() {
+  //   print('precache');
+  //   _precacheNetworkImage(context, widget.image.url.thumb);
+  //   super.didChangeDependencies();
+  // }
+  //
+  void _precacheNetworkImage(BuildContext context, String url) {
+    precacheImage(CachedNetworkImageProvider(url), context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    _precacheNetworkImage(context, widget.image.url.thumb);
+
     return MouseRegion(
       onEnter: (event) => setState(() => isHovering = true),
       onExit: (event) => setState(() => isHovering = false),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(widget.url),
-                fit: BoxFit.cover,
+          CachedNetworkImage(
+            imageUrl: widget.image.url.thumb,
+            imageBuilder: (context, imageProvider) => Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: imageProvider,
+                  fit: BoxFit.cover,
+                ),
               ),
-              borderRadius: BorderRadius.circular(8),
             ),
+            placeholder: (context, url) => const CircularProgressIndicator(
+              color: AppPalette.lightGrey,
+            ),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
           ),
           AnimatedContainer(
             decoration: BoxDecoration(
@@ -79,14 +96,14 @@ class _HoverImageState extends State<HoverImage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.title,
+                      widget.image.label,
                       style: AppTypography.hoverTitle,
                     ),
                     const SizedBox(
                       height: 4,
                     ),
                     Text(
-                      Utils.makeUpperStr(widget.tags),
+                      Utils.makeUpperStr(widget.image.tags),
                       style: AppTypography.hoverDescr.copyWith(
                         color: AppPalette.white.withOpacity(0.7),
                       ),

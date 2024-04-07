@@ -5,8 +5,7 @@ use redis::RedisError;
 use rsmq_async::RsmqConnection;
 use std::time::Duration;
 
-mod config;
-
+use ds_travel_hack_2024::config;
 use ds_travel_hack_2024::connections;
 use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
@@ -50,10 +49,6 @@ async fn main() {
 
         // Set queue name to check
         let scheduled_queue: Option<RsmqDsQueue>;
-        let requeue_killed_jobs: bool; // Skips queue processing.
-                                       // ^ These are set as Redis keys before the worker starts processing a message.
-                                       // ^ If the worker is killed, the keys remain set for them to be processed by another worker.
-                                       // ^ These differ from failed jobs in that they are not requeued since the worker is killed.
         let check_main_gallery: bool; // Skips queue processing; mutates if ML generated gallery is not old enough.
 
         log::debug!("Worker queue counter: {}", worker_queue_counter);
@@ -64,12 +59,10 @@ async fn main() {
                         log::debug!("Main gallery is locked. Processing BackendWorker queue.");
                         scheduled_queue = Some(RsmqDsQueue::BackendWorker);
                         check_main_gallery = false;
-                        requeue_killed_jobs = false;
                     } else {
                         log::debug!("Main gallery is not locked. Checking main gallery.");
                         scheduled_queue = None;
                         check_main_gallery = true;
-                        requeue_killed_jobs = false;
                     }
                 }
                 Err(err) => {
@@ -79,119 +72,21 @@ async fn main() {
                     );
                     scheduled_queue = Some(RsmqDsQueue::BackendWorker);
                     check_main_gallery = false;
-                    requeue_killed_jobs = false;
                 }
             };
         } else if worker_queue_counter % 4 == 0 {
             log::debug!("Checking BackendWorkerFailed queue.");
             scheduled_queue = Some(RsmqDsQueue::BackendWorkerFailed);
             check_main_gallery = false;
-            requeue_killed_jobs = false;
-        } else if worker_queue_counter % 17 == 0 {
-            log::debug!("Processing keys set by failed workers.");
-            scheduled_queue = None;
-            check_main_gallery = false;
-            requeue_killed_jobs = true;
         } else {
             log::debug!("Processing BackendWorker queue.");
             scheduled_queue = Some(RsmqDsQueue::BackendWorker);
             check_main_gallery = false;
-            requeue_killed_jobs = false;
         }
 
         // Reset counter on 253
         if worker_queue_counter >= 253 {
             worker_queue_counter = 0;
-        }
-
-        if requeue_killed_jobs {
-            // TODO: Test this block
-            log::debug!("Processing keys set by failed workers...");
-            let keys: Vec<String> = match redis::cmd("KEYS")
-                .arg("worker:running-task:*")
-                .query_async(&mut *redis_pool.get().await.unwrap())
-                .await
-            {
-                Ok(keys) => keys,
-                Err(err) => {
-                    log::error!("Failed to get keys set by failed workers: {}", err);
-                    worker_queue_counter += 1;
-                    continue;
-                }
-            };
-
-            log::debug!("Keys set by failed workers: {:?}", keys);
-
-            for key in keys {
-                // If task is less than 10 minutes old, skip (separate key by : and get the last element)
-                let key_split: Vec<&str> = key.split(":").collect();
-                let entry_timestamp: i64 = key_split[key_split.len() - 1].parse().unwrap();
-
-                if chrono::Utc::now().timestamp() - entry_timestamp < 600 {
-                    log::info!("Task is less than 10 minutes old, skipping.");
-                    continue;
-                }
-
-                let task: String = match redis::cmd("GET")
-                    .arg(&key)
-                    .query_async(&mut *redis_pool.get().await.unwrap())
-                    .await
-                {
-                    Ok(task) => task,
-                    Err(err) => {
-                        log::error!("Failed to get task set by failed worker: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
-                    }
-                };
-
-                let task: TaskType = match serde_json::from_str(&task) {
-                    Ok(task) => task,
-                    Err(err) => {
-                        log::error!("Failed to parse task set by failed worker: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
-                    }
-                };
-
-                log::info!(
-                    "Requeuing task from failed worker: {}",
-                    serde_json::to_string(&task).unwrap()
-                );
-
-                match rsmq_pool
-                    .send_message(
-                        RsmqDsQueue::BackendWorkerFailed.as_str(),
-                        serde_json::to_string(&task).unwrap(),
-                        None,
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        log::info!("Requeued task from failed worker.");
-                    }
-                    Err(err) => {
-                        log::error!("Failed to requeue task from failed worker: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
-                    }
-                };
-
-                match redis::cmd("DEL")
-                    .arg(&key)
-                    .query_async::<_, Option<String>>(&mut *redis_pool.get().await.unwrap())
-                    .await
-                {
-                    Ok(_) => {
-                        log::info!("Deleted key set by failed worker.");
-                    }
-                    Err(err) => {
-                        log::error!("Failed to delete key set by failed worker: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
-                    }
-                }
-            }
         }
 
         let gallery_ttl: Option<u64>;
@@ -260,7 +155,7 @@ async fn main() {
             } else {
                 log::debug!("Main gallery not found in Redis.");
                 log::warn!("Asking ML to repopulate the main gallery.");
-                match reqwest::get(format!("{}/main/{}", config.svc_ml_fast, 100)).await {
+                match reqwest::get(format!("{}/main/{}", config.svc_ml_fast, 999)).await {
                     Ok(_) => {
                         log::info!("Request to ML successful. Re-running this task in 3 seconds.");
                         task::sleep(Duration::from_secs(3)).await;
@@ -391,52 +286,100 @@ async fn main() {
                     serde_json::to_string(&task).unwrap()
                 );
 
-                // Set task key to Redis
-                let unix_timestamp = chrono::Utc::now().timestamp();
-                let task_key = format!("worker:running-task:{}:{}", task.as_str(), unix_timestamp);
-                match redis::cmd("SET")
-                    .arg(&task_key)
-                    .arg(serde_json::to_string(&task).unwrap())
-                    .arg("EX")
-                    .arg(60 * 60 * 24)
-                    .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
-                    .await
-                {
-                    Ok(_) => {
-                        log::info!("Set task key to Redis.");
-                    }
-                    Err(err) => {
-                        log::error!("Failed to set task key to Redis: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
-                    }
-                }
-
                 // Process task
                 match task {
+                    TaskType::GenS3PresignedUrls {
+                        ref filename,
+                        expiry_secs,
+                    } => {
+                        log::info!(
+                            "Received GenS3PresignedUrls task: {} with expiry_secs: {}",
+                            filename,
+                            expiry_secs
+                        );
+                        let presigned_url =
+                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                &filename,
+                                &bucket_images,
+                                expiry_secs,
+                            )
+                            .await;
+                        let presigned_url_comp =
+                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                &filename,
+                                &bucket_images_compressed,
+                                expiry_secs,
+                            )
+                            .await;
+                        let presigned_url_thumb =
+                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                &filename,
+                                &bucket_images_thumbs,
+                                expiry_secs,
+                            )
+                            .await;
+
+                        let s3_presigned_urls = S3PresignedUrls {
+                            normal: presigned_url,
+                            comp: presigned_url_comp,
+                            thumb: presigned_url_thumb,
+                        };
+
+                        // Send to Redis
+                        let _ = match redis::cmd("SET")
+                            .arg(format!("images:presigned_urls:{}", filename))
+                            .arg(serde_json::to_string(&s3_presigned_urls).unwrap())
+                            .arg("EX")
+                            .arg(expiry_secs - 5) // To prevent expired presigned URLs being sent to clients
+                            .query_async::<_, ()>(&mut *redis_pool.get().await.unwrap())
+                            .await
+                        {
+                            Ok(_) => {
+                                log::info!("Sent presigned URLs to Redis.");
+                            }
+                            Err(err) => {
+                                log::error!("Failed to send presigned URLs to Redis: {}", err);
+                                // Send to failed queue
+                                match rsmq_pool
+                                    .send_message(
+                                        RsmqDsQueue::BackendWorkerFailed.as_str(),
+                                        serde_json::to_string(&task).unwrap(),
+                                        None,
+                                    )
+                                    .await
+                                {
+                                    Ok(_) => {
+                                        log::info!("Sent task to failed queue.");
+                                    }
+                                    Err(err) => {
+                                        log::error!("Failed to send task to failed queue: {}", err);
+                                        worker_queue_counter += 1;
+                                        continue;
+                                    }
+                                }
+                                worker_queue_counter += 1;
+                                continue;
+                            }
+                        };
+                    }
                     TaskType::DeleteImage { filename } => {
                         log::info!("Received DeleteImage task: {}", filename);
-                        match ds_travel_hack_2024::tasks::task_types::delete_image::delete_from_all_buckets(
+                        ds_travel_hack_2024::tasks::task_types::delete_image::delete_image(
                             &filename,
                             &bucket_images,
                             &bucket_images_compressed,
                             &bucket_images_thumbs,
                             &mut rsmq_pool,
+                            &config,
                         )
-                        .await
-                        {
-                            Ok(_) => {
-                                log::info!("Deleted image from all buckets.");
-                            }
-                            Err(err) => {
-                                log::error!("Failed to delete image from all buckets: {}", err);
-                                worker_queue_counter += 1;
-                                continue;
-                            }
-                        }
+                        .await;
                     }
-                    TaskType::CompressImage { filename } => {
-                        log::info!("Received CompressImage task: {}", filename);
+                    TaskType::CompressImage { filename, force } => {
+                        log::info!(
+                            "Received CompressImage task: {} (forced: {})",
+                            filename,
+                            force
+                        );
 
                         match ds_travel_hack_2024::tasks::task_types::compress_image::compress_normal(
                             &filename,
@@ -444,6 +387,7 @@ async fn main() {
                             &bucket_images_compressed,
                             &bucket_images_thumbs,
                             &mut rsmq_pool,
+                            force,
                         )
                         .await
                         {
@@ -456,21 +400,6 @@ async fn main() {
                                 continue;
                             }
                         }
-                    }
-                }
-                // Remove task key from Redis
-                match redis::cmd("DEL")
-                    .arg(&task_key)
-                    .query_async::<_, Option<String>>(&mut *redis_pool.get().await.unwrap())
-                    .await
-                {
-                    Ok(_) => {
-                        log::info!("Deleted task key from Redis.");
-                    }
-                    Err(err) => {
-                        log::error!("Failed to delete task key from Redis: {}", err);
-                        worker_queue_counter += 1;
-                        continue;
                     }
                 }
             }

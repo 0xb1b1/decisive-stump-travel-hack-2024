@@ -16,4 +16,14 @@ class FiltersList with _$FiltersList {
     required FiltersSection<Filter> orientation,
     required FiltersSection<ColorsFilter> colors,
   }) = _FiltersList;
+
+  factory FiltersList.initial() => FiltersList(
+        atmosphere: FiltersSection.atmosphere,
+        persons: FiltersSection.persons,
+        dayTime: FiltersSection.dayTime,
+        season: FiltersSection.season,
+        weather: FiltersSection.weather,
+        orientation: FiltersSection.orientation,
+        colors: FiltersSection.colors,
+      );
 }

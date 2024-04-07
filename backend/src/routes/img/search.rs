@@ -2,93 +2,17 @@ use std::time::Duration;
 
 use log;
 use rocket::{http::Status, response::status, serde::json::Json};
-use serde::{Deserialize, Serialize};
 
 use ds_travel_hack_2024::{
-    models::http::images::ImageInfo, utils::redis::galleries::get_main_gallery,
+    models::http::search::{ImageSearchQuery, SearchImageResponse},
+    tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty},
+    utils::redis::galleries::get_main_gallery,
 };
 
 use crate::config::DsConfig;
 
 pub fn routes() -> Vec<rocket::Route> {
     routes![search_images]
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ImageSearchQuery {
-    // Image search query from the main page gallery
-    pub text: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub time_of_day: Option<Vec<String>>,
-    pub weather: Option<Vec<String>>,
-    pub atmosphere: Option<Vec<String>>,
-    pub season: Option<Vec<String>>,
-    pub number_of_people: Option<Vec<u8>>,
-    pub main_color: Option<Vec<String>>,
-    pub orientation: Option<Vec<String>>,
-    pub landmark: Option<String>, // No multi-choice (prob not used)
-    pub grayscale: Option<bool>,  // No multi-choice
-    pub error: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SearchImageResponse {
-    pub images: Vec<ImageInfo>,
-    pub tags: Option<Vec<String>>,
-    pub error: Option<String>,
-}
-
-fn set_none_if_empty(query: &mut ImageSearchQuery) {
-    if let Some(text_inner) = query.text.as_ref() {
-        if text_inner.len() == 0 {
-            query.text = None;
-        }
-    }
-    if let Some(tags_inner) = query.tags.as_ref() {
-        if tags_inner.len() == 0 {
-            query.tags = None;
-        }
-    }
-    if let Some(time_of_day_inner) = query.time_of_day.as_ref() {
-        if time_of_day_inner.len() == 0 {
-            query.time_of_day = None;
-        }
-    }
-    if let Some(weather_inner) = query.weather.as_ref() {
-        if weather_inner.len() == 0 {
-            query.weather = None;
-        }
-    }
-    if let Some(atmosphere_inner) = query.atmosphere.as_ref() {
-        if atmosphere_inner.len() == 0 {
-            query.atmosphere = None;
-        }
-    }
-    if let Some(season_inner) = query.season.as_ref() {
-        if season_inner.len() == 0 {
-            query.season = None;
-        }
-    }
-    if let Some(number_of_people_inner) = query.number_of_people.as_ref() {
-        if number_of_people_inner.len() == 0 {
-            query.number_of_people = None;
-        }
-    }
-    if let Some(main_color_inner) = query.main_color.as_ref() {
-        if main_color_inner.len() == 0 {
-            query.main_color = None;
-        }
-    }
-    if let Some(orientation_inner) = query.orientation.as_ref() {
-        if orientation_inner.len() == 0 {
-            query.orientation = None;
-        }
-    }
-    if let Some(landmark_inner) = query.landmark.as_ref() {
-        if landmark_inner.len() == 0 {
-            query.landmark = None;
-        }
-    }
 }
 
 // Do not use HTTP GET since it's idempotent
@@ -106,27 +30,20 @@ pub async fn search_images(
     // Ignore some params until ML implements them
     // TODO: Revisit the following after ML is complete
     let mut filtered_data = data.into_inner().clone();
-    filtered_data.orientation = None;
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(40))
         .build()
         .unwrap();
 
-    set_none_if_empty(&mut filtered_data);
+    search_query_set_none_if_empty(&mut filtered_data);
 
-    let filters_set: bool = filtered_data.time_of_day.is_some()
-        || filtered_data.weather.is_some()
-        || filtered_data.atmosphere.is_some()
-        || filtered_data.season.is_some()
-        || filtered_data.number_of_people.is_some()
-        || filtered_data.main_color.is_some()
-        || filtered_data.orientation.is_some()
-        || filtered_data.landmark.is_some()
-        || filtered_data.grayscale.is_some();
+    let filters_set: bool = search_query_is_not_empty(&filtered_data);
 
     let text_set: bool =
         filtered_data.text.is_some() && filtered_data.text.as_ref().unwrap().len() > 0;
+
+    log::debug!("Filters set: {}; Text set: {}", filters_set, text_set);
 
     let endpoint: &str;
 
@@ -155,9 +72,10 @@ pub async fn search_images(
         );
     }
 
+    // if text in filtered data, include it in params
     let mut params: Vec<(&str, &str)>;
-    if let Some(text_inner) = filtered_data.text.as_ref() {
-        params = vec![("text", &text_inner)];
+    if let Some(text) = filtered_data.text.as_ref() {
+        params = vec![("text", text)];
     } else {
         params = vec![];
     }
@@ -188,6 +106,7 @@ pub async fn search_images(
     };
 
     let serialized_data = serde_json::to_string(&filtered_data).unwrap();
+    log::debug!("Serialized data to be sent: {}", serialized_data);
 
     log::debug!("Sending request to: {}", url);
     let mut images: SearchImageResponse = match client.post(url).body(serialized_data).send().await

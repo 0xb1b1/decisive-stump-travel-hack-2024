@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -6,7 +7,7 @@ import 'package:travel_frontend/src/api/models/gallery.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
 
 abstract class ApiPath {
-  static const uploadImage = 'http://127.0.0.1:8000/img/upload';
+  static const uploadImage = 'http://backend.0xb1b1.com:81/img/upload';
   static const getGallery = 'http://backend.0xb1b1.com:81/img/gallery';
   static const getImage = 'http://backend.0xb1b1.com:81/img/get/full/';
   static const search = 'http://backend.0xb1b1.com:81/img/search';
@@ -33,33 +34,38 @@ class AppApi {
     return Gallery.fromJson(response.data);
   }
 
-  Future<Gallery> getSimilar(String filename) async {
+  Future<Gallery> getNeighbors(
+    String filename,
+    ImageSearchQuery? query,
+    int imagesCount,
+  ) async {
     final path = '${ApiPath.similar}$filename';
     final queryParams = {
-      'amount': 400,
+      'amount': imagesCount,
     };
 
-    final response = await _dio.get(
-      path,
-      queryParameters: queryParams,
-    );
-
-    return Gallery.fromJson(response.data);
-  }
-
-  Future<Gallery> search(ImageSearchQuery query) async {
-    const path = ApiPath.search;
-    final queryParams = {
-      'images_limit': 100,
-      'tags_limit': 20,
-    };
-
-    final data = query.toJson();
+    final data = (query != null) ? query.toJson() : jsonEncode({'text': null});
 
     final response = await _dio.post(
       path,
       queryParameters: queryParams,
       data: data,
+    );
+
+    return Gallery.fromJson(response.data);
+  }
+
+  Future<Gallery> search(ImageSearchQuery query, int imagesCount) async {
+    const path = ApiPath.search;
+    final queryParams = {
+      'images_limit': imagesCount,
+      'tags_limit': 20,
+    };
+
+    final response = await _dio.post(
+      path,
+      queryParameters: queryParams,
+      data: query.toJson(),
     );
 
     return Gallery.fromJson(response.data);

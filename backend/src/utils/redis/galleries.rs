@@ -166,7 +166,7 @@ pub async fn ml_gallery_exists(redis_pool: &bb8::Pool<bb8_redis::RedisConnection
         _ => RedisGalleryStore {
             images: vec![],
             error: Some("Gallery not found".into()),
-        }
+        },
     };
 
     gallery.images.len() > 0
