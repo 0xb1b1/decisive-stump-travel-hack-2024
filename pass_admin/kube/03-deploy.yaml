@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+  namespace: decisive-stump-travel-hack-2024
+  labels:
+    app: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin
+  template:
+    metadata:
+      labels:
+        app: admin
+    spec:
+      hostAliases:
+      - ip: "77.37.209.29"
+        hostnames:
+        - "minio-travel.0xb1b1.com"
+      containers:
+      - name: admin
+        image: "0xb1b1/ds-admin-travel-hack-2024:latest"
+        imagePullPolicy: Always
+        # envFrom:
+        # - secretRef:
+        #     name: backend-credentials
+        # - configMapRef:
+        #     name: backend-config
+        # env:
+        # - name: RUST_LOG
+        #   value: "debug"
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "400m"

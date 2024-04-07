@@ -1,10 +1,13 @@
 // use std::time::Duration;
 
+use ds_travel_hack_2024::utils::rsmq::presigned_urls::get_s3_presigned_urls_direct;
 // use async_std::task;
 // use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
 use log;
 use rocket::http::{ContentType, MediaType};
+use rocket::response;
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
+use rsmq_async::PooledRsmq;
 // use rsmq_async::PooledRsmq;
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
@@ -28,7 +31,7 @@ pub fn routes() -> Vec<rocket::Route> {
     routes![upload_image,]
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SearchByImageResponse {
     pub filename: Option<String>,
     pub images: Option<Vec<ImageInfoGallery>>,
@@ -53,6 +56,7 @@ async fn upload_image(
     tags_limit: Option<usize>,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
     config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<SearchByImageResponse>> {
     {
@@ -201,7 +205,7 @@ async fn upload_image(
         .build()
         .unwrap();
 
-    let response = match client.post(url).send().await {
+    let mut response = match client.post(url).send().await {
         Ok(response) => match response.text().await {
             Ok(images_str) => match serde_json::from_str(&images_str) {
                 Ok(images) => images,
@@ -236,6 +240,46 @@ async fn upload_image(
             }
         }
     };
+
+    // If images is None, return the struct
+    let tmp_resp = response.clone();
+    if tmp_resp.images.is_none() {
+        log::warn!("No images in response by ML");
+        return status::Custom(Status::Ok, Json(response));
+    }
+
+    let mut new_images: Vec<ImageInfoGallery> = response.images.clone().unwrap();
+
+    // Add Presigned S3 URLs
+    for image in response.images.clone().unwrap() {
+        let mut new_image = image.clone();
+        new_image.s3_presigned_urls =
+            match get_s3_presigned_urls_direct(
+            &image.filename,
+            None,
+            redis_pool,
+            rsmq_pool,
+            30,
+        )
+            .await
+            {
+                Ok(urls) => Some(urls),
+                Err(_) => {
+                    log::error!(
+                        "Failed to get S3 presigned URLs for image: {}",
+                        image.filename
+                    );
+                    None
+            }
+        };
+
+        log::debug!("Presigned S3 URLs for image {:?}", &new_image);
+
+        new_images.push(new_image);
+    }
+
+    response.images = Some(new_images);
+    log::debug!("New images: {:?}", response.images.clone());
 
     status::Custom(
         Status::Ok,

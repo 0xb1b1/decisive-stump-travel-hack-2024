@@ -1,0 +1,7 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: decisive-stump-travel-hack-2024
+  labels:
+    name: decisive-stump-travel-hack-2024
