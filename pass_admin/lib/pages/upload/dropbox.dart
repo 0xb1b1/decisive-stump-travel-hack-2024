@@ -6,7 +6,7 @@ import 'package:flutter_dropzone/flutter_dropzone.dart';
 class Dropbox extends StatefulWidget {
   const Dropbox({super.key, required this.onPick});
 
-  final Function({required List<Image> images, required List<Uint8List> bytes}) onPick;
+  final Function({required List<Image> images, required List<String> names, required List<Uint8List> bytes}) onPick;
 
   @override
   State<Dropbox> createState() => _DropboxState();
@@ -27,10 +27,12 @@ class _DropboxState extends State<Dropbox> {
     if (fromPicker != null) {
       widget.onPick(
         bytes: fromPicker.map((e) => e.bytes!).toList(),
+        names: fromPicker.map((e) => e.name).toList(),
         images: fromPicker
             .map(
               (e) => Image.memory(
                 e.bytes!,
+                fit: BoxFit.cover,
               ),
             )
             .toList(),
@@ -70,16 +72,22 @@ class _DropboxState extends State<Dropbox> {
                 files.map((e) => controller.createFileUrl(e)),
               );
 
+              final names = await Future.wait(
+                files.map((e) => controller.getFilename(e)),
+              );
+
               final bytes = await Future.wait(
                 files.map((e) => controller.getFileData(e)),
               );
 
               widget.onPick(
                 bytes: bytes,
+                names: names,
                 images: urls
                     .map(
                       (e) => Image.network(
                         e,
+                        fit: BoxFit.cover,
                       ),
                     )
                     .toList(),
