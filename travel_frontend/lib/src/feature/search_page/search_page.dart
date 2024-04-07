@@ -16,7 +16,6 @@ import 'package:travel_frontend/src/widgets/error_scene.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
-
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});
 

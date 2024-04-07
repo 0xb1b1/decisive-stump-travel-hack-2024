@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
@@ -133,21 +132,18 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final currentState = search;
 
     if (currentState is SearchTypeStateInitial) {
-      print('initial');
       final query = _makeInitialQuery(currentState);
       await _searchInitial(query, currentState.isFiltersChosen);
       return;
     }
 
     if (currentState is SearchTypeStateTag) {
-      print('tag');
       final query = _makeTagQuery(currentState);
       await _searchTag(query);
       return;
     }
 
     if (currentState is SearchTypeStateSimilar) {
-      print('similar');
       final query = _makeQueryWithFilters(currentState);
       await _searchSimilar(currentState.filename, query, 30);
       return;
