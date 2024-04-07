@@ -11,6 +11,10 @@ path = "src/main.rs"
 name = "worker"
 path = "src/worker.rs"
 
+[[bin]]
+name = "guests"
+path = "src/guests.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

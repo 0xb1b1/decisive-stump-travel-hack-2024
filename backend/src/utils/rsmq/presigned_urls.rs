@@ -51,7 +51,7 @@ pub async fn get_s3_presigned_urls_direct(
 
     let final_expiry_secs = match expiry_secs {
         Some(expiry_secs) => expiry_secs,
-        None => 3600,
+        None => 36000,
     };
 
     let maybe_urls = get_s3_presigned_urls_redis(filename, redis_pool).await;
