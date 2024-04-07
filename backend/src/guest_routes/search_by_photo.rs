@@ -1,7 +1,6 @@
 // use std::time::Duration;
 
 // use async_std::task;
-use ds_travel_hack_2024::config::DsConfig;
 // use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
 use log;
 use rocket::http::{ContentType, MediaType};
@@ -19,6 +18,8 @@ use ds_travel_hack_2024::models::http::uploads::{
 };
 // use ds_travel_hack_2024::utils;
 use ds_travel_hack_2024::utils::s3::images::get_img;
+
+use crate::config::DsConfig;
 // use ds_travel_hack_2024::utils::rsmq::presigned_urls::get_s3_presigned_urls_direct;
 
 // use crate::config::DsConfig;
@@ -132,45 +133,40 @@ async fn upload_image(
 
     // Check if the file already exists
     match s3_image_exists {
-        true => {
-            log::error!("File already exists: {}", &file_path);
-            return status::Custom(
-                Status::Conflict,
-                Json(SearchByImageResponse {
-                    error: Some("File already exists.".into()),
-                    ..SearchByImageResponse::new()
-                }),
-            );
-        }
+        true => log::error!("File already exists, using it: {}", &file_path),
         false => (),
-    }
+    };
 
     // The following is done via a separate request
     // task::sleep(Duration::from_secs(10)).await;  // [TEMP]: Simulate ML model processing
 
-    log::debug!("Saving file to: {}", &file_path);
-    let mut file_buffer = form.file.open().await.unwrap();
-    match bucket.put_object_stream(&mut file_buffer, &file_path).await {
-        Ok(_) => {
-            log::debug!("Data sent to S3.");
-            locks::image_upload::unlock(&file_path, &redis_pool)
-                .await
-                .unwrap();
-        }
-        Err(e) => {
-            log::error!("Failed to send data to S3: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool)
-                .await
-                .unwrap();
-            return status::Custom(
-                Status::InternalServerError,
-                Json(SearchByImageResponse {
-                    error: Some(format!("Failed to send data to S3: {}", e)),
-                    ..SearchByImageResponse::new()
-                }),
-            );
-        }
-    };
+    if !s3_image_exists {
+        log::debug!("Saving file to: {}", &file_path);
+        let mut file_buffer = form.file.open().await.unwrap();
+        match bucket.put_object_stream(&mut file_buffer, &file_path).await {
+            Ok(_) => {
+                log::debug!("Data sent to S3.");
+                locks::image_upload::unlock(&file_path, &redis_pool)
+                    .await
+                    .unwrap();
+            }
+            Err(e) => {
+                log::error!("Failed to send data to S3: {}", e);
+                locks::image_upload::unlock(&file_path, &redis_pool)
+                    .await
+                    .unwrap();
+                return status::Custom(
+                    Status::InternalServerError,
+                    Json(SearchByImageResponse {
+                        error: Some(format!("Failed to send data to S3: {}", e)),
+                        ..SearchByImageResponse::new()
+                    }),
+                );
+            }
+        };
+    } else {
+        log::debug!("Not saving file again — it already exists: {}", file_name);
+    }
 
     // Get similar images search result from ML
     let neighbors_lim = neighbors_limit.unwrap_or(10).to_string();
@@ -205,7 +201,7 @@ async fn upload_image(
         .build()
         .unwrap();
 
-    let _response = match client.post(url).send().await {
+    let response = match client.post(url).send().await {
         Ok(response) => match response.text().await {
             Ok(images_str) => match serde_json::from_str(&images_str) {
                 Ok(images) => images,
@@ -243,9 +239,6 @@ async fn upload_image(
 
     status::Custom(
         Status::Ok,
-        Json(SearchByImageResponse {
-            filename: Some(file_name),
-            ..SearchByImageResponse::new()
-        }),
+        Json(response),
     )
 }
