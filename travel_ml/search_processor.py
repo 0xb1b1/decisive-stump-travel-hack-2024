@@ -93,6 +93,13 @@ app = FastAPI()
 
 
 def get_search_neighbors(embedding, nk, tk, finder, filters, table, fields):
+    if filters is not None:
+        counter = len(filters.dict())
+        for value in filters.dict().values():
+            if value is None:
+                counter -= 1
+        if counter == 0:
+            filters = None
     return {'images': finder.get_search_neighbors(embedding=embedding,
                                                   k=nk, filters=filters,
                                                   table=table,
@@ -123,10 +130,8 @@ def get_neighbors(table, fields, text=None, filename=None, neighbors_num=20, tag
 
 @app.post('/search/text/')
 async def get_text_neighbors(text: str, neighbors_limit: int = 20, tags_limit: int = 5,
-                             filters: Union[Filters, None] = None,
-                             fields: Union[List['str'], None] = None):
-    if fields is None:
-        fields = ['filename', 'tags', 'label']
+                             filters: Union[Filters, None] = None):
+    fields = ['filename', 'tags', 'label']
     neighbors = get_neighbors(text=text,
                               neighbors_num=neighbors_limit,
                               tags_num=tags_limit,
@@ -139,10 +144,8 @@ async def get_text_neighbors(text: str, neighbors_limit: int = 20, tags_limit: i
 
 @app.post('/search/image/')
 async def get_text_neighbors(filename: str, neighbors_limit: int = 20, tags_limit: int = 5,
-                             filters: Union[Filters, None] = None,
-                             fields: Union[List['str'], None] = None):
-    if fields is None:
-        fields = ['filename', 'tags', 'label']
+                             filters: Union[Filters, None] = None):
+    fields = ['filename', 'tags', 'label']
     neighbors = get_neighbors(filename=filename,
                               neighbors_num=neighbors_limit,
                               tags_num=tags_limit,
