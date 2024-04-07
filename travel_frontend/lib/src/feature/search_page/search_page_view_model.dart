@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
 import 'package:travel_frontend/src/api/models/image_search_query.dart';
@@ -5,7 +6,6 @@ import 'package:travel_frontend/src/feature/search_page/models/search_view_state
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filter.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
-import '../../api/models/gallery.dart';
 import '../../domain/search_repository.dart';
 import '../../navigation/navigation_service.dart';
 import '../../navigation/routes.dart';
@@ -36,12 +36,31 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   Future<void> init() async {
     super.init();
 
+    await _getGallery();
+  }
+
+  Future<void> _getGallery() async {
     try {
       final gallery = await _searchRepository.getGallery();
       if (gallery.images.isEmpty) {
         emit(emptyState);
         return;
       }
+
+      emit(SearchViewState.data(images: gallery.images));
+    } on Object catch (e, _) {
+      emit(errorState);
+    }
+  }
+
+  Future<void> _search(ImageSearchQuery query) async {
+    try {
+      final gallery = await _searchRepository.search(query, 100);
+      if (gallery.images.isEmpty) {
+        emit(emptyState);
+        return;
+      }
+
       emit(SearchViewState.data(images: gallery.images));
     } on Object catch (e, _) {
       emit(errorState);
@@ -71,26 +90,17 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
           images: result.images,
         ),
       );
-    } on Object catch (e) {
+    } on Object catch (_) {
       emit(errorState);
     }
   }
 
-  Future<void> _searchInitial(ImageSearchQuery query) async {
-    try {
-      final result = await _searchRepository.getGallery();
-
-      if (result.images.isEmpty) {
-        emit(emptyState);
-        return;
-      }
-      emit(
-        SearchViewState.data(
-          images: result.images,
-        ),
-      );
-    } on Object catch (e) {
-      emit(errorState);
+  Future<void> _searchInitial(
+      ImageSearchQuery query, bool isFiltersChosen) async {
+    if (query.text == '' && !isFiltersChosen) {
+      await _getGallery();
+    } else {
+      await _search(query);
     }
   }
 
@@ -112,7 +122,7 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
           images: result.images,
         ),
       );
-    } on Object catch (e) {
+    } on Object catch (_) {
       emit(errorState);
     }
   }
@@ -123,19 +133,21 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final currentState = search;
 
     if (currentState is SearchTypeStateInitial) {
+      print('initial');
       final query = _makeInitialQuery(currentState);
-      await _searchInitial(query);
+      await _searchInitial(query, currentState.isFiltersChosen);
       return;
     }
 
     if (currentState is SearchTypeStateTag) {
-      print('searchTag');
+      print('tag');
       final query = _makeTagQuery(currentState);
       await _searchTag(query);
       return;
     }
 
     if (currentState is SearchTypeStateSimilar) {
+      print('similar');
       final query = _makeQueryWithFilters(currentState);
       await _searchSimilar(currentState.filename, query, 30);
       return;
@@ -199,5 +211,17 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final filtersQuery = _makeQueryWithFilters(state);
 
     return filtersQuery.copyWith(tags: [state.tag]);
+  }
+
+  Future<void> pickImage() async {
+    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      _navigationService.pushNamed(
+        Routes.imageUploaded,
+        arguments: {
+          RoutesArgs.uploadedFile: image,
+        },
+      );
+    }
   }
 }

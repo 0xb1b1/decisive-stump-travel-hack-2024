@@ -183,21 +183,21 @@ async fn main() {
                                 let mut gallery_full: Vec<ImageInfoGallery> = Vec::new();
                                 for image in gallery.images {
                                     let presigned_url =
-                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                        ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                             &image.filename,
                                             &bucket_images,
                                             10_800, // 3 hours
                                         )
                                         .await;
                                     let presigned_url_comp =
-                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                        ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                             &image.filename,
                                             &bucket_images_compressed,
                                             10_800, // 3 hours
                                         )
                                         .await;
                                     let presigned_url_thumb =
-                                        ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                                        ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                             &image.filename,
                                             &bucket_images_thumbs,
                                             10_800, // 3 hours
@@ -298,21 +298,21 @@ async fn main() {
                             expiry_secs
                         );
                         let presigned_url =
-                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                 &filename,
                                 &bucket_images,
                                 expiry_secs,
                             )
                             .await;
                         let presigned_url_comp =
-                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                 &filename,
                                 &bucket_images_compressed,
                                 expiry_secs,
                             )
                             .await;
                         let presigned_url_thumb =
-                            ds_travel_hack_2024::utils::s3::images::get_presigned_url(
+                            ds_travel_hack_2024::utils::s3::images::worker_get_presigned_url(
                                 &filename,
                                 &bucket_images_thumbs,
                                 expiry_secs,

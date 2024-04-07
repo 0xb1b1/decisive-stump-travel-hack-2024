@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
-import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/common/app_palette.dart';
 import 'package:travel_frontend/src/common/app_typography.dart';
 import 'package:travel_frontend/src/common/assets_provider.dart';
@@ -11,24 +10,18 @@ import 'package:travel_frontend/src/feature/search_page/widgets/app_bar_info_blo
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/search_block/dropdown_search_block.dart';
 
-import 'package:travel_frontend/src/feature/search_page_providers.dart';
+import 'package:travel_frontend/src/feature/search_page/search_page_providers.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page_view_model.dart';
 import 'package:travel_frontend/src/widgets/error_scene.dart';
 import 'package:travel_frontend/src/widgets/image_gallery/image_gallery.dart';
 import 'package:travel_frontend/src/widgets/page_container.dart';
 
-import '../../navigation/routes.dart';
 
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tag = componentArg0f<String>(
-      context,
-      RoutesArgs.tag,
-    );
-
     final vm = ref.watch(searchViewModelProvider);
     final filtersVm = ref.watch(filtersViewModelProvider);
 
@@ -78,6 +71,7 @@ class SearchPage extends ConsumerWidget {
                         DropdownSearchBlock(
                           filtersViewModel: filtersVm,
                           search: vm.search,
+                          onUploadImage: vm.pickImage,
                         ),
                         const SizedBox(height: 16),
                       ],

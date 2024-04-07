@@ -1,7 +1,5 @@
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
-import 'package:travel_frontend/src/api/models/image_search_query.dart';
+
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/color_filter.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/filters_list.dart';
 
@@ -9,10 +7,6 @@ import 'models/filter.dart';
 import 'models/search_type_state.dart';
 
 class FiltersViewModel extends BaseViewModel<SearchTypeState> {
-  final ImagePicker _imagePicker;
-
-  FiltersViewModel(this._imagePicker);
-
   @override
   SearchTypeState get initState => SearchTypeState.initial(
         filtersList: FiltersList.initial(),
@@ -187,12 +181,4 @@ class FiltersViewModel extends BaseViewModel<SearchTypeState> {
       ),
     );
   }
-
-// Future<void> pickImage() async {
-//   final image = await _imagePicker.pickImage(source: ImageSource.gallery);
-//   if (image != null) {
-//     final file = File(image.path);
-//     _changeModeUploaded(file);
-//   }
-// }
 }

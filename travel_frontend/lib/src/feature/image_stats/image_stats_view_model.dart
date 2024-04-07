@@ -7,7 +7,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_providers.dart';
-import 'package:travel_frontend/src/feature/search_page_providers.dart';
+import 'package:travel_frontend/src/feature/search_page/search_page_providers.dart';
 
 import '../../navigation/navigation_service.dart';
 import '../../navigation/routes.dart';

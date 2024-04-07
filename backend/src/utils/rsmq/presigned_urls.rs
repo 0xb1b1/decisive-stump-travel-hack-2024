@@ -51,14 +51,16 @@ pub async fn get_s3_presigned_urls_direct(
 
     let final_expiry_secs = match expiry_secs {
         Some(expiry_secs) => expiry_secs,
-        None => 3600,
+        None => 36000,
     };
 
     let maybe_urls = get_s3_presigned_urls_redis(filename, redis_pool).await;
 
     if let Some(urls) = maybe_urls {
+        log::debug!("S3 presigned URLs cache hit: {}", filename);
         return Ok(urls);
     } else {
+        log::debug!("S3 presigned URLs cache miss: {}", filename);
         // Send a message to the worker to get the presigned URLs.
         let _ = match rsmq_pool
             .inner()

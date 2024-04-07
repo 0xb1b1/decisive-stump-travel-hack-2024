@@ -11,7 +11,7 @@ abstract class AssetsPath {
   static const search = 'assets/icons/search.svg';
   static const similar = 'assets/icons/similar.svg';
 
-  static const appBar = 'assets/app_bar/header.svg';
+  static const appBar = 'assets/app_bar/app_bar.svg';
 
   static const bottomBar = 'assets/app_bar/bottom_bar.svg';
   static const empty = 'assets/empty.png';

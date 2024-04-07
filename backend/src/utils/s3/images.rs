@@ -34,7 +34,7 @@ pub async fn get_img(file_path: &str, bucket: &Bucket) -> Option<ResponseData> {
 //     }
 // }
 
-pub async fn get_presigned_url(
+pub async fn worker_get_presigned_url(
     file_path: &str,
     bucket: &Bucket,
     expiry_secs: u32,

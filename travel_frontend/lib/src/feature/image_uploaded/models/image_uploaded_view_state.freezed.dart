@@ -14,30 +14,12 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-ImageUploadedViewState _$ImageUploadedViewStateFromJson(
-    Map<String, dynamic> json) {
-  switch (json['runtimeType']) {
-    case 'data':
-      return ImageUploadedViewStateData.fromJson(json);
-    case 'loading':
-      return ImageUploadedViewStateLoading.fromJson(json);
-    case 'error':
-      return ImageUploadedViewStateError.fromJson(json);
-
-    default:
-      throw CheckedFromJsonException(
-          json,
-          'runtimeType',
-          'ImageUploadedViewState',
-          'Invalid union type "${json['runtimeType']}"!');
-  }
-}
-
 /// @nodoc
 mixin _$ImageUploadedViewState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(List<String> possibleTags, Gallery similarImages)
+    required TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)
         data,
     required TResult Function() loading,
     required TResult Function() error,
@@ -45,14 +27,18 @@ mixin _$ImageUploadedViewState {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult? Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult? Function()? loading,
     TResult? Function()? error,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult Function()? loading,
     TResult Function()? error,
     required TResult orElse(),
@@ -80,7 +66,6 @@ mixin _$ImageUploadedViewState {
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -109,9 +94,10 @@ abstract class _$$ImageUploadedViewStateDataImplCopyWith<$Res> {
           $Res Function(_$ImageUploadedViewStateDataImpl) then) =
       __$$ImageUploadedViewStateDataImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({List<String> possibleTags, Gallery similarImages});
-
-  $GalleryCopyWith<$Res> get similarImages;
+  $Res call(
+      {XFile file,
+      List<String> possibleTags,
+      List<GalleryImage> similarImages});
 }
 
 /// @nodoc
@@ -127,44 +113,39 @@ class __$$ImageUploadedViewStateDataImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? file = null,
     Object? possibleTags = null,
     Object? similarImages = null,
   }) {
     return _then(_$ImageUploadedViewStateDataImpl(
+      file: null == file
+          ? _value.file
+          : file // ignore: cast_nullable_to_non_nullable
+              as XFile,
       possibleTags: null == possibleTags
           ? _value._possibleTags
           : possibleTags // ignore: cast_nullable_to_non_nullable
               as List<String>,
       similarImages: null == similarImages
-          ? _value.similarImages
+          ? _value._similarImages
           : similarImages // ignore: cast_nullable_to_non_nullable
-              as Gallery,
+              as List<GalleryImage>,
     ));
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $GalleryCopyWith<$Res> get similarImages {
-    return $GalleryCopyWith<$Res>(_value.similarImages, (value) {
-      return _then(_value.copyWith(similarImages: value));
-    });
   }
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$ImageUploadedViewStateDataImpl implements ImageUploadedViewStateData {
   const _$ImageUploadedViewStateDataImpl(
-      {required final List<String> possibleTags,
-      required this.similarImages,
-      final String? $type})
+      {required this.file,
+      required final List<String> possibleTags,
+      required final List<GalleryImage> similarImages})
       : _possibleTags = possibleTags,
-        $type = $type ?? 'data';
+        _similarImages = similarImages;
 
-  factory _$ImageUploadedViewStateDataImpl.fromJson(
-          Map<String, dynamic> json) =>
-      _$$ImageUploadedViewStateDataImplFromJson(json);
-
+  @override
+  final XFile file;
   final List<String> _possibleTags;
   @override
   List<String> get possibleTags {
@@ -173,15 +154,17 @@ class _$ImageUploadedViewStateDataImpl implements ImageUploadedViewStateData {
     return EqualUnmodifiableListView(_possibleTags);
   }
 
+  final List<GalleryImage> _similarImages;
   @override
-  final Gallery similarImages;
-
-  @JsonKey(name: 'runtimeType')
-  final String $type;
+  List<GalleryImage> get similarImages {
+    if (_similarImages is EqualUnmodifiableListView) return _similarImages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_similarImages);
+  }
 
   @override
   String toString() {
-    return 'ImageUploadedViewState.data(possibleTags: $possibleTags, similarImages: $similarImages)';
+    return 'ImageUploadedViewState.data(file: $file, possibleTags: $possibleTags, similarImages: $similarImages)';
   }
 
   @override
@@ -189,16 +172,19 @@ class _$ImageUploadedViewStateDataImpl implements ImageUploadedViewStateData {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ImageUploadedViewStateDataImpl &&
+            (identical(other.file, file) || other.file == file) &&
             const DeepCollectionEquality()
                 .equals(other._possibleTags, _possibleTags) &&
-            (identical(other.similarImages, similarImages) ||
-                other.similarImages == similarImages));
+            const DeepCollectionEquality()
+                .equals(other._similarImages, _similarImages));
   }
 
-  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType,
-      const DeepCollectionEquality().hash(_possibleTags), similarImages);
+  int get hashCode => Object.hash(
+      runtimeType,
+      file,
+      const DeepCollectionEquality().hash(_possibleTags),
+      const DeepCollectionEquality().hash(_similarImages));
 
   @JsonKey(ignore: true)
   @override
@@ -210,34 +196,39 @@ class _$ImageUploadedViewStateDataImpl implements ImageUploadedViewStateData {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(List<String> possibleTags, Gallery similarImages)
+    required TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)
         data,
     required TResult Function() loading,
     required TResult Function() error,
   }) {
-    return data(possibleTags, similarImages);
+    return data(file, possibleTags, similarImages);
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult? Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult? Function()? loading,
     TResult? Function()? error,
   }) {
-    return data?.call(possibleTags, similarImages);
+    return data?.call(file, possibleTags, similarImages);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult Function()? loading,
     TResult Function()? error,
     required TResult orElse(),
   }) {
     if (data != null) {
-      return data(possibleTags, similarImages);
+      return data(file, possibleTags, similarImages);
     }
     return orElse();
   }
@@ -275,25 +266,18 @@ class _$ImageUploadedViewStateDataImpl implements ImageUploadedViewStateData {
     }
     return orElse();
   }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ImageUploadedViewStateDataImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class ImageUploadedViewStateData implements ImageUploadedViewState {
   const factory ImageUploadedViewStateData(
-      {required final List<String> possibleTags,
-      required final Gallery similarImages}) = _$ImageUploadedViewStateDataImpl;
+          {required final XFile file,
+          required final List<String> possibleTags,
+          required final List<GalleryImage> similarImages}) =
+      _$ImageUploadedViewStateDataImpl;
 
-  factory ImageUploadedViewStateData.fromJson(Map<String, dynamic> json) =
-      _$ImageUploadedViewStateDataImpl.fromJson;
-
+  XFile get file;
   List<String> get possibleTags;
-  Gallery get similarImages;
+  List<GalleryImage> get similarImages;
   @JsonKey(ignore: true)
   _$$ImageUploadedViewStateDataImplCopyWith<_$ImageUploadedViewStateDataImpl>
       get copyWith => throw _privateConstructorUsedError;
@@ -319,18 +303,10 @@ class __$$ImageUploadedViewStateLoadingImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$ImageUploadedViewStateLoadingImpl
     implements ImageUploadedViewStateLoading {
-  const _$ImageUploadedViewStateLoadingImpl({final String? $type})
-      : $type = $type ?? 'loading';
-
-  factory _$ImageUploadedViewStateLoadingImpl.fromJson(
-          Map<String, dynamic> json) =>
-      _$$ImageUploadedViewStateLoadingImplFromJson(json);
-
-  @JsonKey(name: 'runtimeType')
-  final String $type;
+  const _$ImageUploadedViewStateLoadingImpl();
 
   @override
   String toString() {
@@ -344,14 +320,14 @@ class _$ImageUploadedViewStateLoadingImpl
             other is _$ImageUploadedViewStateLoadingImpl);
   }
 
-  @JsonKey(ignore: true)
   @override
   int get hashCode => runtimeType.hashCode;
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(List<String> possibleTags, Gallery similarImages)
+    required TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)
         data,
     required TResult Function() loading,
     required TResult Function() error,
@@ -362,7 +338,9 @@ class _$ImageUploadedViewStateLoadingImpl
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult? Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult? Function()? loading,
     TResult? Function()? error,
   }) {
@@ -372,7 +350,9 @@ class _$ImageUploadedViewStateLoadingImpl
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult Function()? loading,
     TResult Function()? error,
     required TResult orElse(),
@@ -416,21 +396,11 @@ class _$ImageUploadedViewStateLoadingImpl
     }
     return orElse();
   }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ImageUploadedViewStateLoadingImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class ImageUploadedViewStateLoading implements ImageUploadedViewState {
   const factory ImageUploadedViewStateLoading() =
       _$ImageUploadedViewStateLoadingImpl;
-
-  factory ImageUploadedViewStateLoading.fromJson(Map<String, dynamic> json) =
-      _$ImageUploadedViewStateLoadingImpl.fromJson;
 }
 
 /// @nodoc
@@ -453,17 +423,9 @@ class __$$ImageUploadedViewStateErrorImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$ImageUploadedViewStateErrorImpl implements ImageUploadedViewStateError {
-  const _$ImageUploadedViewStateErrorImpl({final String? $type})
-      : $type = $type ?? 'error';
-
-  factory _$ImageUploadedViewStateErrorImpl.fromJson(
-          Map<String, dynamic> json) =>
-      _$$ImageUploadedViewStateErrorImplFromJson(json);
-
-  @JsonKey(name: 'runtimeType')
-  final String $type;
+  const _$ImageUploadedViewStateErrorImpl();
 
   @override
   String toString() {
@@ -477,14 +439,14 @@ class _$ImageUploadedViewStateErrorImpl implements ImageUploadedViewStateError {
             other is _$ImageUploadedViewStateErrorImpl);
   }
 
-  @JsonKey(ignore: true)
   @override
   int get hashCode => runtimeType.hashCode;
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(List<String> possibleTags, Gallery similarImages)
+    required TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)
         data,
     required TResult Function() loading,
     required TResult Function() error,
@@ -495,7 +457,9 @@ class _$ImageUploadedViewStateErrorImpl implements ImageUploadedViewStateError {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult? Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult? Function()? loading,
     TResult? Function()? error,
   }) {
@@ -505,7 +469,9 @@ class _$ImageUploadedViewStateErrorImpl implements ImageUploadedViewStateError {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(List<String> possibleTags, Gallery similarImages)? data,
+    TResult Function(XFile file, List<String> possibleTags,
+            List<GalleryImage> similarImages)?
+        data,
     TResult Function()? loading,
     TResult Function()? error,
     required TResult orElse(),
@@ -549,19 +515,9 @@ class _$ImageUploadedViewStateErrorImpl implements ImageUploadedViewStateError {
     }
     return orElse();
   }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ImageUploadedViewStateErrorImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class ImageUploadedViewStateError implements ImageUploadedViewState {
   const factory ImageUploadedViewStateError() =
       _$ImageUploadedViewStateErrorImpl;
-
-  factory ImageUploadedViewStateError.fromJson(Map<String, dynamic> json) =
-      _$ImageUploadedViewStateErrorImpl.fromJson;
 }
