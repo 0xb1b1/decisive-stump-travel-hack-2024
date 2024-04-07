@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:travel_frontend/core/base_view_model.dart';
-import 'package:travel_frontend/src/api/models/gallery.dart';
+
 import 'package:travel_frontend/src/domain/search_repository.dart';
 import 'package:travel_frontend/src/feature/image_stats/models/image_stats_view_state.dart';
 import 'dart:html' as html;
