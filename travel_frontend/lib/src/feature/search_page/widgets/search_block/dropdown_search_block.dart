@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:travel_frontend/core/view_model_widget.dart';
-import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/widgets/filters_container.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
@@ -10,11 +10,13 @@ import 'package:travel_frontend/src/feature/search_page/widgets/search_block/wid
 class DropdownSearchBlock extends StatefulWidget {
   final FiltersViewModel filtersViewModel;
   final void Function(SearchTypeState) search;
+  final VoidCallback onUploadImage;
 
   const DropdownSearchBlock({
     super.key,
     required this.filtersViewModel,
     required this.search,
+    required this.onUploadImage,
   });
 
   @override
@@ -69,6 +71,7 @@ class _DropdownSearchBlockState extends State<DropdownSearchBlock>
             onFiltersTap: _toggleDropdown,
             filtersTitle: 'Фильтры',
             filtersViewModel: vm,
+            onUploadImage: widget.onUploadImage,
           ),
           SizeTransition(
             sizeFactor: _animation,

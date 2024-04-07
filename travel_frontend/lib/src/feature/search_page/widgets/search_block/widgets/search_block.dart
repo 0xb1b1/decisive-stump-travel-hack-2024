@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:travel_frontend/src/api/models/image_search_query.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/filters_view_model.dart';
 import 'package:travel_frontend/src/feature/search_page/widgets/filters/models/search_type_state.dart';
 
@@ -14,6 +13,7 @@ class SearchBlock extends StatelessWidget {
   final FiltersViewModel filtersViewModel;
   final String filtersTitle;
   final void Function(SearchTypeState) searchQuery;
+  final VoidCallback onUploadImage;
 
   const SearchBlock({
     super.key,
@@ -21,6 +21,7 @@ class SearchBlock extends StatelessWidget {
     required this.filtersTitle,
     required this.filtersViewModel,
     required this.searchQuery,
+    required this.onUploadImage,
   });
 
   @override
@@ -47,7 +48,7 @@ class SearchBlock extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         SideButton(
-          onTap: () {},
+          onTap: onUploadImage,
           title: 'Поиск по изображению',
           icon: CustomPaint(
             size: const Size(20, 17),

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'filters_list.dart';
@@ -22,6 +20,17 @@ class SearchTypeState with _$SearchTypeState {
     required FiltersList filtersList,
     required String filename,
   }) = SearchTypeStateSimilar;
+}
+
+extension Extension on SearchTypeState {
+  bool get isFiltersChosen =>
+      filtersList.colors.filters.any((element) => element.checked) ||
+      filtersList.season.filters.any((element) => element.checked) ||
+      filtersList.dayTime.filters.any((element) => element.checked) ||
+      filtersList.weather.filters.any((element) => element.checked) ||
+      filtersList.atmosphere.filters.any((element) => element.checked) ||
+      filtersList.persons.filters.any((element) => element.checked) ||
+      filtersList.orientation.filters.any((element) => element.checked);
 }
 
 enum SearchTypeMode {

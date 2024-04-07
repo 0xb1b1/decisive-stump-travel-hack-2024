@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travel_frontend/src/feature/image_uploaded/image_uploaded_page.dart';
 import 'package:travel_frontend/src/feature/search_page/search_page.dart';
 
 import '../feature/image_stats/image_stats_page.dart';
@@ -6,7 +7,7 @@ import '../feature/image_stats/image_stats_page.dart';
 abstract class Routes {
   static const search = 'search';
   static const imageStats = 'imageStats';
-  static const imageSimilar = 'imageSimilar';
+  static const imageUploaded = 'imageUploaded';
 
   static final table = <String, Route Function(RouteSettings)>{
     Routes.search: (settings) => MaterialPageRoute<void>(
@@ -15,6 +16,10 @@ abstract class Routes {
         ),
     Routes.imageStats: (settings) => MaterialPageRoute<void>(
           builder: (_) => const ImageStats(),
+          settings: settings,
+        ),
+    Routes.imageUploaded: (settings) => MaterialPageRoute<void>(
+          builder: (_) => const ImageUploadedPage(),
           settings: settings,
         ),
   };

@@ -19,7 +19,7 @@ class ViewModelWidget<T extends BaseViewModel> extends StatefulWidget {
 }
 
 class _ViewModelWidgetState<T extends BaseViewModel>
-    extends State<ViewModelWidget<T>> {
+    extends State<ViewModelWidget<T>> with AutomaticKeepAliveClientMixin {
   late T model;
 
   @override
@@ -28,7 +28,6 @@ class _ViewModelWidgetState<T extends BaseViewModel>
     model = widget.model;
     model.init();
   }
-
 
   //TODO fix
   @override
@@ -47,4 +46,7 @@ class _ViewModelWidgetState<T extends BaseViewModel>
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

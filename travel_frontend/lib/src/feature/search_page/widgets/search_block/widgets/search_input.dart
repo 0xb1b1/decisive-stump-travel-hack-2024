@@ -63,7 +63,7 @@ class _SearchInputState extends State<SearchInput> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _ImageContainerMode(
+              ImageContainerMode(
                 title: 'Поиск по тегу: $tag',
                 onCrossTap: () {
                   widget.filtersViewModel.onCrossTap();
@@ -94,7 +94,7 @@ class _SearchInputState extends State<SearchInput> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _ImageContainerMode(
+              ImageContainerMode(
                 title: 'Выбранное изображение',
                 onCrossTap: () {
                   widget.filtersViewModel.onCrossTap();
@@ -127,7 +127,8 @@ class _SearchInputState extends State<SearchInput> {
                       color: AppPalette.black,
                     ),
                     onPressed: () {
-                      widget.filtersViewModel.changeSearchInitial(_controller.text);
+                      widget.filtersViewModel
+                          .changeSearchInitial(_controller.text);
                       widget.searchQuery(widget.filtersViewModel.state);
                     },
                   )
@@ -141,11 +142,11 @@ class _SearchInputState extends State<SearchInput> {
   }
 }
 
-class _ImageContainerMode extends StatelessWidget {
+class ImageContainerMode extends StatelessWidget {
   final String title;
   final VoidCallback onCrossTap;
 
-  const _ImageContainerMode({
+  const ImageContainerMode({
     super.key,
     required this.title,
     required this.onCrossTap,
