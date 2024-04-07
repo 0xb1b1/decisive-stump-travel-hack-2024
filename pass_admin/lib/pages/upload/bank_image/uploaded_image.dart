@@ -390,6 +390,7 @@ class _UploadedImageState extends State<UploadedImage> {
                 width: 200,
                 height: 150,
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
                       onTap: () {

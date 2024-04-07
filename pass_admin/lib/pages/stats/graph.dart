@@ -8,7 +8,7 @@ class Graph extends StatelessWidget {
   });
 
   final String label;
-  final int value;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class Graph extends StatelessWidget {
                 )),
                 SizedBox(height: 10),
                 Text(
-                  value.toString(),
+                  value,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
               ],

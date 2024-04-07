@@ -33,12 +33,6 @@ class _UploadPageState extends State<UploadPage> {
       body: Column(
         children: [
           const Navbar(page: CurPage.upload),
-          ElevatedButton(
-            onPressed: () {
-              Provider.of<ButtonNotifier>(context, listen: false).buttonPressed();
-            },
-            child: const Text('Опубликовать всё неопубликованное'),
-          ),
           Padding(
             padding: const EdgeInsets.all(10),
             child: Dropbox(
@@ -49,6 +43,22 @@ class _UploadPageState extends State<UploadPage> {
                   _bytes.addAll(bytes);
                 });
               },
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Provider.of<ButtonNotifier>(context, listen: false).buttonPressed();
+            },
+            child: Container(
+              height: 30,
+              margin: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey), // Match TextField border
+                borderRadius: BorderRadius.circular(4.0), // Rounded corners
+              ),
+              child: const Center(
+                child: Text('Опубликовать всё неопубликованное'),
+              ),
             ),
           ),
           Expanded(
