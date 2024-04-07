@@ -127,7 +127,7 @@ class _SearchInputState extends State<SearchInput> {
                       color: AppPalette.black,
                     ),
                     onPressed: () {
-                      widget.filtersViewModel.changeSearch(_controller.text);
+                      widget.filtersViewModel.changeSearchInitial(_controller.text);
                       widget.searchQuery(widget.filtersViewModel.state);
                     },
                   )

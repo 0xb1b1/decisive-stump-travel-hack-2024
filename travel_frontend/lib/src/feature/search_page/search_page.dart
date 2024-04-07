@@ -29,9 +29,7 @@ class SearchPage extends ConsumerWidget {
       RoutesArgs.tag,
     );
 
-    final query = tag == null ? null : ImageSearchQuery(tags: [tag]);
-
-    final vm = ref.watch(searchViewModelProvider(query));
+    final vm = ref.watch(searchViewModelProvider);
     final filtersVm = ref.watch(filtersViewModelProvider);
 
     return ViewModelWidget<SearchPageViewModel>(

@@ -9,5 +9,6 @@ final imageStatsViewModelProvider =
     filename: filename,
     searchRepository: ref.watch(searchRepositoryProvider),
     navigation: ref.watch(navigationProvider),
+    ref: ref,
   ),
 );

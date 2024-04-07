@@ -151,27 +151,41 @@ class FiltersViewModel extends BaseViewModel<SearchTypeState> {
     if (isFiltersChosen) {
       _resetFilters();
     }
-    emit(SearchTypeState.similar(
-      filtersList: state.filtersList,
-      filename: filename,
-    ));
+    emit(
+      SearchTypeState.similar(
+        filtersList: state.filtersList,
+        filename: filename,
+      ),
+    );
+  }
+
+  void changeSearchInitial(String controllerText) {
+    final currentState = state;
+    if (currentState is SearchTypeStateInitial) {
+      emit(currentState.copyWith(search: controllerText));
+    }
+  }
+
+  void changeModeTag(String tag) {
+    if (isFiltersChosen) {
+      _resetFilters();
+    }
+
+    emit(
+      SearchTypeState.tag(
+        filtersList: state.filtersList,
+        tag: tag,
+      ),
+    );
   }
 
   void onCrossTap() {
-    print('onCrossTap');
     emit(
       SearchTypeState.initial(
         filtersList: FiltersList.initial(),
         search: '',
       ),
     );
-  }
-
-  void changeSearch(String controllerText) {
-    final currentState = state;
-    if (currentState is SearchTypeStateInitial) {
-      emit(currentState.copyWith(search: controllerText));
-    }
   }
 
 // Future<void> pickImage() async {

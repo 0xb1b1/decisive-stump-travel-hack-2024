@@ -14,17 +14,14 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   final ImagePicker _imagePicker;
   final SearchRepository _searchRepository;
   final NavigationService _navigationService;
-  final ImageSearchQuery? _initialSearch;
 
   SearchPageViewModel({
     required ImagePicker imagePicker,
     required SearchRepository searchRepository,
     required NavigationService navigationService,
-    required ImageSearchQuery? initialSearch,
   })  : _imagePicker = imagePicker,
         _searchRepository = searchRepository,
-        _navigationService = navigationService,
-        _initialSearch = initialSearch;
+        _navigationService = navigationService;
 
   SearchViewState get loadingState => const SearchViewState.loading();
 
@@ -39,20 +36,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
   Future<void> init() async {
     super.init();
 
-    if (_initialSearch != null) {
-      try {
-        final gallery = await _searchRepository.search(_initialSearch, 20);
-        if (gallery.images.isEmpty) {
-          emit(emptyState);
-          return;
-        }
-        emit(SearchViewState.data(images: gallery.images));
-      } on Object catch (e, _) {
-        emit(errorState);
-      }
-      return;
-    }
-
     try {
       final gallery = await _searchRepository.getGallery();
       if (gallery.images.isEmpty) {
@@ -64,11 +47,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
       emit(errorState);
     }
   }
-
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  // }
 
   void onImageTap(String filename) {
     _navigationService.pushNamed(
@@ -145,13 +123,13 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     final currentState = search;
 
     if (currentState is SearchTypeStateInitial) {
-      print('search');
       final query = _makeInitialQuery(currentState);
       await _searchInitial(query);
       return;
     }
 
     if (currentState is SearchTypeStateTag) {
+      print('searchTag');
       final query = _makeTagQuery(currentState);
       await _searchTag(query);
       return;
@@ -164,7 +142,6 @@ class SearchPageViewModel extends BaseViewModel<SearchViewState> {
     }
   }
 
-//TODO: fix
   int _mapNumber(Filter filter) {
     if (filter.title == 'Без людей') {
       return 0;
