@@ -1,37 +1,59 @@
-use std::time::Duration;
+// use std::time::Duration;
 
-use async_std::task;
-use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
+// use async_std::task;
+use ds_travel_hack_2024::config::DsConfig;
+// use ds_travel_hack_2024::enums::ml_worker::MlTaskType;
 use log;
 use rocket::http::{ContentType, MediaType};
 use rocket::{form::Form, http::Status, response::status, serde::json::Json};
-use rsmq_async::{PooledRsmq, RsmqConnection};
+// use rsmq_async::PooledRsmq;
 use s3::Bucket;
+use serde::{Deserialize, Serialize};
 use tokio::io::AsyncReadExt; // Required for reading file contents (e.g. .read_to_end())
 
-use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
+// use ds_travel_hack_2024::enums::{rsmq::RsmqDsQueue, worker::TaskType};
 use ds_travel_hack_2024::locks;
-use ds_travel_hack_2024::models::http::images::{ImageInfo, ImageUploadFailInfo, S3PresignedUrls};
+use ds_travel_hack_2024::models::http::images::{ImageInfo, ImageInfoGallery, ImageUploadFailInfo, S3PresignedUrls};
 use ds_travel_hack_2024::models::http::uploads::{
     ImageStatusResponse, UploadImage, UploadImageResponse,
 };
-use ds_travel_hack_2024::utils;
-use ds_travel_hack_2024::utils::s3::images::{get_img, get_presigned_url};
+// use ds_travel_hack_2024::utils;
+use ds_travel_hack_2024::utils::s3::images::get_img;
 // use ds_travel_hack_2024::utils::rsmq::presigned_urls::get_s3_presigned_urls_direct;
 
-use crate::config::DsConfig;
+// use crate::config::DsConfig;
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![upload_image, get_image_search_results,]
+    routes![upload_image,]
 }
 
-#[post("/upload", format = "multipart/form-data", data = "<form>")]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SearchByImageResponse {
+    pub filename: Option<String>,
+    pub images: Option<Vec<ImageInfoGallery>>,
+    pub tags: Option<Vec<String>>,
+    pub error: Option<String>,
+}
+impl SearchByImageResponse {
+    pub fn new() -> Self {
+        SearchByImageResponse {
+            filename: None,
+            images: None,
+            tags: None,
+            error: None,
+        }
+    }
+}
+
+#[post("/upload?<neighbors_limit>&<tags_limit>", format = "multipart/form-data", data = "<form>")]
 async fn upload_image(
     form: Form<UploadImage<'_>>,
+    neighbors_limit: Option<usize>,
+    tags_limit: Option<usize>,
     bucket: &rocket::State<Bucket>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    rsmq_pool: &rocket::State<PooledRsmq>,
-) -> status::Custom<Json<UploadImageResponse>> {
+    config: &rocket::State<DsConfig>,
+) -> status::Custom<Json<SearchByImageResponse>> {
     {
         let filename = match form.file.name() {
             Some(name) => name,
@@ -39,9 +61,9 @@ async fn upload_image(
                 log::error!("Failed to get file name.");
                 return status::Custom(
                     Status::BadRequest,
-                    Json(UploadImageResponse {
+                    Json(SearchByImageResponse {
                         error: Some("Failed to get file name.".into()),
-                        ..UploadImageResponse::from_form(&form, false, false)
+                        ..SearchByImageResponse::new()
                     }),
                 );
             }
@@ -60,9 +82,9 @@ async fn upload_image(
             log::error!("Failed to get file type.");
             return status::Custom(
                 Status::BadRequest,
-                Json(UploadImageResponse {
+                Json(SearchByImageResponse {
                     error: Some("Failed to get file type.".into()),
-                    ..UploadImageResponse::from_form(&form, false, false)
+                    ..SearchByImageResponse::new()
                 }),
             );
         }
@@ -72,9 +94,9 @@ async fn upload_image(
         log::error!("Invalid file type: {:?}", file_type);
         return status::Custom(
             Status::UnsupportedMediaType,
-            Json(UploadImageResponse {
+            Json(SearchByImageResponse {
                 error: Some("Invalid file type.".into()),
-                ..UploadImageResponse::from_form(&form, false, false)
+                ..SearchByImageResponse::new()
             }),
         );
     }
@@ -114,58 +136,14 @@ async fn upload_image(
             log::error!("File already exists: {}", &file_path);
             return status::Custom(
                 Status::Conflict,
-                Json(UploadImageResponse {
-                    filename: Some(file_name.clone()),
+                Json(SearchByImageResponse {
                     error: Some("File already exists.".into()),
-                    ..UploadImageResponse::from_form(&form, true, false)
+                    ..SearchByImageResponse::new()
                 }),
             );
         }
         false => (),
     }
-
-    // Check for image lock
-    if !form.force.unwrap_or(false) {
-        let is_locked = match locks::image_upload::check(&file_path, &redis_pool).await {
-            Ok(locked) => locked,
-            Err(e) => {
-                log::error!("Failed to check image lock: {}", e);
-                return status::Custom(
-                    Status::InternalServerError,
-                    Json(UploadImageResponse {
-                        error: Some(format!("Failed to check image lock: {}", e)),
-                        ..UploadImageResponse::from_form(&form, false, false)
-                    }),
-                );
-            }
-        };
-
-        if is_locked {
-            log::error!("Image is locked: {}", &file_path);
-            return status::Custom(
-                Status::Locked,
-                Json(UploadImageResponse {
-                    error: Some("Image is locked.".into()),
-                    ..UploadImageResponse::from_form(&form, false, false)
-                }),
-            );
-        }
-    }
-
-    // Lock the image
-    match locks::image_upload::lock(&file_path, &redis_pool).await {
-        Ok(_) => (),
-        Err(e) => {
-            log::error!("Failed to lock image: {}", e);
-            return status::Custom(
-                Status::InternalServerError,
-                Json(UploadImageResponse {
-                    error: Some(format!("Failed to lock image: {}", e)),
-                    ..UploadImageResponse::from_form(&form, false, false)
-                }),
-            );
-        }
-    };
 
     // The following is done via a separate request
     // task::sleep(Duration::from_secs(10)).await;  // [TEMP]: Simulate ML model processing
@@ -186,291 +164,88 @@ async fn upload_image(
                 .unwrap();
             return status::Custom(
                 Status::InternalServerError,
-                Json(UploadImageResponse {
+                Json(SearchByImageResponse {
                     error: Some(format!("Failed to send data to S3: {}", e)),
-                    ..UploadImageResponse::from_form(&form, false, false)
+                    ..SearchByImageResponse::new()
                 }),
             );
         }
     };
 
-    log::info!("Setting image info in Redis...");
-    match utils::redis::images::set_image_info(
-        // Get the object in form and use .to_image_info() to convert it to ImageInfo
-        &form.to_image_info(&file_name),
-        &redis_pool,
-    )
-    .await
-    {
-        Ok(_) => (),
-        Err(e) => {
-            log::error!("Failed to set image info in Redis: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool)
-                .await
-                .unwrap();
-            // TODO: Delete image from all buckets?
-            return status::Custom(
-                Status::InternalServerError,
-                Json(UploadImageResponse {
-                    error: Some(format!("Failed to set image info in Redis: {}", e)),
-                    ..UploadImageResponse::from_form(&form, false, false)
-                }),
-            );
-        }
-    }
+    // Get similar images search result from ML
+    let neighbors_lim = neighbors_limit.unwrap_or(10).to_string();
+    let tags_lim = tags_limit.unwrap_or(10).to_string();
+    let params: Vec<(&str, &str)> = vec![
+        ("filename", &file_name),
+        ("neighbors_limit", &neighbors_lim),
+        ("tags_limit", &tags_lim),
+    ];
 
-    log::info!("Sending processing task for worker to RSMQ...");
-    let worker_queue_msg_id = match rsmq_pool
-        .inner()
-        .clone()
-        .send_message(
-            RsmqDsQueue::BackendWorker.as_str(),
-            serde_json::to_string(&TaskType::CompressImage {
-                filename: file_name.clone(),
-                force: form.force.unwrap_or(false),
-            })
-            .unwrap()
-            .as_str(),
-            None,
-        )
-        .await
-    {
-        Ok(msg) => msg,
-        Err(e) => {
-            log::error!("Failed to send message to RSMQ: {}", e);
-            locks::image_upload::unlock(&file_path, &redis_pool)
-                .await
-                .unwrap();
-            // TODO: Delete image from all buckets?
+    let url = match reqwest::Url::parse_with_params(
+        &format!("{}/search/image", config.svc_ml_upload),
+        params
+    ) {
+        Ok(url) => url,
+        Err(err) => {
+            log::error!("Failed to parse URL: {}", err);
             return status::Custom(
                 Status::InternalServerError,
-                Json(UploadImageResponse {
-                    error: Some(format!("Failed to send message to RSMQ: {}", e)),
-                    ..UploadImageResponse::from_form(&form, false, false)
+                Json(SearchByImageResponse {
+                    filename: Some(file_name),
+                    images: None,
+                    tags: None,
+                    error: Some("Failed to parse URL".to_string()),
                 }),
             );
         }
     };
-    log::info!(
-        "Sent processing task for worker to RSMQ: {:?}",
-        worker_queue_msg_id
-    );
 
-    locks::image_upload::unlock(&file_path, &redis_pool)
-        .await
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(40))
+        .build()
         .unwrap();
+
+    let _response = match client.post(url).send().await {
+        Ok(response) => match response.text().await {
+            Ok(images_str) => match serde_json::from_str(&images_str) {
+                Ok(images) => images,
+                Err(err) => {
+                    log::error!("Failed to parse response: {}", err);
+                    log::error!("Raw response: {}", images_str);
+                    SearchByImageResponse {
+                        filename: Some(file_name.clone()),
+                        images: None,
+                        tags: None,
+                        error: Some("Failed to parse response".to_string()),
+                    }
+                }
+            },
+            Err(err) => {
+                log::error!("Failed to parse response: {}", err);
+                SearchByImageResponse {
+                    filename: Some(file_name.clone()),
+                    images: None,
+                    tags: None,
+                    error: Some("Failed to parse response".to_string()),
+                }
+            }
+        },
+        Err(err) => {
+            log::error!("Failed to send request: {}", err);
+            SearchByImageResponse {
+                filename: Some(file_name.clone()),
+                images: None,
+                tags: None,
+                error: Some("Failed to send request".to_string()),
+            }
+        }
+    };
 
     status::Custom(
         Status::Ok,
-        Json(UploadImageResponse {
+        Json(SearchByImageResponse {
             filename: Some(file_name),
-            ..UploadImageResponse::from_form(&form, true, true)
+            ..SearchByImageResponse::new()
         }),
     )
-}
-
-#[get("/upload/get?<filename>")]
-async fn get_image_search_results(
-    filename: &str,
-    bucket: &rocket::State<Bucket>,
-    redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
-    config: &rocket::State<DsConfig>,
-) -> status::Custom<Json<ImageStatusResponse>> {
-    log::debug!("Checking image upload status: {}", filename);
-
-    let mut conn = match redis_pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            log::error!("Failed to get connection from Redis pool: {}", e);
-            return status::Custom(
-                Status::InternalServerError,
-                Json(ImageStatusResponse {
-                    is_ml_uploaded: None,
-                    ..ImageStatusResponse::new(filename)
-                }),
-            );
-        }
-    };
-
-    let mut timeout_counter = 0;
-    loop {
-        if timeout_counter >= config.upload_check_retries {
-            log::error!("Image upload check timed out: {}", filename);
-            return status::Custom(
-                Status::RequestTimeout,
-                Json(ImageStatusResponse {
-                    is_ml_uploaded: None,
-                    error: Some("Image upload check timed out.".into()),
-                    ..ImageStatusResponse::new(filename)
-                }),
-            );
-        }
-
-        let image_exists: bool = redis::cmd("EXISTS")
-            .arg(format!("image-info:upload:{}", filename))
-            .query_async(&mut *conn)
-            .await
-            .unwrap();
-
-        if !image_exists {
-            log::error!("Image does not exist: {}", filename);
-            return status::Custom(
-                Status::NotFound,
-                Json(ImageStatusResponse {
-                    is_ml_uploaded: None,
-                    error: Some("Image does not exist (it probably timed out.)".into()),
-                    ..ImageStatusResponse::new(filename)
-                }),
-            );
-        } else {
-            log::debug!("Image exists: {}", filename);
-        }
-
-        let is_ml_uploaded: bool = redis::cmd("EXISTS")
-            .arg(format!("images:upload:ready:{}", filename))
-            .query_async(&mut *conn)
-            .await
-            .unwrap();
-
-        if is_ml_uploaded {
-            log::debug!("Image is ready: {}", filename);
-            log::debug!("Getting presigned URLs from Redis: {}", filename);
-            let presigned_urls = S3PresignedUrls {
-                normal: get_presigned_url(&filename, &bucket, 360).await,
-                comp: None,
-                thumb: None,
-            };
-
-            log::debug!("Getting image info as generated by ML from Redis...");
-            let mut image_info: ImageInfo = match redis::cmd("GET")
-                .arg(format!("images:upload:ready:{}", filename))
-                .query_async(&mut *redis_pool.get().await.unwrap())
-                .await
-            {
-                Ok(data) => match data {
-                    redis::Value::Data(data) => match serde_json::from_slice(&data) {
-                        Ok(info) => info,
-                        Err(e) => {
-                            log::error!("Failed to parse image info: {}", e);
-                            return status::Custom(
-                                Status::InternalServerError,
-                                Json(ImageStatusResponse {
-                                    is_ml_uploaded: None,
-                                    error: Some(format!("Failed to parse image info: {}", e)),
-                                    ..ImageStatusResponse::new(filename)
-                                }),
-                            );
-                        }
-                    },
-                    _ => {
-                        log::error!("Failed to get image info: {:?}", data);
-                        return status::Custom(
-                            Status::InternalServerError,
-                            Json(ImageStatusResponse {
-                                is_ml_uploaded: None,
-                                error: Some("Failed to get image info.".into()),
-                                ..ImageStatusResponse::new(filename)
-                            }),
-                        );
-                    }
-                },
-                Err(e) => {
-                    log::error!("Failed to get image info: {}", e);
-                    return status::Custom(
-                        Status::InternalServerError,
-                        Json(ImageStatusResponse {
-                            is_ml_uploaded: None,
-                            error: Some(format!("Failed to get image info: {}", e)),
-                            ..ImageStatusResponse::new(filename)
-                        }),
-                    );
-                }
-            };
-
-            image_info.s3_presigned_urls = Some(presigned_urls);
-
-            return status::Custom(
-                Status::Ok,
-                Json(ImageStatusResponse {
-                    is_ml_uploaded: Some(is_ml_uploaded),
-                    image_info: Some(image_info),
-                    ..ImageStatusResponse::new(filename)
-                }),
-            );
-        }
-
-        let is_ml_error: bool = redis::cmd("EXISTS")
-            .arg(format!("images:upload:error:{}", filename))
-            .query_async(&mut *conn)
-            .await
-            .unwrap();
-
-        if is_ml_error {
-            let fail_info: ImageUploadFailInfo = match redis::cmd("GET")
-                .arg(format!("images:upload:error:{}", filename))
-                .query_async(&mut *redis_pool.get().await.unwrap())
-                .await
-            {
-                Ok(data) => match data {
-                    redis::Value::Data(data) => match serde_json::from_slice(&data) {
-                        Ok(info) => info,
-                        Err(e) => {
-                            log::error!("Failed to parse image upload fail info: {}", e);
-                            return status::Custom(
-                                Status::InternalServerError,
-                                Json(ImageStatusResponse {
-                                    is_ml_uploaded: None,
-                                    error: Some(format!(
-                                        "Failed to parse image upload fail info: {}",
-                                        e
-                                    )),
-                                    ..ImageStatusResponse::new(filename)
-                                }),
-                            );
-                        }
-                    },
-                    _ => {
-                        log::error!("Failed to get image upload fail info: {:?}", data);
-                        return status::Custom(
-                            Status::InternalServerError,
-                            Json(ImageStatusResponse {
-                                is_ml_uploaded: None,
-                                error: Some("Failed to get image upload fail info.".into()),
-                                ..ImageStatusResponse::new(filename)
-                            }),
-                        );
-                    }
-                },
-                Err(e) => {
-                    log::error!("Failed to get image upload fail info: {}", e);
-                    return status::Custom(
-                        Status::InternalServerError,
-                        Json(ImageStatusResponse {
-                            is_ml_uploaded: None,
-                            error: Some(format!("Failed to get image upload fail info: {}", e)),
-                            ..ImageStatusResponse::new(filename)
-                        }),
-                    );
-                }
-            };
-
-            log::error!("Image upload failed: {}", filename);
-            return status::Custom(
-                Status::Conflict,
-                Json(ImageStatusResponse {
-                    is_ml_uploaded: Some(false),
-                    error: Some("Image upload failed.".into()),
-                    duplicate_filename: Some(fail_info.dublicate_filename),
-                    ..ImageStatusResponse::new(filename)
-                }),
-            );
-        }
-
-        log::debug!(
-            "Image is not ready, waiting before trying again: {}",
-            filename
-        );
-        timeout_counter += 1;
-        task::sleep(Duration::from_secs(config.upload_check_interval_secs)).await;
-    }
 }

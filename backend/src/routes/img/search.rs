@@ -1,13 +1,15 @@
 use std::time::Duration;
 
 use log;
+use reqwest::RequestBuilder;
 use rocket::{http::Status, response::status, serde::json::Json};
 
 use ds_travel_hack_2024::{
     models::http::search::{ImageSearchQuery, SearchImageResponse},
     tasks::utils::requests::{search_query_is_not_empty, search_query_set_none_if_empty},
-    utils::redis::galleries::get_main_gallery,
+    utils::rsmq::presigned_urls::get_s3_presigned_urls_direct,
 };
+use rsmq_async::PooledRsmq;
 
 use crate::config::DsConfig;
 
@@ -23,6 +25,7 @@ pub async fn search_images(
     images_limit: Option<u16>,
     tags_limit: Option<u16>,
     redis_pool: &rocket::State<bb8::Pool<bb8_redis::RedisConnectionManager>>,
+    rsmq_pool: &rocket::State<PooledRsmq>,
     config: &rocket::State<DsConfig>,
 ) -> status::Custom<Json<SearchImageResponse>> {
     log::debug!("Search request received: {:?}", data);
@@ -108,8 +111,15 @@ pub async fn search_images(
     let serialized_data = serde_json::to_string(&filtered_data).unwrap();
     log::debug!("Serialized data to be sent: {}", serialized_data);
 
+    let reqw_builder: RequestBuilder;
+    if filters_set {
+        reqw_builder = client.post(url.clone()).body(serialized_data);
+    } else {
+        reqw_builder = client.post(url.clone());
+    }
+
     log::debug!("Sending request to: {}", url);
-    let mut images: SearchImageResponse = match client.post(url).body(serialized_data).send().await
+    let mut images: SearchImageResponse = match reqw_builder.send().await
     {
         Ok(response) => match response.text().await {
             Ok(images_str) => match serde_json::from_str(&images_str) {
@@ -143,37 +153,24 @@ pub async fn search_images(
         }
     };
 
-    // Add thumbnails from Redis
-    let full_gallery = match get_main_gallery(redis_pool).await {
-        Ok(gallery) => gallery,
-        Err(_) => {
-            log::error!("Failed to get main gallery");
-            return status::Custom(
-                Status::InternalServerError,
-                Json(SearchImageResponse {
-                    images: vec![],
-                    tags: None,
-                    error: Some("Failed to get main gallery".to_string()),
-                }),
-            );
-        }
-    };
-
     for image in images.images.iter_mut() {
         image.s3_presigned_urls =
-            match ds_travel_hack_2024::utils::redis::images::get_s3_presigned_urls_with_gallery(
-                &image.filename,
-                &full_gallery,
-            )
+            match get_s3_presigned_urls_direct(
+            &image.filename,
+            None,
+            redis_pool,
+            rsmq_pool,
+            config.s3_get_presigned_urls_timeout_secs,
+        )
             .await
             {
-                Ok(urls) => urls,
+                Ok(urls) => Some(urls),
                 Err(_) => {
                     log::error!(
                         "Failed to get S3 presigned URLs for image: {}",
                         image.filename
                     );
-                    None // TODO: Is this the correct behavior?
+                    None
                 }
             }
     }

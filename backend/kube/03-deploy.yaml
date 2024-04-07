@@ -85,3 +85,47 @@ spec:
           limits:
             memory: "800Mi"
             cpu: "600m"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guests
+  namespace: decisive-stump-travel-hack-2024
+  labels:
+    app: guests
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: guests
+  template:
+    metadata:
+      labels:
+        app: guests
+    spec:
+      hostAliases:
+      - ip: "77.37.209.29"
+        hostnames:
+        - "minio-travel.0xb1b1.com"
+      containers:
+      - name: guests
+        image: "0xb1b1/ds-guests-travel-hack-2024:latest"
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: backend-credentials
+        - configMapRef:
+            name: backend-config
+        env:
+        - name: RUST_LOG
+          value: "debug"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "300m"
+          limits:
+            memory: "800Mi"
+            cpu: "600m"

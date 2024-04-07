@@ -20,3 +20,26 @@ spec:
                 name: backend
                 port:
                   number: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: guests
+  namespace: decisive-stump-travel-hack-2024
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: guests.0xb1b1.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: guests
+                port:
+                  number: 8080
