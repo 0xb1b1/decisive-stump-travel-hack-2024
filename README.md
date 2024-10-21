@@ -65,7 +65,7 @@ Hugging Face
 </li>
 
 <li>
-Flatter
+Flutter
 </li>
 
 <li>
