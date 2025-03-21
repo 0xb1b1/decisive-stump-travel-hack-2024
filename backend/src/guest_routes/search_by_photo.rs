@@ -47,6 +47,9 @@ impl SearchByImageResponse {
             error: None,
         }
     }
+    pub fn set_images(&mut self, images: Vec<ImageInfoGallery>) {
+        self.images = Some(images);
+    }
 }
 
 #[post("/upload?<neighbors_limit>&<tags_limit>", format = "multipart/form-data", data = "<form>")]
@@ -248,10 +251,11 @@ async fn upload_image(
         return status::Custom(Status::Ok, Json(response));
     }
 
-    let mut new_images: Vec<ImageInfoGallery> = response.images.clone().unwrap();
+    let mut new_images: Vec<ImageInfoGallery> = Vec::new();
 
     // Add Presigned S3 URLs
     for image in response.images.clone().unwrap() {
+        let is_ok: bool;
         let mut new_image = image.clone();
         new_image.s3_presigned_urls =
             match get_s3_presigned_urls_direct(
@@ -263,8 +267,12 @@ async fn upload_image(
         )
             .await
             {
-                Ok(urls) => Some(urls),
+                Ok(urls) => {
+                    is_ok = true;
+                    Some(urls)
+                },
                 Err(_) => {
+                    is_ok = false;
                     log::error!(
                         "Failed to get S3 presigned URLs for image: {}",
                         image.filename
@@ -273,13 +281,15 @@ async fn upload_image(
             }
         };
 
-        log::debug!("Presigned S3 URLs for image {:?}", &new_image);
+        log::debug!("Presigned S3 URLs for image {:?}", &new_image.s3_presigned_urls.clone());
 
-        new_images.push(new_image);
+        if is_ok {
+            new_images.push(new_image);
+        }
     }
 
-    response.images = Some(new_images);
-    log::debug!("New images: {:?}", response.images.clone());
+    response.set_images(new_images);
+    log::debug!("Returning response: {:?}", response);
 
     status::Custom(
         Status::Ok,
